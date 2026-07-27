@@ -50,4 +50,6 @@ def test_audit_returns_aggregate(client) -> None:
         assert "results" in data
         assert "healthy" in data
         assert "unhealthy" in data
+        assert "phi_cps" in data
+        assert 0.0 <= data["phi_cps"] <= 1.0
         assert mock_get.called

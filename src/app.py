@@ -300,14 +300,18 @@ def audit() -> Any:
             results.append(data)
             if data.get("status") == "ok":
                 healthy += 1
+    total = len(results)
+    healthy_count = healthy
+    phi_cps = round((healthy_count / total), 3) if total else 0.0
     return jsonify(
         {
             "service": "kix",
             "port": 8800,
             "timestamp": _utcnow(),
-            "total": len(results),
-            "healthy": healthy,
+            "total": total,
+            "healthy": healthy_count,
             "unhealthy": sum(1 for r in results if r.get("status") != "ok"),
+            "phi_cps": phi_cps,
             "results": sorted(results, key=lambda x: x.get("name", "")),
         }
     )
