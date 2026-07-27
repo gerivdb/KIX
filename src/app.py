@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import sqlite3
 import subprocess
 import sys
 import threading
@@ -134,6 +135,23 @@ def _sync_runners() -> dict[str, Runner]:
                     updated_at=now,
                 )
     return runners
+
+
+def _load_phi_cps_history(limit: int = 20) -> list[dict[str, Any]]:
+    default_db = Path(__file__).resolve().parent.parent / "data" / "kix.sqlite"
+    bridge_db = Path(__file__).resolve().parent.parent / "scripts" / ".." / "L3-CITIZENS" / "MIMIR" / "data" / "metrics.db"
+    bridge_db = bridge_db.resolve()
+    db_path = bridge_db if bridge_db.exists() else default_db
+    try:
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT ts, value FROM phi_cps ORDER BY ts DESC LIMIT ?", (limit,)
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+    except Exception:
+        return []
 
 
 @app.get("/health")
@@ -426,6 +444,14 @@ def dashboard() -> Any:
             "</tr>"
         )
     body = "\n".join(rows)
+    history = _load_phi_cps_history(limit=20)
+    history_rows = []
+    for item in history:
+        ts = item.get("ts")
+        value = item.get("value")
+        dt = datetime.fromtimestamp(int(ts), tz=timezone.utc).isoformat() if ts else ""
+        history_rows.append(f"<tr><td>{dt}</td><td>{value}</td></tr>")
+    history_body = "\n".join(reversed(history_rows))
     html = f"""<!doctype html>
 <html>
 <head>
@@ -433,7 +459,7 @@ def dashboard() -> Any:
 <title>KIX Dashboard</title>
 <style>
 body {{ font-family: Arial, sans-serif; margin: 2rem; }}
-table {{ border-collapse: collapse; width: 100%; }}
+table {{ border-collapse: collapse; width: 100%; margin-bottom: 1.5rem; }}
 th, td {{ border: 1px solid #bbb; padding: 0.5rem; text-align: left; }}
 .badge.ok {{ color: #fff; background: #2a9d8f; padding: 0.2rem 0.5rem; border-radius: 4px; }}
 .badge.stopped {{ color: #fff; background: #e76f51; padding: 0.2rem 0.5rem; border-radius: 4px; }}
@@ -451,6 +477,15 @@ th, td {{ border: 1px solid #bbb; padding: 0.5rem; text-align: left; }}
 </thead>
 <tbody>
 {body}
+</tbody>
+</table>
+<h2>φ-CPS History</h2>
+<table>
+<thead>
+<tr><th>Timestamp</th><th>Value</th></tr>
+</thead>
+<tbody>
+{history_body}
 </tbody>
 </table>
 <script>
