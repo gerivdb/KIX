@@ -363,6 +363,46 @@ def alerts() -> Any:
     )
 
 
+@app.get("/events")
+def events() -> Any:
+    threshold = 0.9
+    try:
+        env_threshold = os.environ.get("KIX_ALERT_THRESHOLD")
+        if env_threshold is not None:
+            threshold = float(env_threshold)
+    except (TypeError, ValueError):
+        pass
+    runners = _sync_runners()
+    results: list[dict[str, Any]] = []
+    workers = min(8, len(runners) or 1)
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        future_map = {pool.submit(_probe_runner_health, runner): runner for runner in runners.values()}
+        for future in as_completed(future_map):
+            results.append(future.result())
+    total = len(results)
+    healthy = sum(1 for r in results if r.get("status") == "ok")
+    phi_cps = round((healthy / total), 3) if total else 0.0
+    payload = json.dumps(
+        {
+            "service": "kix",
+            "port": 8800,
+            "timestamp": _utcnow(),
+            "triggered": phi_cps < threshold,
+            "phi_cps": phi_cps,
+            "threshold": threshold,
+            "total": total,
+            "healthy": healthy,
+            "unhealthy": total - healthy,
+            "results": sorted(results, key=lambda x: x.get("name", "")),
+        }
+    )
+    return app.response_class(
+        f"event: message\ndata: {payload}\n\n",
+        mimetype="text/event-stream",
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
+    )
+
+
 @app.get("/dashboard")
 def dashboard() -> Any:
     runners = _sync_runners()
@@ -399,11 +439,12 @@ th, td {{ border: 1px solid #bbb; padding: 0.5rem; text-align: left; }}
 .badge.stopped {{ color: #fff; background: #e76f51; padding: 0.2rem 0.5rem; border-radius: 4px; }}
 .badge.starting {{ color: #fff; background: #e9c46a; padding: 0.2rem 0.5rem; border-radius: 4px; }}
 .badge.unknown {{ color: #fff; background: #9ca3af; padding: 0.2rem 0.5rem; border-radius: 4px; }}
+#phi {{ font-size: 1.2rem; margin-bottom: 1rem; }}
 </style>
 </head>
 <body>
 <h1>KIX Dashboard</h1>
-<p>Service: KIX | Port: 8800 | Updated: {_utcnow()}</p>
+<p id="phi">φ-CPS: -- | Updated: {_utcnow()}</p>
 <table>
 <thead>
 <tr><th>Name</th><th>Port</th><th>Status</th><th>Pid</th><th>Last check</th></tr>
@@ -412,6 +453,39 @@ th, td {{ border: 1px solid #bbb; padding: 0.5rem; text-align: left; }}
 {body}
 </tbody>
 </table>
+<script>
+function render(payload){{
+  const data = payload || {{}};
+  const phi = document.getElementById('phi');
+  if (phi) phi.textContent = 'φ-CPS: ' + (data.phi_cps ?? '--') + ' | Updated: ' + (data.timestamp || new Date().toISOString());
+  if (!Array.isArray(data.results)) return;
+  const tbody = document.querySelector('tbody');
+  if (!tbody) return;
+  const map = new Map(data.results.map(r => [r.name, r]));
+  const rows = [];
+  for (const tr of tbody.rows) {{
+    const name = tr.children[0].textContent;
+    const item = map.get(name);
+    if (!item) continue;
+    const status = item.status || 'unknown';
+    const badge = '<span class=\"badge ' + status + '\">' + status + '</span>';
+    tr.children[2].innerHTML = badge;
+    tr.children[3].textContent = item.pid || '';
+    tr.children[4].textContent = item.last_check || '';
+  }}
+}}
+function connect(){{
+  const es = new EventSource('/events');
+  es.onmessage = function(e){{
+    try {{ render(JSON.parse(e.data)); }} catch {{}}
+  }};
+  es.onerror = function(){{
+    es.close();
+    setTimeout(connect, 2000);
+  }};
+}}
+connect();
+</script>
 </body>
 </html>
 """

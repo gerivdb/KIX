@@ -75,3 +75,9 @@ def test_dashboard_returns_html(client) -> None:
     assert resp.status_code == 200
     assert resp.content_type.startswith("text/html")
     assert b"KIX Dashboard" in resp.data
+
+
+def test_events_returns_sse(client) -> None:
+    resp = client.get("/events")
+    assert resp.status_code == 200
+    assert resp.content_type.startswith("text/event-stream")
