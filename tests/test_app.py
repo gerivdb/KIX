@@ -68,3 +68,10 @@ def test_alerts_returns_items(client) -> None:
         assert "threshold" in data
         assert "items" in data
         assert data["threshold"] == 0.9
+
+
+def test_dashboard_returns_html(client) -> None:
+    resp = client.get("/dashboard")
+    assert resp.status_code == 200
+    assert resp.content_type.startswith("text/html")
+    assert b"KIX Dashboard" in resp.data

@@ -361,3 +361,58 @@ def alerts() -> Any:
             "items": items,
         }
     )
+
+
+@app.get("/dashboard")
+def dashboard() -> Any:
+    runners = _sync_runners()
+    rows: list[str] = []
+    for runner in runners.values():
+        if runner.status == "running":
+            badge = '<span class="badge ok">running</span>'
+        elif runner.status == "stopped":
+            badge = '<span class="badge stopped">stopped</span>'
+        elif runner.status == "starting":
+            badge = '<span class="badge starting">starting</span>'
+        else:
+            badge = f'<span class="badge unknown">{runner.status}</span>'
+        rows.append(
+            "<tr>"
+            f"<td>{runner.name}</td>"
+            f"<td>{runner.port}</td>"
+            f"<td>{badge}</td>"
+            f"<td>{runner.pid or ''}</td>"
+            f"<td>{runner.last_check or ''}</td>"
+            "</tr>"
+        )
+    body = "\n".join(rows)
+    html = f"""<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>KIX Dashboard</title>
+<style>
+body {{ font-family: Arial, sans-serif; margin: 2rem; }}
+table {{ border-collapse: collapse; width: 100%; }}
+th, td {{ border: 1px solid #bbb; padding: 0.5rem; text-align: left; }}
+.badge.ok {{ color: #fff; background: #2a9d8f; padding: 0.2rem 0.5rem; border-radius: 4px; }}
+.badge.stopped {{ color: #fff; background: #e76f51; padding: 0.2rem 0.5rem; border-radius: 4px; }}
+.badge.starting {{ color: #fff; background: #e9c46a; padding: 0.2rem 0.5rem; border-radius: 4px; }}
+.badge.unknown {{ color: #fff; background: #9ca3af; padding: 0.2rem 0.5rem; border-radius: 4px; }}
+</style>
+</head>
+<body>
+<h1>KIX Dashboard</h1>
+<p>Service: KIX | Port: 8800 | Updated: {_utcnow()}</p>
+<table>
+<thead>
+<tr><th>Name</th><th>Port</th><th>Status</th><th>Pid</th><th>Last check</th></tr>
+</thead>
+<tbody>
+{body}
+</tbody>
+</table>
+</body>
+</html>
+"""
+    return html, 200, {"Content-Type": "text/html; charset=utf-8"}
