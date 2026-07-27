@@ -53,3 +53,18 @@ def test_audit_returns_aggregate(client) -> None:
         assert "phi_cps" in data
         assert 0.0 <= data["phi_cps"] <= 1.0
         assert mock_get.called
+
+
+def test_alerts_returns_items(client) -> None:
+    fake_response = MagicMock()
+    fake_response.status_code = 200
+    fake_response.json.return_value = {"status": "ok", "service": "rlm-graph", "port": 8786}
+    with patch("src.app.requests.get", return_value=fake_response):
+        resp = client.get("/alerts")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert "triggered" in data
+        assert "phi_cps" in data
+        assert "threshold" in data
+        assert "items" in data
+        assert data["threshold"] == 0.9

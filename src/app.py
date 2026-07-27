@@ -315,3 +315,49 @@ def audit() -> Any:
             "results": sorted(results, key=lambda x: x.get("name", "")),
         }
     )
+
+
+@app.get("/alerts")
+def alerts() -> Any:
+    threshold = 0.9
+    try:
+        env_threshold = os.environ.get("KIX_ALERT_THRESHOLD")
+        if env_threshold is not None:
+            threshold = float(env_threshold)
+    except (TypeError, ValueError):
+        pass
+    runners = _sync_runners()
+    results: list[dict[str, Any]] = []
+    workers = min(8, len(runners) or 1)
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        future_map = {pool.submit(_probe_runner_health, runner): runner for runner in runners.values()}
+        for future in as_completed(future_map):
+            results.append(future.result())
+    total = len(results)
+    healthy = sum(1 for r in results if r.get("status") == "ok")
+    phi_cps = round((healthy / total), 3) if total else 0.0
+    items: list[dict[str, Any]] = []
+    for item in results:
+        if item.get("status") != "ok":
+            items.append(
+                {
+                    "name": item.get("name"),
+                    "port": item.get("port"),
+                    "status": item.get("status"),
+                    "latency_ms": item.get("latency_ms"),
+                    "detail": item.get("detail"),
+                }
+            )
+    triggered = phi_cps < threshold
+    return jsonify(
+        {
+            "service": "kix",
+            "port": 8800,
+            "timestamp": _utcnow(),
+            "triggered": triggered,
+            "phi_cps": phi_cps,
+            "threshold": threshold,
+            "unhealthy": len(items),
+            "items": items,
+        }
+    )
