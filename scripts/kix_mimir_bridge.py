@@ -33,6 +33,12 @@ def fetch_kix_audit(base_url: str) -> dict:
     return resp.json()
 
 
+def fetch_kix_alerts(base_url: str) -> dict:
+    resp = requests.get(f"{base_url}/alerts", timeout=5)
+    resp.raise_for_status()
+    return resp.json()
+
+
 def ensure_schema(conn: sqlite3.Connection):
     conn.executescript(
         """
@@ -45,9 +51,21 @@ def ensure_schema(conn: sqlite3.Connection):
             ts INTEGER, value REAL, components TEXT,
             PRIMARY KEY (ts)
         );
+        CREATE TABLE IF NOT EXISTS alerts (
+            ts INTEGER, triggered INTEGER, phi_cps REAL, threshold REAL,
+            payload TEXT,
+            PRIMARY KEY (ts)
+        );
         """
     )
     conn.commit()
+
+
+def store_alerts(conn: sqlite3.Connection, triggered: bool, phi_cps: float, threshold: float, payload: dict, ts: int):
+    conn.execute(
+        "INSERT OR REPLACE INTO alerts (ts, triggered, phi_cps, threshold, payload) VALUES (?, ?, ?, ?, ?)",
+        (ts, 1 if triggered else 0, phi_cps, threshold, json.dumps(payload)),
+    )
 
 
 def store_phi_cps(conn: sqlite3.Connection, value: float, ts: int):
@@ -78,12 +96,21 @@ def run(kix_url: str, mimir_db: Path, interval: int):
     print(f"[bridge] KIX={kix_url} MIMIR={mimir_db} interval={interval}s")
     while True:
         try:
-            data = fetch_kix_audit(kix_url)
+            audit = fetch_kix_audit(kix_url)
+            alerts = fetch_kix_alerts(kix_url)
             ts = utcnow_ts()
-            store_phi_cps(conn, float(data.get("phi_cps", 0.0)), ts)
-            store_health(conn, data.get("results", []), ts)
+            store_phi_cps(conn, float(audit.get("phi_cps", 0.0)), ts)
+            store_health(conn, audit.get("results", []), ts)
+            store_alerts(
+                conn,
+                bool(alerts.get("triggered")),
+                float(alerts.get("phi_cps", 0.0)),
+                float(alerts.get("threshold", 0.9)),
+                alerts,
+                ts,
+            )
             conn.commit()
-            print(f"[bridge] stored phi_cps={data.get('phi_cps')} healthy={data.get('healthy')} total={data.get('total')}")
+            print(f"[bridge] stored phi_cps={audit.get('phi_cps')} healthy={audit.get('healthy')} total={audit.get('total')} triggered={alerts.get('triggered')}")
         except Exception as exc:
             print(f"[bridge] error: {exc}")
         time.sleep(interval)
