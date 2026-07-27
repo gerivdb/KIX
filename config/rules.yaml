@@ -1,0 +1,23 @@
+"""KARTON service configuration."""
+
+service:
+  name: kix
+  port: 8800
+  mode: standalone
+
+db:
+  path: data/kix.sqlite
+  provider: sqlite
+
+importers:
+  known_repositories: true
+  bridges: false
+
+routes:
+  health: /health
+  metrics: /metrics
+  vote: /vote
+  runners: /runners
+  runner_status: /runners/<name>/status
+  runner_start: /runners/<name>/start
+  runner_stop: /runners/<name>/stop
