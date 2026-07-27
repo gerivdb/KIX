@@ -1,9 +1,21 @@
 """Tests for KIX orchestrator."""
 
+import pytest
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
+from flask import Flask
 from src.runner_state import RunnerStateStore
 from src.app import _load_known_repositories
+
+
+@pytest.fixture
+def client():
+    from src.app import app as kix_app
+
+    kix_app.config["TESTING"] = True
+    with kix_app.test_client() as client:
+        yield client
 
 
 def test_runner_state_roundtrip() -> None:
@@ -24,3 +36,18 @@ def test_known_repositories_loader() -> None:
     names = {r.name for r in runners}
     assert "KIX" in names
     assert "RLM-GRAPH" in names
+
+
+def test_audit_returns_aggregate(client) -> None:
+    fake_response = MagicMock()
+    fake_response.status_code = 200
+    fake_response.json.return_value = {"status": "ok", "service": "rlm-graph", "port": 8786}
+    with patch("src.app.requests.get", return_value=fake_response) as mock_get:
+        resp = client.get("/audit")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["service"] == "kix"
+        assert "results" in data
+        assert "healthy" in data
+        assert "unhealthy" in data
+        assert mock_get.called

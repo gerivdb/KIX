@@ -7,12 +7,14 @@ import os
 import subprocess
 import sys
 import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 from urllib.parse import urlparse
 
+import requests
 import yaml
 from flask import Flask, jsonify, request
 
@@ -244,3 +246,68 @@ def stop_runner(name: str) -> Any:
             pass
     STORE.upsert(name, status="stopped", pid=None, updated_at=_utcnow())
     return jsonify({"status": "stopped", "name": name})
+
+
+def _probe_runner_health(runner: Runner) -> dict[str, Any]:
+    url = f"http://localhost:{runner.port}/health"
+    started = datetime.now(timezone.utc)
+    try:
+        resp = requests.get(url, timeout=2)
+        latency = (datetime.now(timezone.utc) - started).total_seconds()
+        payload = {}
+        try:
+            payload = resp.json() or {}
+        except ValueError:
+            payload = {}
+        if resp.status_code == 200:
+            return {
+                "name": runner.name,
+                "port": runner.port,
+                "status": "ok",
+                "http_status": resp.status_code,
+                "latency_ms": round(latency * 1000, 2),
+                "service": payload.get("service"),
+            }
+        return {
+            "name": runner.name,
+            "port": runner.port,
+            "status": "unhealthy",
+            "http_status": resp.status_code,
+            "latency_ms": round(latency * 1000, 2),
+            "detail": "non_200",
+        }
+    except requests.RequestException as exc:
+        latency = (datetime.now(timezone.utc) - started).total_seconds()
+        return {
+            "name": runner.name,
+            "port": runner.port,
+            "status": "unreachable",
+            "latency_ms": round(latency * 1000, 2),
+            "detail": str(exc),
+        }
+
+
+@app.get("/audit")
+def audit() -> Any:
+    runners = _sync_runners()
+    results: list[dict[str, Any]] = []
+    healthy = 0
+    workers = min(8, len(runners) or 1)
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        future_map = {pool.submit(_probe_runner_health, runner): runner for runner in runners.values()}
+        for future in as_completed(future_map):
+            data = future.result()
+            results.append(data)
+            if data.get("status") == "ok":
+                healthy += 1
+    return jsonify(
+        {
+            "service": "kix",
+            "port": 8800,
+            "timestamp": _utcnow(),
+            "total": len(results),
+            "healthy": healthy,
+            "unhealthy": sum(1 for r in results if r.get("status") != "ok"),
+            "results": sorted(results, key=lambda x: x.get("name", "")),
+        }
+    )
