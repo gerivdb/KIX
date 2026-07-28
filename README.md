@@ -89,9 +89,26 @@ curl -X POST http://localhost:8800/runners/RLM-GRAPH/start `
 Ouvrir `http://localhost:8800/dashboard`.
 
 Le dashboard affiche :
-- **RLM services** : statut, PID, dernier check
-- **φ-CPS History** : historique du coefficient de santé
-- **Recent Alerts** : 10 dernières alertes MIMIR avec services concernés
+
+### Vue d'ensemble (cartes résumé)
+- **Runners** : nombre total de services supervisés
+- **Healthy / Unhealthy** : répartition des états
+- **φ-CPS** : valeur actuelle du coefficient de santé
+
+### φ-CPS History
+- **Graphique** : évolution temporelle de φ-CPS (limites 20/50/100 points)
+- **Sélection** : boutons pour changer la plage historique affichée
+- **Mise à jour en temps réel** : le graphique et les cartes sont rafraîchis via SSE (`/events`)
+
+### Runners
+- Statut, PID, dernier check pour chaque service
+
+### Recent Alerts
+- 10 dernières alertes MIMIR avec services concernés
+- Indicateur `triggered` / `skipped`
+
+### Notification Metrics
+- Taux de succès, latence moyenne et dernière notification par canal
 
 Badges :
 - `running` : vert
