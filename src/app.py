@@ -20,10 +20,17 @@ import yaml
 from flask import Flask, jsonify, request
 
 from src.runner_state import RunnerStateStore
+from src.notification_store import NotificationStore
+from src.notification_metrics import NotificationMetricsStore
+from src.auth import login_required, create_token, _load_users
+from src.audit_log import AuditLogStore
 
 app = Flask(__name__)
 
 STORE = RunnerStateStore(os.environ.get("KIX_DB", str(Path(__file__).resolve().parent.parent / "data" / "kix.sqlite")))
+NOTIFICATIONS = NotificationStore(os.environ.get("KIX_NOTIFICATIONS_DB", str(Path(__file__).resolve().parent.parent / "data" / "notifications.db")))
+METRICS = NotificationMetricsStore(os.environ.get("KIX_METRICS_DB", str(Path(__file__).resolve().parent.parent / "data" / "metrics.db")))
+AUDIT_LOG = AuditLogStore(os.environ.get("KIX_AUDIT_DB", str(Path(__file__).resolve().parent.parent / "data" / "audit.db")))
 KNOWN_REPO_FILE = Path(__file__).resolve().parents[3] / "L0-CANON" / "GOVERNANCE-HUB" / "known_repositories.yaml"
 
 
@@ -154,14 +161,68 @@ def _load_phi_cps_history(limit: int = 20) -> list[dict[str, Any]]:
         return []
 
 
+def _load_recent_alerts(limit: int = 10) -> list[dict[str, Any]]:
+    bridge_db = Path(__file__).resolve().parent.parent / "scripts" / ".." / "L3-CITIZENS" / "MIMIR" / "data" / "metrics.db"
+    bridge_db = bridge_db.resolve()
+    if not bridge_db.exists():
+        return []
+    try:
+        conn = sqlite3.connect(bridge_db)
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT ts, triggered, phi_cps, threshold, payload FROM alerts ORDER BY ts DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+        conn.close()
+        results = []
+        for r in rows:
+            item = dict(r)
+            try:
+                payload = json.loads(item["payload"] or "{}")
+                item["items"] = payload.get("items", [])
+            except Exception:
+                item["items"] = []
+            results.append(item)
+        return results
+    except Exception:
+        return []
+
+
 @app.get("/health")
 def health() -> Any:
     return jsonify({"status": "ok", "service": "kix", "port": 8800})
 
 
+@app.post("/login")
+def login() -> Any:
+    data = request.get_json() or {}
+    username = data.get("username")
+    password = data.get("password")
+    if not username or not password:
+        return jsonify({"error": "missing_credentials"}), 400
+    users = _load_users()
+    user = users.get(username)
+    if not user or user["password"] != password:
+        return jsonify({"error": "invalid_credentials"}), 401
+    token = create_token(username, user["role"])
+    return jsonify({"access_token": token, "role": user["role"], "username": username})
+
+
 @app.get("/metrics")
 def metrics() -> Any:
     states = STORE.list_all()
+    notif_metrics = METRICS.list_all()
+    notif_channels = {
+        channel: {
+            "total_sent": m.total_sent,
+            "total_success": m.total_success,
+            "total_failed": m.total_failed,
+            "success_rate": round(m.total_success / m.total_sent, 3) if m.total_sent else 0.0,
+            "avg_latency_ms": round(m.avg_latency_ms, 2),
+            "last_sent_at": m.last_sent_at,
+        }
+        for channel, m in notif_metrics.items()
+    }
     return jsonify(
         {
             "service": "kix",
@@ -169,8 +230,36 @@ def metrics() -> Any:
             "runners_total": len(states),
             "runners_running": sum(1 for s in states.values() if s.status == "running"),
             "runners_stopped": sum(1 for s in states.values() if s.status == "stopped"),
+            "notifications": notif_channels,
             "timestamp": _utcnow(),
         }
+    )
+
+
+@app.get("/metrics/prometheus")
+def metrics_prometheus() -> Any:
+    notif_metrics = METRICS.list_all()
+    lines = [
+        "# HELP kix_notification_total_total Total notifications sent per channel",
+        "# TYPE kix_notification_total_total counter",
+    ]
+    for channel, m in notif_metrics.items():
+        lines.append(f'kix_notification_total_total{{channel="{channel}"}} {m.total_sent}')
+    lines.append("# HELP kix_notification_success_total Total successful notifications per channel")
+    lines.append("# TYPE kix_notification_success_total counter")
+    for channel, m in notif_metrics.items():
+        lines.append(f'kix_notification_success_total{{channel="{channel}"}} {m.total_success}')
+    lines.append("# HELP kix_notification_failed_total Total failed notifications per channel")
+    lines.append("# TYPE kix_notification_failed_total counter")
+    for channel, m in notif_metrics.items():
+        lines.append(f'kix_notification_failed_total{{channel="{channel}"}} {m.total_failed}')
+    lines.append("# HELP kix_notification_latency_seconds Average notification latency per channel")
+    lines.append("# TYPE kix_notification_latency_seconds gauge")
+    for channel, m in notif_metrics.items():
+        lines.append(f'kix_notification_latency_seconds{{channel="{channel}"}} {round(m.avg_latency_ms / 1000, 4)}')
+    return app.response_class(
+        "\n".join(lines) + "\n",
+        mimetype="text/plain; version=0.0.4",
     )
 
 
@@ -227,6 +316,7 @@ def _launch_runner(runner: Runner) -> tuple[bool, Optional[str]]:
 
 
 @app.post("/runners/<string:name>/start")
+@login_required(roles=["admin", "operator"])
 def start_runner(name: str) -> Any:
     runners = _sync_runners()
     runner = runners.get(name)
@@ -238,15 +328,25 @@ def start_runner(name: str) -> Any:
     if not ok:
         return jsonify({"error": "launch_failed", "detail": err}), 500
     import time
+
     time.sleep(0.3)
     alive = _is_process_alive(runner.pid or 0) if runner.pid else _probe_port(runner.port)
     status = "running" if alive else "starting"
     now = _utcnow()
     STORE.upsert(name, status=status, pid=runner.pid, started_at=runner.started_at or now, updated_at=now)
+    AUDIT_LOG.record(
+        "runner_start",
+        f"/runners/{name}/start",
+        "POST",
+        getattr(request, "user", {}).get("sub"),
+        details=f"started {name}",
+        ip_address=request.remote_addr,
+    )
     return jsonify({"status": status, "name": name})
 
 
 @app.post("/runners/<string:name>/stop")
+@login_required(roles=["admin", "operator"])
 def stop_runner(name: str) -> Any:
     runners = _sync_runners()
     runner = runners.get(name)
@@ -263,6 +363,14 @@ def stop_runner(name: str) -> Any:
         except OSError:
             pass
     STORE.upsert(name, status="stopped", pid=None, updated_at=_utcnow())
+    AUDIT_LOG.record(
+        "runner_stop",
+        f"/runners/{name}/stop",
+        "POST",
+        getattr(request, "user", {}).get("sub"),
+        details=f"stopped {name}",
+        ip_address=request.remote_addr,
+    )
     return jsonify({"status": "stopped", "name": name})
 
 
@@ -305,8 +413,8 @@ def _probe_runner_health(runner: Runner) -> dict[str, Any]:
         }
 
 
-@app.get("/audit")
-def audit() -> Any:
+@app.get("/probe/audit")
+def probe_audit() -> Any:
     runners = _sync_runners()
     results: list[dict[str, Any]] = []
     healthy = 0
@@ -335,6 +443,21 @@ def audit() -> Any:
     )
 
 
+@app.get("/audit")
+@login_required(roles=["admin"])
+def action_audit() -> Any:
+    limit = int(request.args.get("limit", "100"))
+    items = AUDIT_LOG.list_recent(limit=limit)
+    return jsonify(
+        {
+            "service": "kix",
+            "port": 8800,
+            "count": len(items),
+            "audit": items,
+        }
+    )
+
+
 @app.get("/alerts")
 def alerts() -> Any:
     threshold = 0.9
@@ -344,6 +467,7 @@ def alerts() -> Any:
             threshold = float(env_threshold)
     except (TypeError, ValueError):
         pass
+    service_filter = request.args.get("service")
     runners = _sync_runners()
     results: list[dict[str, Any]] = []
     workers = min(8, len(runners) or 1)
@@ -357,6 +481,8 @@ def alerts() -> Any:
     items: list[dict[str, Any]] = []
     for item in results:
         if item.get("status") != "ok":
+            if service_filter and item.get("name") != service_filter:
+                continue
             items.append(
                 {
                     "name": item.get("name"),
@@ -421,6 +547,62 @@ def events() -> Any:
     )
 
 
+@app.get("/notifications/history")
+def notifications_history() -> Any:
+    limit = int(request.args.get("limit", "100"))
+    service = request.args.get("service")
+    records = NOTIFICATIONS.list_recent(limit=limit, service=service)
+    return jsonify(
+        {
+            "service": "kix",
+            "port": 8800,
+            "count": len(records),
+            "notifications": [
+                {
+                    "id": r.id,
+                    "event": r.event,
+                    "timestamp": r.timestamp,
+                    "phi_cps": r.phi_cps,
+                    "threshold": r.threshold,
+                    "consecutive_cycles": r.consecutive_cycles,
+                    "service": r.service,
+                    "channel": r.channel,
+                    "payload": r.payload,
+                }
+                for r in records
+            ],
+        }
+    )
+
+
+@app.get("/remediation/status")
+@login_required(roles=["admin"])
+def remediation_status() -> Any:
+    remediation_db = os.environ.get("KIX_REMEDIATION_DB", str(Path(__file__).resolve().parent.parent / "data" / "remediation.db"))
+    try:
+        from src.auto_remediation import RemediationStore
+
+        store = RemediationStore(remediation_db)
+        items = store.list_recent(limit=100)
+        AUDIT_LOG.record(
+            "remediation_status_view",
+            "/remediation/status",
+            "GET",
+            getattr(request, "user", {}).get("sub"),
+            ip_address=request.remote_addr,
+        )
+        return jsonify(
+            {
+                "service": "kix",
+                "port": 8800,
+                "count": len(items),
+                "remediations": items,
+            }
+        )
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
 @app.get("/dashboard")
 def dashboard() -> Any:
     runners = _sync_runners()
@@ -452,6 +634,44 @@ def dashboard() -> Any:
         dt = datetime.fromtimestamp(int(ts), tz=timezone.utc).isoformat() if ts else ""
         history_rows.append(f"<tr><td>{dt}</td><td>{value}</td></tr>")
     history_body = "\n".join(reversed(history_rows))
+    alerts = _load_recent_alerts(limit=10)
+    alert_rows = []
+    for item in alerts:
+        ts = item.get("ts")
+        dt = datetime.fromtimestamp(int(ts), tz=timezone.utc).isoformat() if ts else ""
+        phi_cps = item.get("phi_cps")
+        threshold = item.get("threshold")
+        alert_items = item.get("items") or []
+        service_names = ", ".join(x.get("name", "?") for x in alert_items[:5])
+        if len(alert_items) > 5:
+            service_names += f" (+{len(alert_items) - 5})"
+        triggered_badge = '<span class="badge alert-triggered">YES</span>' if item.get("triggered") else '<span class="badge alert-skipped">NO</span>'
+        alert_rows.append(
+            "<tr>"
+            f"<td>{dt}</td>"
+            f"<td>{triggered_badge}</td>"
+            f"<td>{phi_cps}</td>"
+            f"<td>{threshold}</td>"
+            f"<td>{service_names}</td>"
+            "</tr>"
+        )
+    alert_body = "\n".join(reversed(alert_rows))
+    notif_metrics = METRICS.list_all()
+    metrics_rows = []
+    for channel, m in notif_metrics.items():
+        success_rate = round(m.total_success / m.total_sent, 3) if m.total_sent else 0.0
+        metrics_rows.append(
+            "<tr>"
+            f"<td>{channel}</td>"
+            f"<td>{m.total_sent}</td>"
+            f"<td>{m.total_success}</td>"
+            f"<td>{m.total_failed}</td>"
+            f"<td>{success_rate}</td>"
+            f"<td>{round(m.avg_latency_ms, 2)}</td>"
+            f"<td>{m.last_sent_at or ''}</td>"
+            "</tr>"
+        )
+    metrics_body = "\n".join(metrics_rows)
     html = f"""<!doctype html>
 <html>
 <head>
@@ -465,6 +685,8 @@ th, td {{ border: 1px solid #bbb; padding: 0.5rem; text-align: left; }}
 .badge.stopped {{ color: #fff; background: #e76f51; padding: 0.2rem 0.5rem; border-radius: 4px; }}
 .badge.starting {{ color: #fff; background: #e9c46a; padding: 0.2rem 0.5rem; border-radius: 4px; }}
 .badge.unknown {{ color: #fff; background: #9ca3af; padding: 0.2rem 0.5rem; border-radius: 4px; }}
+.badge.alert-triggered {{ color: #fff; background: #d62828; padding: 0.2rem 0.5rem; border-radius: 4px; }}
+.badge.alert-skipped {{ color: #fff; background: #6c757d; padding: 0.2rem 0.5rem; border-radius: 4px; }}
 #phi {{ font-size: 1.2rem; margin-bottom: 1rem; }}
 </style>
 </head>
@@ -486,6 +708,24 @@ th, td {{ border: 1px solid #bbb; padding: 0.5rem; text-align: left; }}
 </thead>
 <tbody>
 {history_body}
+</tbody>
+</table>
+<h2>Recent Alerts</h2>
+<table>
+<thead>
+<tr><th>Timestamp</th><th>Triggered</th><th>φ-CPS</th><th>Threshold</th><th>Services</th></tr>
+</thead>
+<tbody>
+{alert_body}
+</tbody>
+</table>
+<h2>Notification Metrics</h2>
+<table>
+<thead>
+<tr><th>Channel</th><th>Total Sent</th><th>Success</th><th>Failed</th><th>Success Rate</th><th>Avg Latency (ms)</th><th>Last Sent</th></tr>
+</thead>
+<tbody>
+{metrics_body}
 </tbody>
 </table>
 <script>

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-KIX → MIMIR Bridge — Poll KIX /audit, store phi_cps and health in MIMIR SQLite.
+KIX → MIMIR Bridge — Poll KIX /probe/audit, store phi_cps and health in MIMIR SQLite.
 
 Usage:
     python scripts/kix_mimir_bridge.py --kix http://localhost:8800 --mimir D:/DO/WEB/TOOLS/L3-CITIZENS/MIMIR/data/metrics.db --interval 5
@@ -28,13 +28,13 @@ def utcnow_ts() -> int:
 
 
 def fetch_kix_audit(base_url: str) -> dict:
-    resp = requests.get(f"{base_url}/audit", timeout=5)
+    resp = requests.get(f"{base_url}/probe/audit", timeout=30)
     resp.raise_for_status()
     return resp.json()
 
 
 def fetch_kix_alerts(base_url: str) -> dict:
-    resp = requests.get(f"{base_url}/alerts", timeout=5)
+    resp = requests.get(f"{base_url}/alerts", timeout=30)
     resp.raise_for_status()
     return resp.json()
 
