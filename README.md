@@ -17,6 +17,7 @@ Port: **8800**
 - `GET /notifications/history` — Historique des notifications envoyées
   - `?limit=<n>` — nombre d'entrées (défaut: 100)
   - `?service=<name>` — filtrer par service
+- `GET /remediation/status` — État des actions de remédiation automatique
 - `GET /metrics` — Métriques JSON (runners + notifications)
 - `GET /metrics/prometheus` — Métriques Prometheus (format texte)
 - `GET /dashboard` — Dashboard web (services + φ-CPS + alertes récentes + métriques notification)
@@ -280,3 +281,74 @@ Le script `alert_notifier.py` génère des traces OpenTelemetry pour chaque envo
 - Status : `OK` ou `ERROR` selon le résultat
 
 Pour activer la collecte OpenTelemetry, configurer les variables d'environnement OTLP standards (`OTEL_EXPORTER_OTLP_ENDPOINT`, etc.).
+
+## Auto-remédiation
+
+### Script `auto_remediation.py`
+
+Le moteur d'auto-remédiation lit les politiques définies dans `config/automation.yaml` et exécute des actions automatiques quand les conditions sont remplies.
+
+```powershell
+# Dry-run (simulation)
+cd D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+python scripts/auto_remediation.py --dry-run
+
+# Déclencher une remédiation manuelle pour un service
+python scripts/auto_remediation.py --dry-run --service RLM-GRAPH
+
+# Exécuter toutes les politiques
+python scripts/auto_remediation.py
+```
+
+Paramètres :
+- `--kix` : URL de KIX (défaut: `http://localhost:8800`)
+- `--config` : chemin vers `automation.yaml` (défaut: `config/automation.yaml`)
+- `--dry-run` : simulation sans exécution réelle
+- `--service` : filtrer par nom de service
+- `--action` : type d'action (`restart`, `notify`, `all`)
+- `--interval` : intervalle en secondes entre les cycles (défaut: 10)
+
+### Endpoint `/remediation/status`
+
+Consulter l'historique des actions de remédiation :
+
+```powershell
+curl http://localhost:8800/remediation/status | jq .
+```
+
+Réponse :
+```json
+{
+  "service": "kix",
+  "port": 8800,
+  "count": 5,
+  "remediations": [
+    {
+      "policy_id": "restart-unreachable-runner",
+      "service": "RLM-GRAPH",
+      "action_type": "restart_runner",
+      "success": 1,
+      "detail": "restart triggered for RLM-GRAPH",
+      "timestamp": "2026-07-28T05:00:00+00:00"
+    }
+  ]
+}
+```
+
+### Politiques par défaut
+
+Le fichier `config/automation.yaml` contient les politiques suivantes :
+
+| Politique | Condition | Action |
+|-----------|-----------|--------|
+| `restart-unreachable-runner` | `runner.status == "unreachable"` | Redémarrer le runner |
+| `restart-stopped-runner` | `runner.status == "stopped"` | Redémarrer le runner (délai 5s) |
+| `alert-on-phi-cps-degraded` | `phi_cps < 0.9` | Notification webhook/Teams |
+| `escalation-after-multiple-failures` | `consecutive_failures >= 3` | Notification email |
+
+### Variables d'environnement
+
+- `AUTOMATION_CONFIG` : chemin vers `automation.yaml`
+- `KIX_REMEDIATION_DB` : chemin vers la base de remédiation (défaut: `data/remediation.db`)
+- `REMEDIATION_INTERVAL` : intervalle de cycle en secondes
+
