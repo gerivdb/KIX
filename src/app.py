@@ -154,6 +154,33 @@ def _load_phi_cps_history(limit: int = 20) -> list[dict[str, Any]]:
         return []
 
 
+def _load_recent_alerts(limit: int = 10) -> list[dict[str, Any]]:
+    bridge_db = Path(__file__).resolve().parent.parent / "scripts" / ".." / "L3-CITIZENS" / "MIMIR" / "data" / "metrics.db"
+    bridge_db = bridge_db.resolve()
+    if not bridge_db.exists():
+        return []
+    try:
+        conn = sqlite3.connect(bridge_db)
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT ts, triggered, phi_cps, threshold, payload FROM alerts ORDER BY ts DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+        conn.close()
+        results = []
+        for r in rows:
+            item = dict(r)
+            try:
+                payload = json.loads(item["payload"] or "{}")
+                item["items"] = payload.get("items", [])
+            except Exception:
+                item["items"] = []
+            results.append(item)
+        return results
+    except Exception:
+        return []
+
+
 @app.get("/health")
 def health() -> Any:
     return jsonify({"status": "ok", "service": "kix", "port": 8800})
@@ -452,6 +479,28 @@ def dashboard() -> Any:
         dt = datetime.fromtimestamp(int(ts), tz=timezone.utc).isoformat() if ts else ""
         history_rows.append(f"<tr><td>{dt}</td><td>{value}</td></tr>")
     history_body = "\n".join(reversed(history_rows))
+    alerts = _load_recent_alerts(limit=10)
+    alert_rows = []
+    for item in alerts:
+        ts = item.get("ts")
+        dt = datetime.fromtimestamp(int(ts), tz=timezone.utc).isoformat() if ts else ""
+        phi_cps = item.get("phi_cps")
+        threshold = item.get("threshold")
+        alert_items = item.get("items") or []
+        service_names = ", ".join(x.get("name", "?") for x in alert_items[:5])
+        if len(alert_items) > 5:
+            service_names += f" (+{len(alert_items) - 5})"
+        triggered_badge = '<span class="badge alert-triggered">YES</span>' if item.get("triggered") else '<span class="badge alert-skipped">NO</span>'
+        alert_rows.append(
+            "<tr>"
+            f"<td>{dt}</td>"
+            f"<td>{triggered_badge}</td>"
+            f"<td>{phi_cps}</td>"
+            f"<td>{threshold}</td>"
+            f"<td>{service_names}</td>"
+            "</tr>"
+        )
+    alert_body = "\n".join(reversed(alert_rows))
     html = f"""<!doctype html>
 <html>
 <head>
@@ -465,6 +514,8 @@ th, td {{ border: 1px solid #bbb; padding: 0.5rem; text-align: left; }}
 .badge.stopped {{ color: #fff; background: #e76f51; padding: 0.2rem 0.5rem; border-radius: 4px; }}
 .badge.starting {{ color: #fff; background: #e9c46a; padding: 0.2rem 0.5rem; border-radius: 4px; }}
 .badge.unknown {{ color: #fff; background: #9ca3af; padding: 0.2rem 0.5rem; border-radius: 4px; }}
+.badge.alert-triggered {{ color: #fff; background: #d62828; padding: 0.2rem 0.5rem; border-radius: 4px; }}
+.badge.alert-skipped {{ color: #fff; background: #6c757d; padding: 0.2rem 0.5rem; border-radius: 4px; }}
 #phi {{ font-size: 1.2rem; margin-bottom: 1rem; }}
 </style>
 </head>
@@ -486,6 +537,15 @@ th, td {{ border: 1px solid #bbb; padding: 0.5rem; text-align: left; }}
 </thead>
 <tbody>
 {history_body}
+</tbody>
+</table>
+<h2>Recent Alerts</h2>
+<table>
+<thead>
+<tr><th>Timestamp</th><th>Triggered</th><th>φ-CPS</th><th>Threshold</th><th>Services</th></tr>
+</thead>
+<tbody>
+{alert_body}
 </tbody>
 </table>
 <script>
