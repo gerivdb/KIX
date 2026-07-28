@@ -371,6 +371,7 @@ def alerts() -> Any:
             threshold = float(env_threshold)
     except (TypeError, ValueError):
         pass
+    service_filter = request.args.get("service")
     runners = _sync_runners()
     results: list[dict[str, Any]] = []
     workers = min(8, len(runners) or 1)
@@ -384,6 +385,8 @@ def alerts() -> Any:
     items: list[dict[str, Any]] = []
     for item in results:
         if item.get("status") != "ok":
+            if service_filter and item.get("name") != service_filter:
+                continue
             items.append(
                 {
                     "name": item.get("name"),

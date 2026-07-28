@@ -70,6 +70,17 @@ def test_alerts_returns_items(client) -> None:
         assert data["threshold"] == 0.9
 
 
+def test_alerts_filters_by_service(client) -> None:
+    fake_response = MagicMock()
+    fake_response.status_code = 200
+    fake_response.json.return_value = {"status": "ok", "service": "rlm-graph", "port": 8786}
+    with patch("src.app.requests.get", return_value=fake_response):
+        resp = client.get("/alerts?service=RLM-GRAPH")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["service"] == "kix"
+
+
 def test_dashboard_returns_html(client) -> None:
     resp = client.get("/dashboard")
     assert resp.status_code == 200
