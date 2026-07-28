@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -100,14 +101,15 @@ def test_monitor_triggers_after_cycles() -> None:
             with patch("scripts.alert_notifier.send_email"):
                 with patch("scripts.alert_notifier.send_teams"):
                     with patch("scripts.alert_notifier.record_notification") as mock_record:
-                        with patch("scripts.alert_notifier.time.sleep", side_effect=fake_sleep):
-                            rc = monitor("http://localhost:8800", "mem://", "mem://", 1, 0.9, 3, False, webhook_url="http://example.com/webhook")
-                            assert rc == 0
-                            assert mock_webhook.call_count == 1
-                            assert mock_record.call_count == 1
-                            payload = mock_record.call_args[0][1]
-                            assert payload["event"] == "phi_cps_degraded"
-                            assert payload["consecutive_cycles"] == 3
+                        with patch("scripts.alert_notifier.NotificationMetricsStore"):
+                            with patch("scripts.alert_notifier.time.sleep", side_effect=fake_sleep):
+                                rc = monitor("http://localhost:8800", "mem://", "mem://", "mem://", 1, 0.9, 3, False, webhook_url="http://example.com/webhook")
+                                assert rc == 0
+                                assert mock_webhook.call_count == 1
+                                assert mock_record.call_count == 1
+                                payload = mock_record.call_args[0][1]
+                                assert payload["event"] == "phi_cps_degraded"
+                                assert payload["consecutive_cycles"] == 3
 
 
 def test_monitor_resets_when_not_triggered() -> None:
@@ -136,10 +138,11 @@ def test_monitor_resets_when_not_triggered() -> None:
             with patch("scripts.alert_notifier.send_email"):
                 with patch("scripts.alert_notifier.send_teams"):
                     with patch("scripts.alert_notifier.record_notification") as mock_record:
-                        with patch("scripts.alert_notifier.time.sleep", side_effect=fake_sleep):
-                            monitor("http://localhost:8800", "mem://", "mem://", 1, 0.9, 3, False, webhook_url="http://example.com/webhook")
-                            assert mock_webhook.call_count == 0
-                            assert mock_record.call_count == 0
+                        with patch("scripts.alert_notifier.NotificationMetricsStore"):
+                            with patch("scripts.alert_notifier.time.sleep", side_effect=fake_sleep):
+                                monitor("http://localhost:8800", "mem://", "mem://", "mem://", 1, 0.9, 3, False, webhook_url="http://example.com/webhook")
+                                assert mock_webhook.call_count == 0
+                                assert mock_record.call_count == 0
 
 
 def test_send_teams_fallback_without_requests() -> None:

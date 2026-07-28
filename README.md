@@ -17,7 +17,9 @@ Port: **8800**
 - `GET /notifications/history` — Historique des notifications envoyées
   - `?limit=<n>` — nombre d'entrées (défaut: 100)
   - `?service=<name>` — filtrer par service
-- `GET /dashboard` — Dashboard web (services + φ-CPS + alertes récentes)
+- `GET /metrics` — Métriques JSON (runners + notifications)
+- `GET /metrics/prometheus` — Métriques Prometheus (format texte)
+- `GET /dashboard` — Dashboard web (services + φ-CPS + alertes récentes + métriques notification)
 - `GET /events` — Flux SSE pour mise à jour temps réel du dashboard
 
 ## Stack
@@ -199,3 +201,82 @@ python scripts/alert_notifier.py `
   --smtp-host "smtp.gmail.com" --smtp-port 587 --smtp-user "user@gmail.com" --smtp-password "pass" --email-from "kix@gerivdb.io" --email-to "team@gerivdb.io" `
   --threshold 0.9 --cycles 3
 ```
+
+## Observabilité
+
+### Endpoint `/metrics`
+
+Métriques JSON incluant les runners et les notifications :
+
+```powershell
+curl http://localhost:8800/metrics | jq .
+```
+
+Réponse :
+```json
+{
+  "service": "kix",
+  "port": 8800,
+  "runners_total": 10,
+  "runners_running": 8,
+  "runners_stopped": 2,
+  "notifications": {
+    "webhook": {
+      "total_sent": 10,
+      "total_success": 9,
+      "total_failed": 1,
+      "success_rate": 0.9,
+      "avg_latency_ms": 120.5,
+      "last_sent_at": "2026-07-28T04:00:00+00:00"
+    }
+  },
+  "timestamp": "2026-07-28T04:00:00+00:00"
+}
+```
+
+### Endpoint `/metrics/prometheus`
+
+Métriques au format Prometheus texte :
+
+```powershell
+curl http://localhost:8800/metrics/prometheus
+```
+
+Sortie :
+```
+# HELP kix_notification_total_total Total notifications sent per channel
+# TYPE kix_notification_total_total counter
+kix_notification_total_total{channel="webhook"} 10
+kix_notification_total_total{channel="teams"} 5
+# HELP kix_notification_success_total Total successful notifications per channel
+# TYPE kix_notification_success_total counter
+kix_notification_success_total{channel="webhook"} 9
+kix_notification_success_total{channel="teams"} 5
+# HELP kix_notification_failed_total Total failed notifications per channel
+# TYPE kix_notification_failed_total counter
+kix_notification_failed_total{channel="webhook"} 1
+# HELP kix_notification_latency_seconds Average notification latency per channel
+# TYPE kix_notification_latency_seconds gauge
+kix_notification_latency_seconds{channel="webhook"} 0.1205
+```
+
+### Dashboard — Section Notification Metrics
+
+Le dashboard inclut maintenant une section **Notification Metrics** qui affiche :
+- **Channel** : nom du canal (webhook, email, teams)
+- **Total Sent** : nombre total de notifications envoyées
+- **Success** : nombre de notifications réussies
+- **Failed** : nombre de notifications échouées
+- **Success Rate** : taux de succès (0.0 - 1.0)
+- **Avg Latency (ms)** : latence moyenne d'envoi
+- **Last Sent** : date du dernier envoi
+
+### OpenTelemetry
+
+Le script `alert_notifier.py` génère des traces OpenTelemetry pour chaque envoi de notification :
+
+- Span name : `notification.send.<channel>`
+- Attributs : `notification.channel`, `notification.service`, `notification.phi_cps`
+- Status : `OK` ou `ERROR` selon le résultat
+
+Pour activer la collecte OpenTelemetry, configurer les variables d'environnement OTLP standards (`OTEL_EXPORTER_OTLP_ENDPOINT`, etc.).

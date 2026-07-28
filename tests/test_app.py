@@ -8,6 +8,7 @@ from flask import Flask
 from src.runner_state import RunnerStateStore
 from src.app import _load_known_repositories
 from src.notification_store import NotificationRecord
+from src.notification_metrics import NotificationMetrics
 
 
 @pytest.fixture
@@ -144,3 +145,44 @@ def test_notifications_history_filters_by_service(client, tmp_path: Path) -> Non
         assert data["count"] == 0
         args, kwargs = mock_notif.list_recent.call_args
         assert kwargs.get("service") == "RLM-GRAPH"
+
+
+def test_metrics_includes_notifications(client, tmp_path: Path) -> None:
+    from src.app import METRICS
+    with patch("src.app.METRICS") as mock_metrics:
+        mock_metrics.list_all.return_value = {
+            "webhook": NotificationMetrics(channel="webhook", total_sent=10, total_success=9, total_failed=1, avg_latency_ms=120.5, last_sent_at="2026-07-28T04:00:00+00:00"),
+        }
+        resp = client.get("/metrics")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert "notifications" in data
+        assert data["notifications"]["webhook"]["total_sent"] == 10
+        assert data["notifications"]["webhook"]["success_rate"] == 0.9
+
+
+def test_metrics_prometheus_endpoint(client, tmp_path: Path) -> None:
+    from src.app import METRICS
+    with patch("src.app.METRICS") as mock_metrics:
+        mock_metrics.list_all.return_value = {
+            "webhook": NotificationMetrics(channel="webhook", total_sent=10, total_success=9, total_failed=1, avg_latency_ms=120.5, last_sent_at="2026-07-28T04:00:00+00:00"),
+        }
+        resp = client.get("/metrics/prometheus")
+        assert resp.status_code == 200
+        assert resp.content_type.startswith("text/plain")
+        text = resp.get_data(as_text=True)
+        assert 'kix_notification_total_total{channel="webhook"} 10' in text
+        assert 'kix_notification_success_total{channel="webhook"} 9' in text
+        assert 'kix_notification_failed_total{channel="webhook"} 1' in text
+
+
+def test_dashboard_includes_metrics_section(client, tmp_path: Path) -> None:
+    from src.app import METRICS
+    with patch("src.app.METRICS") as mock_metrics:
+        mock_metrics.list_all.return_value = {
+            "webhook": NotificationMetrics(channel="webhook", total_sent=10, total_success=9, total_failed=1, avg_latency_ms=120.5, last_sent_at="2026-07-28T04:00:00+00:00"),
+        }
+        resp = client.get("/dashboard")
+        assert resp.status_code == 200
+        assert b"Notification Metrics" in resp.data
+        assert b"webhook" in resp.data
