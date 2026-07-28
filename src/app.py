@@ -523,6 +523,25 @@ def notifications_history() -> Any:
     )
 
 
+@app.get("/remediation/status")
+def remediation_status() -> Any:
+    remediation_db = os.environ.get("KIX_REMEDIATION_DB", str(Path(__file__).resolve().parent.parent / "data" / "remediation.db"))
+    try:
+        from src.auto_remediation import RemediationStore
+        store = RemediationStore(remediation_db)
+        items = store.list_recent(limit=100)
+        return jsonify(
+            {
+                "service": "kix",
+                "port": 8800,
+                "count": len(items),
+                "remediations": items,
+            }
+        )
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
 @app.get("/dashboard")
 def dashboard() -> Any:
     runners = _sync_runners()

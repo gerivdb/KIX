@@ -1,5 +1,6 @@
 """Tests for KIX orchestrator."""
 
+import os
 import pytest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -9,6 +10,7 @@ from src.runner_state import RunnerStateStore
 from src.app import _load_known_repositories
 from src.notification_store import NotificationRecord
 from src.notification_metrics import NotificationMetrics
+from src.auto_remediation import RemediationResult
 
 
 @pytest.fixture
@@ -186,3 +188,40 @@ def test_dashboard_includes_metrics_section(client, tmp_path: Path) -> None:
         assert resp.status_code == 200
         assert b"Notification Metrics" in resp.data
         assert b"webhook" in resp.data
+
+
+def test_remediation_status_empty(client, tmp_path: Path) -> None:
+    remediation_db = str(tmp_path / "remediation.db")
+    with patch.dict(os.environ, {"KIX_REMEDIATION_DB": remediation_db}):
+        resp = client.get("/remediation/status")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["service"] == "kix"
+        assert data["count"] == 0
+        assert data["remediations"] == []
+
+
+def test_remediation_status_with_data(client, tmp_path: Path) -> None:
+    import sqlite3
+    from datetime import datetime, timezone
+    from src.auto_remediation import RemediationStore
+    remediation_db = tmp_path / "remediation.db"
+    store = RemediationStore(remediation_db)
+    store.record(
+        RemediationResult(
+            policy_id="restart-unreachable-runner",
+            service="RLM-GRAPH",
+            action_type="restart_runner",
+            success=True,
+            detail="restart triggered",
+            timestamp="2026-07-28T05:00:00+00:00",
+        )
+    )
+    with patch.dict(os.environ, {"KIX_REMEDIATION_DB": str(remediation_db)}):
+        resp = client.get("/remediation/status")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["count"] == 1
+        assert data["remediations"][0]["policy_id"] == "restart-unreachable-runner"
+        assert data["remediations"][0]["service"] == "RLM-GRAPH"
+
