@@ -22,12 +22,15 @@ from flask import Flask, jsonify, request
 from src.runner_state import RunnerStateStore
 from src.notification_store import NotificationStore
 from src.notification_metrics import NotificationMetricsStore
+from src.auth import login_required, create_token, _load_users
+from src.audit_log import AuditLogStore
 
 app = Flask(__name__)
 
 STORE = RunnerStateStore(os.environ.get("KIX_DB", str(Path(__file__).resolve().parent.parent / "data" / "kix.sqlite")))
 NOTIFICATIONS = NotificationStore(os.environ.get("KIX_NOTIFICATIONS_DB", str(Path(__file__).resolve().parent.parent / "data" / "notifications.db")))
 METRICS = NotificationMetricsStore(os.environ.get("KIX_METRICS_DB", str(Path(__file__).resolve().parent.parent / "data" / "metrics.db")))
+AUDIT_LOG = AuditLogStore(os.environ.get("KIX_AUDIT_DB", str(Path(__file__).resolve().parent.parent / "data" / "audit.db")))
 KNOWN_REPO_FILE = Path(__file__).resolve().parents[3] / "L0-CANON" / "GOVERNANCE-HUB" / "known_repositories.yaml"
 
 
@@ -190,6 +193,21 @@ def health() -> Any:
     return jsonify({"status": "ok", "service": "kix", "port": 8800})
 
 
+@app.post("/login")
+def login() -> Any:
+    data = request.get_json() or {}
+    username = data.get("username")
+    password = data.get("password")
+    if not username or not password:
+        return jsonify({"error": "missing_credentials"}), 400
+    users = _load_users()
+    user = users.get(username)
+    if not user or user["password"] != password:
+        return jsonify({"error": "invalid_credentials"}), 401
+    token = create_token(username, user["role"])
+    return jsonify({"access_token": token, "role": user["role"], "username": username})
+
+
 @app.get("/metrics")
 def metrics() -> Any:
     states = STORE.list_all()
@@ -298,6 +316,7 @@ def _launch_runner(runner: Runner) -> tuple[bool, Optional[str]]:
 
 
 @app.post("/runners/<string:name>/start")
+@login_required(roles=["admin", "operator"])
 def start_runner(name: str) -> Any:
     runners = _sync_runners()
     runner = runners.get(name)
@@ -309,15 +328,25 @@ def start_runner(name: str) -> Any:
     if not ok:
         return jsonify({"error": "launch_failed", "detail": err}), 500
     import time
+
     time.sleep(0.3)
     alive = _is_process_alive(runner.pid or 0) if runner.pid else _probe_port(runner.port)
     status = "running" if alive else "starting"
     now = _utcnow()
     STORE.upsert(name, status=status, pid=runner.pid, started_at=runner.started_at or now, updated_at=now)
+    AUDIT_LOG.record(
+        "runner_start",
+        f"/runners/{name}/start",
+        "POST",
+        getattr(request, "user", {}).get("sub"),
+        details=f"started {name}",
+        ip_address=request.remote_addr,
+    )
     return jsonify({"status": status, "name": name})
 
 
 @app.post("/runners/<string:name>/stop")
+@login_required(roles=["admin", "operator"])
 def stop_runner(name: str) -> Any:
     runners = _sync_runners()
     runner = runners.get(name)
@@ -334,6 +363,14 @@ def stop_runner(name: str) -> Any:
         except OSError:
             pass
     STORE.upsert(name, status="stopped", pid=None, updated_at=_utcnow())
+    AUDIT_LOG.record(
+        "runner_stop",
+        f"/runners/{name}/stop",
+        "POST",
+        getattr(request, "user", {}).get("sub"),
+        details=f"stopped {name}",
+        ip_address=request.remote_addr,
+    )
     return jsonify({"status": "stopped", "name": name})
 
 
@@ -376,8 +413,8 @@ def _probe_runner_health(runner: Runner) -> dict[str, Any]:
         }
 
 
-@app.get("/audit")
-def audit() -> Any:
+@app.get("/probe/audit")
+def probe_audit() -> Any:
     runners = _sync_runners()
     results: list[dict[str, Any]] = []
     healthy = 0
@@ -402,6 +439,21 @@ def audit() -> Any:
             "unhealthy": sum(1 for r in results if r.get("status") != "ok"),
             "phi_cps": phi_cps,
             "results": sorted(results, key=lambda x: x.get("name", "")),
+        }
+    )
+
+
+@app.get("/audit")
+@login_required(roles=["admin"])
+def action_audit() -> Any:
+    limit = int(request.args.get("limit", "100"))
+    items = AUDIT_LOG.list_recent(limit=limit)
+    return jsonify(
+        {
+            "service": "kix",
+            "port": 8800,
+            "count": len(items),
+            "audit": items,
         }
     )
 
@@ -524,12 +576,21 @@ def notifications_history() -> Any:
 
 
 @app.get("/remediation/status")
+@login_required(roles=["admin"])
 def remediation_status() -> Any:
     remediation_db = os.environ.get("KIX_REMEDIATION_DB", str(Path(__file__).resolve().parent.parent / "data" / "remediation.db"))
     try:
         from src.auto_remediation import RemediationStore
+
         store = RemediationStore(remediation_db)
         items = store.list_recent(limit=100)
+        AUDIT_LOG.record(
+            "remediation_status_view",
+            "/remediation/status",
+            "GET",
+            getattr(request, "user", {}).get("sub"),
+            ip_address=request.remote_addr,
+        )
         return jsonify(
             {
                 "service": "kix",
