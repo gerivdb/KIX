@@ -249,3 +249,40 @@ def test_remediation_status_with_data(client, tmp_path: Path) -> None:
         assert data["remediations"][0]["policy_id"] == "restart-unreachable-runner"
         assert data["remediations"][0]["service"] == "RLM-GRAPH"
 
+
+def test_healthz_returns_ok(client) -> None:
+    resp = client.get("/healthz")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["status"] == "ok"
+
+
+def test_readyz_returns_ok(client) -> None:
+    resp = client.get("/readyz")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["status"] == "ok"
+    assert data["checks"]["kix"] == "ok"
+    assert data["checks"]["runner_store"] == "ok"
+    assert data["checks"]["notifications"] == "ok"
+    assert data["checks"]["audit"] == "ok"
+
+
+def test_cross_service_status_returns_snapshot(client, tmp_path: Path) -> None:
+    from src.app import METRICS
+    metrics_db = tmp_path / "metrics.db"
+    with patch.dict(os.environ, {"KIX_METRICS_DB": str(metrics_db)}):
+        with patch("src.app.METRICS") as mock_metrics:
+            mock_metrics.list_all.return_value = {
+                "webhook": NotificationMetrics(channel="webhook", total_sent=1, total_success=1, total_failed=0, avg_latency_ms=50.0, last_sent_at="2026-07-28T06:00:00+00:00"),
+            }
+            resp = client.get("/status/cross-service")
+            assert resp.status_code == 200
+            data = resp.get_json()
+            assert "runners" in data
+            assert "notification_metrics" in data
+            assert data["notification_metrics"]["webhook"]["total_sent"] == 1
+            assert "timestamp" in data
+            assert data["service"] == "kix"
+
+

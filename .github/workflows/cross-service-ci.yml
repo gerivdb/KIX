@@ -1,0 +1,25 @@
+name: Cross-Service Integration
+
+on:
+  push:
+    branches: [ main, phase19-cross-service-tests ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    env:
+      KIX_JWT_SECRET: test-secret-ci
+      KIX_AUDIT_DB: ${{ runner.temp }}/audit.db
+      KIX_NOTIFICATIONS_DB: ${{ runner.temp }}/notifications.db
+      KIX_METRICS_DB: ${{ runner.temp }}/metrics.db
+      KIX_DB: ${{ runner.temp }}/kix.sqlite
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --upgrade pip
+      - run: pip install -r requirements.txt
+      - run: python -m pytest tests/ -q

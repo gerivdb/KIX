@@ -333,19 +333,13 @@ def cross_service_status() -> Any:
         policies = engine.list_policies()
     except Exception:
         policies = []
-    try:
-        from src.notification_metrics import NotificationMetricsStore
-        metrics = NotificationMetricsStore(os.environ.get("KIX_METRICS_DB", str(Path(__file__).resolve().parent.parent / "data" / "metrics.db")))
-        notif_metrics = metrics.list_all()
-    except Exception:
-        notif_metrics = {}
     runners = _sync_runners()
     snapshot = {
         "timestamp": _utcnow(),
         "service": "kix",
         "runners": {name: runner.to_dict() for name, runner in runners.items()},
         "remediation_policies": [p.to_dict() if hasattr(p, "to_dict") else dict(p) for p in policies],
-        "notification_metrics": notif_metrics,
+        "notification_metrics": METRICS.list_all(),
     }
     return jsonify(snapshot)
 
