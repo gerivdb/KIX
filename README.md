@@ -14,6 +14,9 @@ Port: **8800**
 - `POST /runners/<name>/stop`
 - `GET /alerts` — Alertes en temps réel (φ-CPS, services en erreur)
   - `?service=<name>` — filtrer les alertes par service
+- `GET /notifications/history` — Historique des notifications envoyées
+  - `?limit=<n>` — nombre d'entrées (défaut: 100)
+  - `?service=<name>` — filtrer par service
 - `GET /dashboard` — Dashboard web (services + φ-CPS + alertes récentes)
 - `GET /events` — Flux SSE pour mise à jour temps réel du dashboard
 
@@ -116,3 +119,83 @@ Paramètres :
 
 Variables d'environnement :
 - `KIX_URL`, `MIMIR_DB`, `ALERT_THRESHOLD`, `ALERT_CYCLES`, `ALERT_INTERVAL`, `ALERT_WEBHOOK_URL`
+
+## Historique des notifications
+
+### Endpoint `/notifications/history`
+
+Consulter l'historique des notifications envoyées :
+
+```powershell
+# Dernières 50 notifications
+curl "http://localhost:8800/notifications/history?limit=50" | jq .
+
+# Filtrer par service
+curl "http://localhost:8800/notifications/history?service=RLM-GRAPH" | jq .
+```
+
+Réponse :
+```json
+{
+  "service": "kix",
+  "port": 8800,
+  "count": 10,
+  "notifications": [
+    {
+      "id": 1,
+      "event": "phi_cps_degraded",
+      "timestamp": "2026-07-28T04:00:00+00:00",
+      "phi_cps": 0.7,
+      "threshold": 0.9,
+      "consecutive_cycles": 3,
+      "service": "RLM-GRAPH",
+      "channel": "webhook",
+      "payload": "{...}"
+    }
+  ]
+}
+```
+
+### Canaux de notification
+
+#### Webhook
+
+```powershell
+python scripts/alert_notifier.py --webhook-url "https://example.com/webhook" --threshold 0.9 --cycles 3
+```
+
+#### Teams
+
+```powershell
+python scripts/alert_notifier.py --teams-webhook "https://outlook.office.com/webhook/..." --threshold 0.9 --cycles 3
+```
+
+Format Teams : MessageCard adapté avec titre, sous-titre et texte.
+
+#### Email (SMTP)
+
+```powershell
+python scripts/alert_notifier.py `
+  --smtp-host "smtp.gmail.com" `
+  --smtp-port 587 `
+  --smtp-user "user@gmail.com" `
+  --smtp-password "app-password" `
+  --email-from "kix@gerivdb.io" `
+  --email-to "team@gerivdb.io" `
+  --threshold 0.9 --cycles 3
+```
+
+Variables d'environnement pour email :
+- `ALERT_SMTP_HOST`, `ALERT_SMTP_PORT`, `ALERT_SMTP_USER`, `ALERT_SMTP_PASSWORD`, `ALERT_EMAIL_FROM`, `ALERT_EMAIL_TO`
+
+### Combinaison de canaux
+
+Plusieurs canaux peuvent être actifs simultanément :
+
+```powershell
+python scripts/alert_notifier.py `
+  --webhook-url "https://example.com/webhook" `
+  --teams-webhook "https://outlook.office.com/webhook/..." `
+  --smtp-host "smtp.gmail.com" --smtp-port 587 --smtp-user "user@gmail.com" --smtp-password "pass" --email-from "kix@gerivdb.io" --email-to "team@gerivdb.io" `
+  --threshold 0.9 --cycles 3
+```
