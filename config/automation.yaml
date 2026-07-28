@@ -1,0 +1,70 @@
+# Auto-remediation policies for KIX/MIMIR
+# Each rule matches a condition and defines actions to execute.
+
+version: "1.0"
+
+policies:
+  - id: restart-unreachable-runner
+    name: "Restart unreachable RLM runner"
+    description: "Restart a runner when its health endpoint is unreachable"
+    condition:
+      field: "runner.status"
+      operator: "=="
+      value: "unreachable"
+    action:
+      type: "restart_runner"
+      params:
+        delay_seconds: 0
+        max_attempts: 1
+    enabled: true
+
+  - id: restart-stopped-runner
+    name: "Restart stopped runner"
+    description: "Restart a runner when it is stopped"
+    condition:
+      field: "runner.status"
+      operator: "=="
+      value: "stopped"
+    action:
+      type: "restart_runner"
+      params:
+        delay_seconds: 5
+        max_attempts: 1
+    enabled: true
+
+  - id: alert-on-phi-cps-degraded
+    name: "Alert on phi-CPS degraded"
+    description: "Send notification when phi-CPS stays below threshold"
+    condition:
+      field: "phi_cps"
+      operator: "<"
+      value: 0.9
+    action:
+      type: "send_notification"
+      params:
+        channels:
+          - "webhook"
+          - "teams"
+        message: "phi-CPS degraded: {{phi_cps}} (threshold: {{threshold}})"
+    enabled: true
+
+  - id: escalation-after-multiple-failures
+    name: "Escalation after multiple failures"
+    description: "Escalate to email when a service fails multiple times in a row"
+    condition:
+      field: "consecutive_failures"
+      operator: ">="
+      value: 3
+    action:
+      type: "send_notification"
+      params:
+        channels:
+          - "email"
+        message: "Service {{service_name}} has failed {{consecutive_failures}} times consecutively"
+    enabled: true
+
+# Global settings
+settings:
+  max_concurrent_actions: 2
+  cooldown_seconds: 60
+  dry_run_default: false
