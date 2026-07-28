@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 from flask import Flask
 from src.runner_state import RunnerStateStore
 from src.app import _load_known_repositories
+from src.notification_store import NotificationRecord
 
 
 @pytest.fixture
@@ -93,3 +94,53 @@ def test_events_returns_sse(client) -> None:
     resp = client.get("/events")
     assert resp.status_code == 200
     assert resp.content_type.startswith("text/event-stream")
+
+
+def test_notifications_history_empty(client) -> None:
+    resp = client.get("/notifications/history")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["service"] == "kix"
+    assert data["count"] == 0
+    assert data["notifications"] == []
+
+
+def test_notifications_history_with_data(client, tmp_path: Path) -> None:
+    from src.app import NOTIFICATIONS
+    test_db = tmp_path / "notifications.db"
+    # Patch NOTIFICATIONS to use temp db
+    with patch("src.app.NOTIFICATIONS") as mock_notif:
+        from src.notification_store import NotificationStore
+        store = NotificationStore(test_db)
+        mock_notif.list_recent.return_value = [
+            NotificationRecord(
+                id=1,
+                event="phi_cps_degraded",
+                timestamp="2026-07-28T04:00:00+00:00",
+                phi_cps=0.7,
+                threshold=0.9,
+                consecutive_cycles=3,
+                service="RLM-GRAPH",
+                channel="webhook",
+                payload='{"items": []}',
+            )
+        ]
+        resp = client.get("/notifications/history?limit=10")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["count"] == 1
+        assert data["notifications"][0]["service"] == "RLM-GRAPH"
+
+
+def test_notifications_history_filters_by_service(client, tmp_path: Path) -> None:
+    from src.app import NOTIFICATIONS
+    with patch("src.app.NOTIFICATIONS") as mock_notif:
+        from src.notification_store import NotificationStore
+        store = NotificationStore(tmp_path / "notifications.db")
+        mock_notif.list_recent.return_value = []
+        resp = client.get("/notifications/history?service=RLM-GRAPH")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["count"] == 0
+        args, kwargs = mock_notif.list_recent.call_args
+        assert kwargs.get("service") == "RLM-GRAPH"

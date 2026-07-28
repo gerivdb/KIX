@@ -20,10 +20,12 @@ import yaml
 from flask import Flask, jsonify, request
 
 from src.runner_state import RunnerStateStore
+from src.notification_store import NotificationStore
 
 app = Flask(__name__)
 
 STORE = RunnerStateStore(os.environ.get("KIX_DB", str(Path(__file__).resolve().parent.parent / "data" / "kix.sqlite")))
+NOTIFICATIONS = NotificationStore(os.environ.get("KIX_NOTIFICATIONS_DB", str(Path(__file__).resolve().parent.parent / "data" / "notifications.db")))
 KNOWN_REPO_FILE = Path(__file__).resolve().parents[3] / "L0-CANON" / "GOVERNANCE-HUB" / "known_repositories.yaml"
 
 
@@ -448,6 +450,34 @@ def events() -> Any:
         f"event: message\ndata: {payload}\n\n",
         mimetype="text/event-stream",
         headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
+    )
+
+
+@app.get("/notifications/history")
+def notifications_history() -> Any:
+    limit = int(request.args.get("limit", "100"))
+    service = request.args.get("service")
+    records = NOTIFICATIONS.list_recent(limit=limit, service=service)
+    return jsonify(
+        {
+            "service": "kix",
+            "port": 8800,
+            "count": len(records),
+            "notifications": [
+                {
+                    "id": r.id,
+                    "event": r.event,
+                    "timestamp": r.timestamp,
+                    "phi_cps": r.phi_cps,
+                    "threshold": r.threshold,
+                    "consecutive_cycles": r.consecutive_cycles,
+                    "service": r.service,
+                    "channel": r.channel,
+                    "payload": r.payload,
+                }
+                for r in records
+            ],
+        }
     )
 
 
