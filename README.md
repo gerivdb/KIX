@@ -12,6 +12,8 @@ Port: **8800**
 - `GET /runners/<name>/status`
 - `POST /runners/<name>/start`
 - `POST /runners/<name>/stop`
+- `GET /alerts` — Alertes en temps réel (φ-CPS, services en erreur)
+  - `?service=<name>` — filtrer les alertes par service
 - `GET /dashboard` — Dashboard web (services + φ-CPS + alertes récentes)
 - `GET /events` — Flux SSE pour mise à jour temps réel du dashboard
 
@@ -84,3 +86,33 @@ Sortie attendue :
 - **KIX ne répond pas** : vérifier que le processus Flask est en écoute sur le port 8800.
 - **RLM tous `unknown`** : vérifier que les services RLM sont démarrés et écoutent sur leurs ports respectifs.
 - **Aucune alerte dans MIMIR** : vérifier que le bridge est en cours d'exécution et que `metrics.db` est accessible.
+
+## Alerting proactif
+
+### Script `alert_notifier.py`
+
+Surveille φ-CPS et envoie une notification quand il reste sous le seuil pendant N cycles consécutifs.
+
+```powershell
+# Dry-run (affichage console)
+cd D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+python scripts/alert_notifier.py --dry-run --threshold 0.9 --cycles 3 --interval 5
+
+# Avec webhook (ex: Discord/Teams)
+python scripts/alert_notifier.py --webhook-url "https://example.com/webhook" --threshold 0.9 --cycles 3
+
+# Filtrer par service
+python scripts/alert_notifier.py --service RLM-GRAPH --dry-run
+```
+
+Paramètres :
+- `--kix` : URL de KIX (défaut: `http://localhost:8800`)
+- `--threshold` : seuil φ-CPS (défaut: `0.9`)
+- `--cycles` : nombre de cycles consécutifs sous seuil avant alerte (défaut: `3`)
+- `--interval` : intervalle en secondes entre les checks (défaut: `5`)
+- `--dry-run` : affiche les notifications sans les envoyer
+- `--webhook-url` : URL du webhook pour les notifications
+- `--service` : filtrer les alertes par nom de service
+
+Variables d'environnement :
+- `KIX_URL`, `MIMIR_DB`, `ALERT_THRESHOLD`, `ALERT_CYCLES`, `ALERT_INTERVAL`, `ALERT_WEBHOOK_URL`
