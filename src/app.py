@@ -193,6 +193,44 @@ def health() -> Any:
     return jsonify({"status": "ok", "service": "kix", "port": 8800})
 
 
+@app.get("/healthz")
+def healthz() -> Any:
+    return jsonify({"status": "ok"})
+
+
+@app.get("/readyz")
+def readyz() -> Any:
+    checks: dict[str, Any] = {"kix": "ok"}
+    try:
+        db_path = os.environ.get("KIX_DB", str(Path(__file__).resolve().parent.parent / "data" / "kix.sqlite"))
+        conn = sqlite3.connect(db_path)
+        conn.execute("SELECT 1")
+        conn.close()
+        checks["runner_store"] = "ok"
+    except Exception:
+        checks["runner_store"] = "error"
+        return jsonify({"status": "degraded", "checks": checks}), 503
+    try:
+        notifications_db = os.environ.get("KIX_NOTIFICATIONS_DB", str(Path(__file__).resolve().parent.parent / "data" / "notifications.db"))
+        conn = sqlite3.connect(notifications_db)
+        conn.execute("SELECT 1")
+        conn.close()
+        checks["notifications"] = "ok"
+    except Exception:
+        checks["notifications"] = "error"
+    try:
+        audit_db = os.environ.get("KIX_AUDIT_DB", str(Path(__file__).resolve().parent.parent / "data" / "audit.db"))
+        conn = sqlite3.connect(audit_db)
+        conn.execute("SELECT 1")
+        conn.close()
+        checks["audit"] = "ok"
+    except Exception:
+        checks["audit"] = "error"
+    status = "ok" if all(v == "ok" for v in checks.values()) else "degraded"
+    code = 200 if status == "ok" else 503
+    return jsonify({"status": status, "checks": checks}), code
+
+
 @app.post("/login")
 def login() -> Any:
     data = request.get_json() or {}
@@ -285,6 +323,31 @@ def runner_status(name: str) -> Any:
     if not runner:
         return jsonify({"error": "runner_not_found", "name": name}), 404
     return jsonify(runner.to_dict())
+
+
+@app.get("/status/cross-service")
+def cross_service_status() -> Any:
+    try:
+        from src.auto_remediation import AutoRemediationEngine
+        engine = AutoRemediationEngine(os.environ.get("KIX_REMEDIATION_DB", str(Path(__file__).resolve().parent.parent / "data" / "remediation.db")))
+        policies = engine.list_policies()
+    except Exception:
+        policies = []
+    try:
+        from src.notification_metrics import NotificationMetricsStore
+        metrics = NotificationMetricsStore(os.environ.get("KIX_METRICS_DB", str(Path(__file__).resolve().parent.parent / "data" / "metrics.db")))
+        notif_metrics = metrics.list_all()
+    except Exception:
+        notif_metrics = {}
+    runners = _sync_runners()
+    snapshot = {
+        "timestamp": _utcnow(),
+        "service": "kix",
+        "runners": {name: runner.to_dict() for name, runner in runners.items()},
+        "remediation_policies": [p.to_dict() if hasattr(p, "to_dict") else dict(p) for p in policies],
+        "notification_metrics": notif_metrics,
+    }
+    return jsonify(snapshot)
 
 
 def _launch_runner(runner: Runner) -> tuple[bool, Optional[str]]:

@@ -193,6 +193,38 @@ def health():
     """Endpoint health pour les monitorings"""
     return jsonify({"status": "OK", "service": "KIX Orchestrator", "version": "test-20260728"}), 200
 
+
+@app.route('/healthz', methods=['GET'])
+def healthz():
+    return jsonify({"status": "ok"}), 200
+
+
+@app.route('/readyz', methods=['GET'])
+def readyz():
+    checks = {"kix": "ok"}
+    try:
+        import sqlite3
+        db_path = os.environ.get("KIX_DB", os.path.join(os.path.dirname(__file__), "data", "kix.sqlite"))
+        conn = sqlite3.connect(db_path)
+        conn.execute("SELECT 1")
+        conn.close()
+        checks["runner_store"] = "ok"
+    except Exception:
+        checks["runner_store"] = "error"
+        return jsonify({"status": "degraded", "checks": checks}), 503
+    try:
+        notifications_db = os.environ.get("KIX_NOTIFICATIONS_DB", os.path.join(os.path.dirname(__file__), "data", "notifications.db"))
+        conn = sqlite3.connect(notifications_db)
+        conn.execute("SELECT 1")
+        conn.close()
+        checks["notifications"] = "ok"
+    except Exception:
+        checks["notifications"] = "error"
+    status = "ok" if all(v == "ok" for v in checks.values()) else "degraded"
+    code = 200 if status == "ok" else 503
+    return jsonify({"status": status, "checks": checks}), code
+
+
 @app.route('/governance-check', methods=['POST'])
 def governance_check():
     """Validation ADR via API

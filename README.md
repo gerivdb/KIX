@@ -6,7 +6,10 @@ Port: **8800**
 ## Endpoints
 
 - `GET /health`
+- `GET /healthz`
+- `GET /readyz`
 - `GET /metrics`
+- `GET /status/cross-service`
 - `GET /vote`
 - `GET /runners`
 - `GET /runners/<name>/status`
@@ -25,6 +28,42 @@ Port: **8800**
 - `POST /login` — Obtenir un JWT token
 - `GET /probe/audit` — Audit de santé publique (sans authentification)
 - `GET /audit` — **Authentification requise** (`admin`) — Journal des actions critiques
+
+## Industrialisation
+
+### Endpoints de readiness/liveness
+
+- `GET /healthz` — Liveness probe (KIX répond)
+- `GET /readyz` — Readiness probe (dépendances : runner store, notifications, audit)
+
+### Statut cross-service
+
+- `GET /status/cross-service` — Agrégat temps réel :
+  - `runners` : statut détaillé de tous les services
+  - `remediation_policies` : politiques d’auto‑remédiation actives
+  - `notification_metrics` : métriques de notification par canal
+
+### Intégration continue
+
+Workflow GitHub Actions : `.github/workflows/ci.yml`
+
+- Déclenché sur `push` et `pull_request` vers `main`
+- Exécute `pytest` sur Python 3.12
+- Variables d’environnement isolées (`KIX_DB`, `KIX_NOTIFICATIONS_DB`, `KIX_METRICS_DB`, `KIX_AUDIT_DB`)
+
+### Monitoring cross-service
+
+La route `/status/cross-service` agrège :
+
+- Les statuts runners
+- Les politiques d’auto‑remédiation
+- Les métriques de notification
+
+Elle peut être consommée par :
+
+- Un monitoring externe (Prometheus, Datadog)
+- Un service de supervision cross‑service (CTULU, MIMIR)
+- Un health-check Kubernetes (`/readyz`)
 
 ## Stack
 
