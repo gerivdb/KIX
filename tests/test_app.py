@@ -11,6 +11,7 @@ from src.app import _load_known_repositories
 from src.notification_store import NotificationRecord
 from src.notification_metrics import NotificationMetrics
 from src.auto_remediation import RemediationResult
+from src.audit_log import AuditLogStore
 
 
 @pytest.fixture
@@ -42,12 +43,12 @@ def test_known_repositories_loader() -> None:
     assert "RLM-GRAPH" in names
 
 
-def test_audit_returns_aggregate(client) -> None:
+def test_probe_audit_returns_aggregate(client) -> None:
     fake_response = MagicMock()
     fake_response.status_code = 200
     fake_response.json.return_value = {"status": "ok", "service": "rlm-graph", "port": 8786}
     with patch("src.app.requests.get", return_value=fake_response) as mock_get:
-        resp = client.get("/audit")
+        resp = client.get("/probe/audit")
         assert resp.status_code == 200
         data = resp.get_json()
         assert data["service"] == "kix"
@@ -57,6 +58,23 @@ def test_audit_returns_aggregate(client) -> None:
         assert "phi_cps" in data
         assert 0.0 <= data["phi_cps"] <= 1.0
         assert mock_get.called
+
+
+def test_action_audit_requires_admin_token(client, tmp_path: Path) -> None:
+    from src.auth import create_token
+    from src.audit_log import AuditLogStore
+
+    audit_db = str(tmp_path / "audit.db")
+    store = AuditLogStore(audit_db)
+    store.record("runner_start", "/runners/X/start", "POST", "admin", details="test")
+    token = create_token("admin", "admin")
+    with patch("src.app.AUDIT_LOG", store):
+        resp = client.get("/audit", headers={"Authorization": f"Bearer {token}"})
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["service"] == "kix"
+        assert data["count"] == 1
+        assert data["audit"][0]["action"] == "runner_start"
 
 
 def test_alerts_returns_items(client) -> None:
@@ -191,9 +209,12 @@ def test_dashboard_includes_metrics_section(client, tmp_path: Path) -> None:
 
 
 def test_remediation_status_empty(client, tmp_path: Path) -> None:
+    from src.auth import create_token
+
     remediation_db = str(tmp_path / "remediation.db")
+    token = create_token("admin", "admin")
     with patch.dict(os.environ, {"KIX_REMEDIATION_DB": remediation_db}):
-        resp = client.get("/remediation/status")
+        resp = client.get("/remediation/status", headers={"Authorization": f"Bearer {token}"})
         assert resp.status_code == 200
         data = resp.get_json()
         assert data["service"] == "kix"
@@ -205,6 +226,8 @@ def test_remediation_status_with_data(client, tmp_path: Path) -> None:
     import sqlite3
     from datetime import datetime, timezone
     from src.auto_remediation import RemediationStore
+    from src.auth import create_token
+
     remediation_db = tmp_path / "remediation.db"
     store = RemediationStore(remediation_db)
     store.record(
@@ -217,8 +240,9 @@ def test_remediation_status_with_data(client, tmp_path: Path) -> None:
             timestamp="2026-07-28T05:00:00+00:00",
         )
     )
+    token = create_token("admin", "admin")
     with patch.dict(os.environ, {"KIX_REMEDIATION_DB": str(remediation_db)}):
-        resp = client.get("/remediation/status")
+        resp = client.get("/remediation/status", headers={"Authorization": f"Bearer {token}"})
         assert resp.status_code == 200
         data = resp.get_json()
         assert data["count"] == 1
