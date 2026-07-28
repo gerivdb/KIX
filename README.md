@@ -10,24 +10,79 @@ Port: **8800**
 - `GET /vote`
 - `GET /runners`
 - `GET /runners/<name>/status`
-- `POST /runners/<name>/start`
-- `POST /runners/<name>/stop`
+- `POST /runners/<name>/start` — **Authentification requise** (`admin`, `operator`)
+- `POST /runners/<name>/stop` — **Authentification requise** (`admin`, `operator`)
 - `GET /alerts` — Alertes en temps réel (φ-CPS, services en erreur)
   - `?service=<name>` — filtrer les alertes par service
 - `GET /notifications/history` — Historique des notifications envoyées
   - `?limit=<n>` — nombre d'entrées (défaut: 100)
   - `?service=<name>` — filtrer par service
-- `GET /remediation/status` — État des actions de remédiation automatique
+- `GET /remediation/status` — **Authentification requise** (`admin`)
 - `GET /metrics` — Métriques JSON (runners + notifications)
 - `GET /metrics/prometheus` — Métriques Prometheus (format texte)
 - `GET /dashboard` — Dashboard web (services + φ-CPS + alertes récentes + métriques notification)
 - `GET /events` — Flux SSE pour mise à jour temps réel du dashboard
+- `POST /login` — Obtenir un JWT token
+- `GET /probe/audit` — Audit de santé publique (sans authentification)
+- `GET /audit` — **Authentification requise** (`admin`) — Journal des actions critiques
 
 ## Stack
 
 - Python 3.12
 - Flask
 - SQLite
+- PyJWT
+
+## Authentification et contrôle d'accès (RBAC)
+
+KIX utilise **JWT** pour protéger les endpoints sensibles. Trois rôles sont disponibles :
+
+| Rôle | Droits |
+|------|--------|
+| `admin` | Accès complet + consultation de l'audit log |
+| `operator` | Démarrage/arrêt des runners |
+| `viewer` | Consultation seule |
+
+### Obtenir un token
+
+```powershell
+curl -X POST http://localhost:8800/login `
+  -H "Content-Type: application/json" `
+  -d '{"username":"admin","password":"admin123"}'
+```
+
+Réponse :
+```json
+{
+  "access_token": "<JWT_TOKEN>",
+  "role": "admin",
+  "username": "admin"
+}
+```
+
+### Utiliser le token
+
+Inclure le token dans le header `Authorization` :
+
+```powershell
+curl -X POST http://localhost:8800/runners/RLM-GRAPH/start `
+  -H "Authorization: Bearer <JWT_TOKEN>"
+```
+
+### Endpoints protégés
+
+| Endpoint | Rôles autorisés |
+|----------|-----------------|
+| `POST /runners/<name>/start` | `admin`, `operator` |
+| `POST /runners/<name>/stop` | `admin`, `operator` |
+| `GET /remediation/status` | `admin` |
+| `GET /audit` | `admin` |
+
+### Variables d'environnement
+
+- `KIX_JWT_SECRET` : secret JWT (défaut: `dev-secret-change-me`)
+- `KIX_USERS` : JSON des utilisateurs personnalisés (optionnel)
+- `KIX_AUDIT_DB` : chemin vers la base d'audit (défaut: `data/audit.db`)
 
 ## Dashboard
 
@@ -351,4 +406,44 @@ Le fichier `config/automation.yaml` contient les politiques suivantes :
 - `AUTOMATION_CONFIG` : chemin vers `automation.yaml`
 - `KIX_REMEDIATION_DB` : chemin vers la base de remédiation (défaut: `data/remediation.db`)
 - `REMEDIATION_INTERVAL` : intervalle de cycle en secondes
+
+## Audit log
+
+### Endpoint `/audit` (admin only)
+
+Consulter l'historique des actions critiques :
+
+```powershell
+curl http://localhost:8800/audit `
+  -H "Authorization: Bearer <admin_token>"
+```
+
+Réponse :
+```json
+{
+  "service": "kix",
+  "port": 8800,
+  "count": 10,
+  "audit": [
+    {
+      "id": 1,
+      "action": "runner_start",
+      "endpoint": "/runners/RLM-GRAPH/start",
+      "method": "POST",
+      "username": "admin",
+      "timestamp": "2026-07-28T06:00:00+00:00",
+      "details": "started RLM-GRAPH",
+      "ip_address": "127.0.0.1"
+    }
+  ]
+}
+```
+
+Paramètres :
+- `?limit=<n>` : nombre d'entrées (défaut: 100)
+
+### Actions tracées
+
+- Démarrage/arrêt des runners (`runner_start`, `runner_stop`)
+- Consultation de l'état de remédiation (`remediation_status_view`)
 
