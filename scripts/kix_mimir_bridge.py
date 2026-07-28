@@ -28,13 +28,13 @@ def utcnow_ts() -> int:
 
 
 def fetch_kix_audit(base_url: str) -> dict:
-    resp = requests.get(f"{base_url}/audit", timeout=5)
+    resp = requests.get(f"{base_url}/audit", timeout=30)
     resp.raise_for_status()
     return resp.json()
 
 
 def fetch_kix_alerts(base_url: str) -> dict:
-    resp = requests.get(f"{base_url}/alerts", timeout=5)
+    resp = requests.get(f"{base_url}/alerts", timeout=30)
     resp.raise_for_status()
     return resp.json()
 
