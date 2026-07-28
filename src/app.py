@@ -21,11 +21,13 @@ from flask import Flask, jsonify, request
 
 from src.runner_state import RunnerStateStore
 from src.notification_store import NotificationStore
+from src.notification_metrics import NotificationMetricsStore
 
 app = Flask(__name__)
 
 STORE = RunnerStateStore(os.environ.get("KIX_DB", str(Path(__file__).resolve().parent.parent / "data" / "kix.sqlite")))
 NOTIFICATIONS = NotificationStore(os.environ.get("KIX_NOTIFICATIONS_DB", str(Path(__file__).resolve().parent.parent / "data" / "notifications.db")))
+METRICS = NotificationMetricsStore(os.environ.get("KIX_METRICS_DB", str(Path(__file__).resolve().parent.parent / "data" / "metrics.db")))
 KNOWN_REPO_FILE = Path(__file__).resolve().parents[3] / "L0-CANON" / "GOVERNANCE-HUB" / "known_repositories.yaml"
 
 
@@ -191,6 +193,18 @@ def health() -> Any:
 @app.get("/metrics")
 def metrics() -> Any:
     states = STORE.list_all()
+    notif_metrics = METRICS.list_all()
+    notif_channels = {
+        channel: {
+            "total_sent": m.total_sent,
+            "total_success": m.total_success,
+            "total_failed": m.total_failed,
+            "success_rate": round(m.total_success / m.total_sent, 3) if m.total_sent else 0.0,
+            "avg_latency_ms": round(m.avg_latency_ms, 2),
+            "last_sent_at": m.last_sent_at,
+        }
+        for channel, m in notif_metrics.items()
+    }
     return jsonify(
         {
             "service": "kix",
@@ -198,8 +212,36 @@ def metrics() -> Any:
             "runners_total": len(states),
             "runners_running": sum(1 for s in states.values() if s.status == "running"),
             "runners_stopped": sum(1 for s in states.values() if s.status == "stopped"),
+            "notifications": notif_channels,
             "timestamp": _utcnow(),
         }
+    )
+
+
+@app.get("/metrics/prometheus")
+def metrics_prometheus() -> Any:
+    notif_metrics = METRICS.list_all()
+    lines = [
+        "# HELP kix_notification_total_total Total notifications sent per channel",
+        "# TYPE kix_notification_total_total counter",
+    ]
+    for channel, m in notif_metrics.items():
+        lines.append(f'kix_notification_total_total{{channel="{channel}"}} {m.total_sent}')
+    lines.append("# HELP kix_notification_success_total Total successful notifications per channel")
+    lines.append("# TYPE kix_notification_success_total counter")
+    for channel, m in notif_metrics.items():
+        lines.append(f'kix_notification_success_total{{channel="{channel}"}} {m.total_success}')
+    lines.append("# HELP kix_notification_failed_total Total failed notifications per channel")
+    lines.append("# TYPE kix_notification_failed_total counter")
+    for channel, m in notif_metrics.items():
+        lines.append(f'kix_notification_failed_total{{channel="{channel}"}} {m.total_failed}')
+    lines.append("# HELP kix_notification_latency_seconds Average notification latency per channel")
+    lines.append("# TYPE kix_notification_latency_seconds gauge")
+    for channel, m in notif_metrics.items():
+        lines.append(f'kix_notification_latency_seconds{{channel="{channel}"}} {round(m.avg_latency_ms / 1000, 4)}')
+    return app.response_class(
+        "\n".join(lines) + "\n",
+        mimetype="text/plain; version=0.0.4",
     )
 
 
@@ -534,6 +576,22 @@ def dashboard() -> Any:
             "</tr>"
         )
     alert_body = "\n".join(reversed(alert_rows))
+    notif_metrics = METRICS.list_all()
+    metrics_rows = []
+    for channel, m in notif_metrics.items():
+        success_rate = round(m.total_success / m.total_sent, 3) if m.total_sent else 0.0
+        metrics_rows.append(
+            "<tr>"
+            f"<td>{channel}</td>"
+            f"<td>{m.total_sent}</td>"
+            f"<td>{m.total_success}</td>"
+            f"<td>{m.total_failed}</td>"
+            f"<td>{success_rate}</td>"
+            f"<td>{round(m.avg_latency_ms, 2)}</td>"
+            f"<td>{m.last_sent_at or ''}</td>"
+            "</tr>"
+        )
+    metrics_body = "\n".join(metrics_rows)
     html = f"""<!doctype html>
 <html>
 <head>
@@ -579,6 +637,15 @@ th, td {{ border: 1px solid #bbb; padding: 0.5rem; text-align: left; }}
 </thead>
 <tbody>
 {alert_body}
+</tbody>
+</table>
+<h2>Notification Metrics</h2>
+<table>
+<thead>
+<tr><th>Channel</th><th>Total Sent</th><th>Success</th><th>Failed</th><th>Success Rate</th><th>Avg Latency (ms)</th><th>Last Sent</th></tr>
+</thead>
+<tbody>
+{metrics_body}
 </tbody>
 </table>
 <script>
