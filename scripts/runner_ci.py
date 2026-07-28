@@ -1,62 +1,52 @@
-# Sovereign CI Pipeline for RLM Services via KIX
-# Orchestrates all RLM runners and runs their test suites
-# Dynamically scales to available CPU cores for maximum elegance
+#!/usr/bin/env python3
+"""
+Sovereign CI Pipeline for Cognitive Runners via KIX
+Orchestrates all cognitive runners (RLM, TLM, LLM, TEMPORAL) 
+with dynamic CPU-aware parallelization.
+
+Usage:
+    python -m KIX.scripts.runner_ci
+    python -m KIX.scripts.runner_ci --layers RLM,TLM
+    python -m KIX.scripts.runner_ci --dry-run
+"""
 
 from __future__ import annotations
 
+import argparse
 import os
 import sys
 import time
 import urllib.request
 import urllib.error
 import subprocess
-from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
+
+# Import cognitive runners registry
+from scripts.cognitive_runners import (
+    get_all_runners,
+    get_existing_runners,
+    get_runners_by_layers,
+    get_layers,
+    LAYER_ORDER,
+    CognitiveRunner,
+)
+
+
+KIX_PORT = 8800
+ROOT = Path(__file__).resolve().parent.parent.parent  # L2-PLATFORM
 
 
 @dataclass
-class RunnerConfig:
-    """Configuration for a single RLM runner"""
+class RunnerResult:
+    """Result of starting a single runner."""
     name: str
     port: int
-    path: str
-
-
-# Dynamically configure runners from known repositories
-# Each runner: (name, port, relative_path_from_L2_PLATFORM)
-RUNNER_DEFINITIONS = [
-    ("RLM-SECURE", 8797, "RLM-SECURE"),
-    ("RLM-DEPLOY", 8795, "RLM-DEPLOY"),
-    ("RLM-GRAPH", 8794, "RLM-GRAPH"),
-    ("RLM-CONFIG", 8793, "RLM-CONFIG"),
-    ("RLM-INCIDENT", 8798, "RLM-INCIDENT"),
-    ("RLM-RELEASE", 8799, "RLM-RELEASE"),
-]
-
-
-def get_optimal_worker_count() -> int:
-    """
-    Dynamically determine optimal worker count based on CPU cores.
-    Returns max workers for ThreadPoolExecutor, reserving 1 core for system.
-    """
-    cpu_count = os.cpu_count() or 1
-    # Reserve 1 core for system/KIX, use rest for parallel runner startup
-    # Minimum 1 worker, maximum = cpu_count - 1 (or 1 if only 1 core)
-    return max(1, cpu_count - 1)
-
-
-def build_runner_configs(root: Path) -> list[RunnerConfig]:
-    """Build runner configs from definitions, only including existing directories."""
-    configs = []
-    for name, port, rel_path in RUNNER_DEFINITIONS:
-        runner_path = root / rel_path
-        if runner_path.exists():
-            configs.append(RunnerConfig(name=name, port=port, path=str(runner_path)))
-        else:
-            print(f"[KIX-CI] SKIP {name}: directory not found at {runner_path}")
-    return configs
+    success: bool
+    error: Optional[str] = None
+    pid: Optional[int] = None
 
 
 def wait_for_port(port: int, timeout: float = 5.0) -> bool:
@@ -71,105 +61,234 @@ def wait_for_port(port: int, timeout: float = 5.0) -> bool:
     return False
 
 
-def start_runner(config: RunnerConfig) -> tuple[str, bool, Optional[subprocess.Popen]]:
-    """Start a single runner and verify it's healthy. Returns (name, success, process)."""
+def calculate_optimal_workers(runner_count: int) -> int:
+    """
+    Calculate optimal worker count for CPU-aware parallelization.
+    
+    Formula: min(runner_count, cpu_cores - 1)
+    Reserve 1 core for KIX orchestrator + system.
+    """
+    cpu_cores = os.cpu_count() or 1
+    max_workers = max(1, min(runner_count, cpu_cores - 1))
+    return max_workers
+
+
+def start_runner(runner: CognitiveRunner) -> RunnerResult:
+    """Start a single cognitive runner via its src/app.py."""
+    runner_dir = ROOT / runner.path_suffix
+    
+    if not runner_dir.exists():
+        return RunnerResult(
+            name=runner.name,
+            port=runner.port,
+            success=False,
+            error=f"Directory not found: {runner_dir}"
+        )
+    
+    app_path = runner_dir / "src" / "app.py"
+    if not app_path.exists():
+        return RunnerResult(
+            name=runner.name,
+            port=runner.port,
+            success=False,
+            error=f"app.py not found: {app_path}"
+        )
+    
     try:
         proc = subprocess.Popen(
-            [sys.executable, "src/app.py"],
-            cwd=config.path,
+            [sys.executable, str(app_path)],
+            cwd=runner_dir,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        healthy = wait_for_port(config.port)
-        return (config.name, healthy, proc if healthy else None)
+        
+        # Wait for health check
+        if wait_for_port(runner.port):
+            return RunnerResult(
+                name=runner.name,
+                port=runner.port,
+                success=True,
+                pid=proc.pid
+            )
+        else:
+            proc.terminate()
+            return RunnerResult(
+                name=runner.name,
+                port=runner.port,
+                success=False,
+                error="Health check timeout"
+            )
     except Exception as e:
-        print(f"[KIX-CI] {config.name}: FAILED to start - {e}")
-        return (config.name, False, None)
+        return RunnerResult(
+            name=runner.name,
+            port=runner.port,
+            success=False,
+            error=str(e)
+        )
 
 
-def run_probe_audit(kix_port: int) -> bool:
-    """Run probe audit via KIX orchestrator."""
+def start_runners_parallel(
+    runners: list[CognitiveRunner],
+    max_workers: int
+) -> list[RunnerResult]:
+    """Start multiple runners in parallel with controlled concurrency."""
+    results = []
+    
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_runner = {
+            executor.submit(start_runner, runner): runner 
+            for runner in runners
+        }
+        
+        for future in as_completed(future_to_runner):
+            results.append(future.result())
+    
+    return results
+
+
+def start_kix() -> Optional[subprocess.Popen]:
+    """Start KIX orchestrator."""
+    kix_dir = ROOT / "KIX"
+    if not kix_dir.exists():
+        print(f"[KIX-CI] ERROR: KIX directory not found: {kix_dir}")
+        return None
+    
+    print("[KIX-CI] Starting KIX orchestrator on port 8800...")
+    proc = subprocess.Popen(
+        [sys.executable, "src/app.py"],
+        cwd=kix_dir,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    
+    if wait_for_port(KIX_PORT):
+        print("[KIX-CI] KIX orchestrator online")
+        return proc
+    else:
+        print("[KIX-CI] ERROR: KIX failed to start")
+        proc.terminate()
+        return None
+
+
+def run_probe_audit() -> bool:
+    """Run KIX probe audit to verify all runners."""
     try:
-        urllib.request.urlopen(f"http://localhost:{kix_port}/probe/audit", timeout=10)
+        urllib.request.urlopen(f"http://localhost:{KIX_PORT}/probe/audit", timeout=10)
+        print("[KIX-CI] Probe audit completed via KIX")
         return True
     except Exception as e:
         print(f"[KIX-CI] Probe audit error: {e}")
         return False
 
 
+def print_summary(results: list[RunnerResult]) -> int:
+    """Print CI summary and return exit code."""
+    success_count = sum(1 for r in results if r.success)
+    total_count = len(results)
+    
+    print("\n" + "=" * 60)
+    print("[KIX-CI] SOVEREIGN CI PIPELINE SUMMARY")
+    print("=" * 60)
+    print(f"Total runners: {total_count}")
+    print(f"Successful:    {success_count}")
+    print(f"Failed:        {total_count - success_count}")
+    print("-" * 60)
+    
+    for r in results:
+        status = "✅ OK" if r.success else "❌ FAIL"
+        pid_info = f" (PID: {r.pid})" if r.pid else ""
+        err_info = f" — {r.error}" if r.error else ""
+        print(f"  {status} {r.name}:{r.port}{pid_info}{err_info}")
+    
+    print("=" * 60)
+    
+    return 0 if success_count == total_count else 1
+
+
 def main() -> int:
-    print("[KIX-CI] Sovereign pipeline starting...")
-
-    # Detect optimal worker count based on CPU cores
-    optimal_workers = get_optimal_worker_count()
-    print(f"[KIX-CI] Detected {os.cpu_count()} CPU cores, using {optimal_workers} parallel workers")
-
-    # Build runner configurations from existing directories
-    root = Path(__file__).resolve().parent.parent.parent  # L2-PLATFORM
-    runner_configs = build_runner_configs(root)
-
-    if not runner_configs:
-        print("[KIX-CI] No runners found to test")
-        return 1
-
-    print(f"[KIX-CI] Found {len(runner_configs)} runners to test")
-
-    # Start KIX orchestrator first
-    kix_proc = subprocess.Popen(
-        [sys.executable, "src/app.py"],
-        cwd=root / "KIX",
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+    parser = argparse.ArgumentParser(description="Sovereign CI Pipeline for Cognitive Runners")
+    parser.add_argument(
+        "--layers", 
+        default="all",
+        help=f"Comma-separated layers to test: {', '.join(get_layers())} (default: all)"
     )
-
-    kix_port = 8800
-    if not wait_for_port(kix_port):
-        print("[KIX-CI] ERROR: KIX failed to start")
-        kix_proc.terminate()
-        return 1
-
-    print("[KIX-CI] KIX online")
-
-    # Start runners in parallel using optimal worker count
-    failed = []
-    running_procs = []
-
-    with ThreadPoolExecutor(max_workers=optimal_workers) as executor:
-        future_to_config = {
-            executor.submit(start_runner, config): config
-            for config in runner_configs
-        }
-
-        for future in as_completed(future_to_config):
-            name, healthy, proc = future.result()
-            if healthy:
-                print(f"[KIX-CI] {name}: OK (port {next(c.port for c in runner_configs if c.name == name)})")
-                running_procs.append(proc)
-            else:
-                print(f"[KIX-CI] {name}: FAILED to start")
-                failed.append(name)
-
-    # Run probe audit via KIX
-    print("[KIX-CI] Running probe audit via KIX...")
-    audit_ok = run_probe_audit(kix_port)
-    if audit_ok:
-        print("[KIX-CI] Probe audit completed via KIX")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="List runners that would be tested without starting them"
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=0,
+        help="Override worker count (0 = auto)"
+    )
+    parser.add_argument(
+        "--no-kix",
+        action="store_true",
+        help="Skip KIX orchestrator (assume already running)"
+    )
+    args = parser.parse_args()
+    
+    print("[KIX-CI] Sovereign CI Pipeline starting...")
+    print(f"[KIX-CI] Root: {ROOT}")
+    print(f"[KIX-CI] CPU cores: {os.cpu_count()}")
+    
+    # Resolve runners
+    if args.layers == "all":
+        runners = list(get_all_runners())
     else:
-        print("[KIX-CI] Probe audit failed")
-
-    # Cleanup all runner processes
-    for proc in running_procs:
-        if proc:
-            proc.terminate()
-
-    kix_proc.terminate()
-
-    if failed:
-        print(f"[KIX-CI] Failed runners: {', '.join(failed)}")
+        layer_list = [l.strip() for l in args.layers.split(",")]
+        runners = list(get_runners_by_layers(layer_list))
+    
+    # Filter to existing directories
+    existing_runners = get_existing_runners(str(ROOT))
+    runner_names = {r.name for r in existing_runners}
+    runners = [r for r in runners if r.name in runner_names]
+    
+    if not runners:
+        print("[KIX-CI] No matching runners found")
         return 1
-
-    print("[KIX-CI] Pipeline completed successfully")
-    return 0
+    
+    print(f"[KIX-CI] Target runners ({len(runners)}):")
+    for r in runners:
+        print(f"  - {r.name} ({r.layer}) port {r.port}")
+    
+    if args.dry_run:
+        print("[KIX-CI] Dry run complete — no runners started")
+        return 0
+    
+    # Calculate workers
+    worker_count = args.workers if args.workers > 0 else calculate_optimal_workers(len(runners))
+    print(f"[KIX-CI] Parallel workers: {worker_count}")
+    
+    # Start KIX if not skipped
+    kix_proc = None
+    if not args.no_kix:
+        kix_proc = start_kix()
+        if not kix_proc:
+            return 1
+    
+    try:
+        # Start runners in parallel
+        print(f"[KIX-CI] Starting {len(runners)} runners...")
+        start_time = time.time()
+        results = start_runners_parallel(runners, worker_count)
+        elapsed = time.time() - start_time
+        
+        print(f"[KIX-CI] All runners started in {elapsed:.1f}s")
+        
+        # Run probe audit
+        if not args.no_kix:
+            run_probe_audit()
+        
+        # Print summary and return exit code
+        return print_summary(results)
+    
+    finally:
+        if kix_proc:
+            print("[KIX-CI] Stopping KIX orchestrator...")
+            kix_proc.terminate()
 
 
 if __name__ == "__main__":
