@@ -119,6 +119,8 @@ def _probe_port(port: int, timeout: float = 1.0) -> bool:
 
 def _sync_runners() -> dict[str, Runner]:
     runners = {r.name: r for r in _load_known_repositories()}
+    if "MEM-CORE" not in runners:
+        runners["MEM-CORE"] = Runner(name="MEM-CORE", port=8907)
     states = STORE.list_all()
     now = _utcnow()
     for name, runner in runners.items():
@@ -191,6 +193,44 @@ def _load_recent_alerts(limit: int = 10) -> list[dict[str, Any]]:
 @app.get("/health")
 def health() -> Any:
     return jsonify({"status": "ok", "service": "kix", "port": 8800})
+
+
+@app.get("/healthz")
+def healthz() -> Any:
+    return jsonify({"status": "ok"})
+
+
+@app.get("/readyz")
+def readyz() -> Any:
+    checks: dict[str, Any] = {"kix": "ok"}
+    try:
+        db_path = os.environ.get("KIX_DB", str(Path(__file__).resolve().parent.parent / "data" / "kix.sqlite"))
+        conn = sqlite3.connect(db_path)
+        conn.execute("SELECT 1")
+        conn.close()
+        checks["runner_store"] = "ok"
+    except Exception:
+        checks["runner_store"] = "error"
+        return jsonify({"status": "degraded", "checks": checks}), 503
+    try:
+        notifications_db = os.environ.get("KIX_NOTIFICATIONS_DB", str(Path(__file__).resolve().parent.parent / "data" / "notifications.db"))
+        conn = sqlite3.connect(notifications_db)
+        conn.execute("SELECT 1")
+        conn.close()
+        checks["notifications"] = "ok"
+    except Exception:
+        checks["notifications"] = "error"
+    try:
+        audit_db = os.environ.get("KIX_AUDIT_DB", str(Path(__file__).resolve().parent.parent / "data" / "audit.db"))
+        conn = sqlite3.connect(audit_db)
+        conn.execute("SELECT 1")
+        conn.close()
+        checks["audit"] = "ok"
+    except Exception:
+        checks["audit"] = "error"
+    status = "ok" if all(v == "ok" for v in checks.values()) else "degraded"
+    code = 200 if status == "ok" else 503
+    return jsonify({"status": status, "checks": checks}), code
 
 
 @app.post("/login")
@@ -284,7 +324,34 @@ def runner_status(name: str) -> Any:
     runner = runners.get(name)
     if not runner:
         return jsonify({"error": "runner_not_found", "name": name}), 404
+    if runner.name == "MEM-CORE":
+        try:
+            resp = requests.get(f"http://localhost:{runner.port}/healthz", timeout=2)
+            runner.status = "running" if resp.status_code == 200 else "stopped"
+            runner.meta["api_status"] = resp.status_code
+        except requests.RequestException:
+            runner.status = "stopped"
+            runner.meta["api_status"] = None
     return jsonify(runner.to_dict())
+
+
+@app.get("/status/cross-service")
+def cross_service_status() -> Any:
+    try:
+        from src.auto_remediation import AutoRemediationEngine
+        engine = AutoRemediationEngine(os.environ.get("KIX_REMEDIATION_DB", str(Path(__file__).resolve().parent.parent / "data" / "remediation.db")))
+        policies = engine.list_policies()
+    except Exception:
+        policies = []
+    runners = _sync_runners()
+    snapshot = {
+        "timestamp": _utcnow(),
+        "service": "kix",
+        "runners": {name: runner.to_dict() for name, runner in runners.items()},
+        "remediation_policies": [p.to_dict() if hasattr(p, "to_dict") else dict(p) for p in policies],
+        "notification_metrics": METRICS.list_all(),
+    }
+    return jsonify(snapshot)
 
 
 def _launch_runner(runner: Runner) -> tuple[bool, Optional[str]]:
@@ -343,6 +410,100 @@ def start_runner(name: str) -> Any:
         ip_address=request.remote_addr,
     )
     return jsonify({"status": status, "name": name})
+
+
+# ==================== NEW ENDPOINTS FOR P2 ====================
+@app.post("/schedule/cycle")
+@login_required(roles=["admin", "operator"])
+def schedule_cycle() -> Any:
+    """
+    Schedule a new operational cycle for a service.
+    Body format:
+    {
+        "service": "PLIX",
+        "cron": "0 0 * * *",  # cron expression
+        "action": "backup"   # action to execute on schedule
+    }
+    """
+    if not request.is_json:
+        return jsonify({"error": "body_must_be_json"}), 400
+    
+    data = request.get_json()
+    service = data.get("service")
+    cron = data.get("cron")
+    action = data.get("action")
+    
+    if not service or not cron or not action:
+        return jsonify({"error": "missing_fields", "details": "service, cron, and action are required"}), 400
+    
+    # Store the schedule in the database (simplified approach)
+    schedule = {
+        "service": service,
+        "cron": cron,
+        "action": action,
+        "created_at": _utcnow(),
+        "created_by": getattr(request, "user", {}).get("sub", "anonymous")
+    }
+    
+    # Save schedule to persistent storage
+    schedules = load_schedules()
+    schedules.append(schedule)
+    save_schedules(schedules)
+    
+    return jsonify({
+        "status": "scheduled",
+        "service": service,
+        "cron": cron,
+        "action": action,
+        "schedule_id": len(schedules) - 1
+    })
+
+
+def load_schedules() -> list[dict[str, Any]]:
+    """Load schedules from persistent storage."""
+    schedule_file = Path(__file__).resolve().parents[1] / "data" / "schedules.json"
+    if schedule_file.exists():
+        try:
+            with open(schedule_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return []
+    return []
+
+
+def save_schedules(schedules: list[dict[str, Any]]) -> None:
+    """Save schedules to persistent storage."""
+    schedule_file = Path(__file__).resolve().parents[1] / "data" / "schedules.json"
+    # Ensure parent directory exists
+    schedule_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(schedule_file, "w", encoding="utf-8") as f:
+        json.dump(schedules, f, indent=2)
+
+
+@app.delete("/schedule/cycle/<int:schedule_id>")
+@login_required(roles=["admin", "operator"])
+def delete_schedule(schedule_id: int) -> Any:
+    """Delete a schedule by ID."""
+    schedules = load_schedules()
+    if schedule_id < 0 or schedule_id >= len(schedules):
+        return jsonify({"error": "schedule_not_found"}), 404
+    
+    deleted = schedules.pop(schedule_id)
+    save_schedules(schedules)
+    
+    return jsonify({
+        "status": "deleted",
+        "service": deleted["service"],
+        "schedule_id": schedule_id
+    })
+
+
+@app.get("/schedules")
+@login_required(roles=["admin", "operator"])
+def list_schedules() -> Any:
+    """List all scheduled cycles."""
+    schedules = load_schedules()
+    return jsonify({"total": len(schedules), "schedules": schedules})
 
 
 @app.post("/runners/<string:name>/stop")
