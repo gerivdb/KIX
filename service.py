@@ -12,10 +12,13 @@ Fonctionnalités essentielles :
 
 import os
 import subprocess
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template_string
 import json
 import time
 from threading import Thread
+import yaml
+from datetime import datetime
+from pathlib import Path
 
 app = Flask(__name__)
 
@@ -36,8 +39,9 @@ SERVICE_MAP = {
     8795: "RLM-DEPLOY",
     8796: "RLM-SECURE",
     8797: "RLM-GRAPH",
-    8798: "RLM-INCIDENT",
-    8799: "RLM-RELEASE"
+     8798: "RLM-INCIDENT",
+     8799: "RLM-RELEASE",
+     7243: "trixd"
 }
 
 # TLM Services (ports réservés pour intégration future)
@@ -364,6 +368,183 @@ def vote():
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+# ============================================================================
+# Fin-Ops Dashboard — Multi-Environment Supervision (INTENT-094)
+# ============================================================================
+
+KNOWN_REPOS_PATH = Path(r"D:\DO\WEB\TOOLS\L4-TOOLS\REPO-STANDARDS\config\known_repositories.yaml")
+
+def load_known_repositories():
+    """Charge known_repositories.yaml et retourne la liste des repos."""
+    try:
+        with open(KNOWN_REPOS_PATH, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        return data.get("repos", [])
+    except Exception:
+        return []
+
+def compute_finops_metrics():
+    """Calcule les métriques Fin-Ops par environnement."""
+    repos = load_known_repositories()
+    
+    metrics = {
+        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "total_repos": len(repos),
+        "env0": {"total": 0, "public": 0, "private": 0, "cloned": 0, "not_cloned": 0},
+        "env1": {"services": 0, "pipelines": 0},
+        "env2": {"clones": 0, "missing": 0},
+        "env3": {"services": 0},
+        "env4": {"services": 0},
+        "env5": {"archived": 0},
+        "runners": {"total": len(SERVICE_MAP) + len(TLM_SERVICE_MAP), "running": 0, "stopped": 0},
+    }
+    
+    for repo in repos:
+        stratum = repo.get("stratum", "").upper()
+        visibility = repo.get("visibility", "unknown")
+        cloned = repo.get("cloned", False)
+        status = repo.get("status", "").lower()
+        
+        # Mapping stratum -> environnement Fin-Ops
+        if stratum == "L0":
+            env_key = "env0"
+        elif stratum in ("L1", "L2"):
+            env_key = "env2"
+        elif stratum == "L3":
+            env_key = "env3"
+        elif stratum == "L4":
+            env_key = "env1"
+        elif stratum == "L5":
+            env_key = "env5"
+        else:
+            continue
+        
+        # Comptage par environnement
+        if env_key == "env0":
+            metrics["env0"]["total"] += 1
+            if visibility == "public":
+                metrics["env0"]["public"] += 1
+            elif visibility == "private":
+                metrics["env0"]["private"] += 1
+            if cloned:
+                metrics["env0"]["cloned"] += 1
+            else:
+                metrics["env0"]["not_cloned"] += 1
+        elif env_key == "env2":
+            metrics["env2"]["clones"] += 1 if cloned else 0
+            metrics["env2"]["missing"] += 0 if cloned else 1
+        elif env_key == "env3":
+            metrics["env3"]["services"] += 1
+        elif env_key == "env1":
+            metrics["env1"]["services"] += 1
+        elif env_key == "env5":
+            metrics["env5"]["archived"] += 1
+    
+    # Runners status (simulé pour l'instant)
+    metrics["runners"]["running"] = metrics["runners"]["total"]
+    metrics["runners"]["stopped"] = 0
+    
+    return metrics
+
+FIN_OPS_DASHBOARD_HTML = """<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KIX — Fin-Ops Dashboard</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #e2e8f0; padding: 20px; }
+        h1 { color: #38bdf8; margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+        .card h2 { color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+        .metric { font-size: 2rem; font-weight: bold; color: #f1f5f9; }
+        .metric small { font-size: 0.9rem; color: #94a3b8; }
+        .status { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+        .status.ok { background: #059669; color: white; }
+        .status.warn { background: #d97706; color: white; }
+        .status.err { background: #dc2626; color: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #334155; }
+        th { color: #94a3b8; font-weight: normal; font-size: 0.85rem; }
+        td { color: #e2e8f0; }
+        .footer { margin-top: 30px; color: #64748b; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+    <h1>KIX — Fin-Ops Dashboard</h1>
+    <div class="grid">
+        <div class="card">
+            <h2>ENV0 — GitHub Remote</h2>
+            <div class="metric">{{ metrics.env0.total }} <small>repos</small></div>
+            <table>
+                <tr><th>Public</th><td>{{ metrics.env0.public }}</td></tr>
+                <tr><th>Private</th><td>{{ metrics.env0.private }}</td></tr>
+                <tr><th>Cloned</th><td>{{ metrics.env0.cloned }}</td></tr>
+                <tr><th>Not cloned</th><td>{{ metrics.env0.not_cloned }}</td></tr>
+            </table>
+        </div>
+        <div class="card">
+            <h2>ENV1 — Services</h2>
+            <div class="metric">{{ metrics.env1.services }} <small>services</small></div>
+            <table>
+                <tr><th>Pipelines</th><td>{{ metrics.env1.pipelines }}</td></tr>
+            </table>
+        </div>
+        <div class="card">
+            <h2>ENV2 — Workstation</h2>
+            <div class="metric">{{ metrics.env2.clones }} <small>clones</small></div>
+            <table>
+                <tr><th>Missing</th><td>{{ metrics.env2.missing }}</td></tr>
+            </table>
+        </div>
+        <div class="card">
+            <h2>ENV3 — Standard</h2>
+            <div class="metric">{{ metrics.env3.services }} <small>services</small></div>
+        </div>
+        <div class="card">
+            <h2>ENV4 — Critical</h2>
+            <div class="metric">{{ metrics.env4.services }} <small>services</small></div>
+        </div>
+        <div class="card">
+            <h2>ENV5 — GitOps</h2>
+            <div class="metric">{{ metrics.env5.archived }} <small>archived</small></div>
+        </div>
+        <div class="card">
+            <h2>Runners</h2>
+            <div class="metric">{{ metrics.runners.total }} <small>total</small></div>
+            <table>
+                <tr><th>Running</th><td>{{ metrics.runners.running }}</td></tr>
+                <tr><th>Stopped</th><td>{{ metrics.runners.stopped }}</td></tr>
+            </table>
+        </div>
+    </div>
+    <div class="footer">
+        Generated at {{ metrics.generated_at }} | KIX Fin-Ops Dashboard v0.1
+    </div>
+</body>
+</html>
+"""
+
+@app.route('/fin-ops/dashboard', methods=['GET'])
+def finops_dashboard():
+    """Dashboard Fin-Ops multi-environnement."""
+    metrics = compute_finops_metrics()
+    return render_template_string(FIN_OPS_DASHBOARD_HTML, metrics=metrics)
+
+@app.route('/fin-ops/api/summary', methods=['GET'])
+def finops_api_summary():
+    """API JSON du dashboard Fin-Ops."""
+    metrics = compute_finops_metrics()
+    return jsonify(metrics), 200
+
+@app.route('/fin-ops/api/inventory', methods=['GET'])
+def finops_api_inventory():
+    """Inventaire des repos connus."""
+    repos = load_known_repositories()
+    return jsonify({"repos": repos, "count": len(repos)}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=KIX_PORT, debug=False)
