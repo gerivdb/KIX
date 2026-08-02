@@ -31,7 +31,7 @@ STORE = RunnerStateStore(os.environ.get("KIX_DB", str(Path(__file__).resolve().p
 NOTIFICATIONS = NotificationStore(os.environ.get("KIX_NOTIFICATIONS_DB", str(Path(__file__).resolve().parent.parent / "data" / "notifications.db")))
 METRICS = NotificationMetricsStore(os.environ.get("KIX_METRICS_DB", str(Path(__file__).resolve().parent.parent / "data" / "metrics.db")))
 AUDIT_LOG = AuditLogStore(os.environ.get("KIX_AUDIT_DB", str(Path(__file__).resolve().parent.parent / "data" / "audit.db")))
-KNOWN_REPO_FILE = Path(__file__).resolve().parents[3] / "L0-CANON" / "GOVERNANCE-HUB" / "known_repositories.yaml"
+KNOWN_REPO_FILE = os.environ.get("KIX_KNOWN_REPOS_FILE", str(Path(__file__).resolve().parents[3] / "L0-CANON" / "GOVERNANCE-HUB" / "known_repositories.yaml"))
 
 
 @dataclass
@@ -148,7 +148,7 @@ def _sync_runners() -> dict[str, Runner]:
 
 def _load_phi_cps_history(limit: int = 20) -> list[dict[str, Any]]:
     default_db = Path(__file__).resolve().parent.parent / "data" / "kix.sqlite"
-    bridge_db = Path(__file__).resolve().parent.parent / "scripts" / ".." / "L3-CITIZENS" / "MIMIR" / "data" / "metrics.db"
+    bridge_db = Path(os.environ.get("KIX_MIMIR_METRICS_DB", str(Path(__file__).resolve().parent.parent / "scripts" / ".." / "L3-CITIZENS" / "MIMIR" / "data" / "metrics.db")))
     bridge_db = bridge_db.resolve()
     db_path = bridge_db if bridge_db.exists() else default_db
     try:
@@ -164,7 +164,7 @@ def _load_phi_cps_history(limit: int = 20) -> list[dict[str, Any]]:
 
 
 def _load_recent_alerts(limit: int = 10) -> list[dict[str, Any]]:
-    bridge_db = Path(__file__).resolve().parent.parent / "scripts" / ".." / "L3-CITIZENS" / "MIMIR" / "data" / "metrics.db"
+    bridge_db = Path(os.environ.get("KIX_MIMIR_METRICS_DB", str(Path(__file__).resolve().parent.parent / "scripts" / ".." / "L3-CITIZENS" / "MIMIR" / "data" / "metrics.db")))
     bridge_db = bridge_db.resolve()
     if not bridge_db.exists():
         return []

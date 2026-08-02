@@ -1,0 +1,47 @@
+---
+type: REPO
+version: "1.0.0"
+date: "2026-08-02"
+status: ACTIVE
+intent_hash: "0xREPO_KIX_20260802"
+author: "V7.6_ENGINEERING"
+
+repo: gerivdb/KIX
+canonical_name: gerivdb/KIX
+local_path: "D:\\DO\\WEB\\TOOLS\\L2-PLATFORM\\KIX"
+stratum: L2-PLATFORM
+profil: PLATFORM
+rss_version: "2.3"
+structure_hash: sha256:PLACEHOLDER
+last_audited: "2026-08-02"
+conformite: EN_COURS
+remote_origin: "https://github.com/gerivdb/KIX.git"
+
+dossiers_presents:
+  - src
+  - tests
+  - scripts
+  - config
+  - data
+
+dossiers_manquants:
+  - .github/workflows  # À supprimer (interdiction ADR-024)
+  - .rssignore         # À créer
+
+fichiers_requis_absents:
+  - REPO.yaml          # ✅ Créé par ce fichier
+  - .rssignore         # À créer
+
+crosslinks:
+  - governance-hub: "L0-CANON/GOVERNANCE-HUB (known_repositories.yaml, OrgansRegistry.yaml)"
+  - mimir: "L3-CITIZENS/MIMIR (metrics.db)"
+  - path-registry: "L2-PLATFORM/PLIX (path-registry.yaml)"
+  - kiva-cli: "L1-INFRA/KIVA-CLI (kiva ci run KIX)"
+
+env_vars:
+  - KIX_KNOWN_REPOS_FILE: "Chemin vers known_repositories.yaml (défaut: L0-CANON/GOVERNANCE-HUB/known_repositories.yaml)"
+  - KIX_MIMIR_METRICS_DB: "Chemin vers metrics.db MIMIR (défaut: L3-CITIZENS/MIMIR/data/metrics.db)"
+
+role: ORCHESTRATOR
+description: "Central orchestrator for the gerivdb RLM/TLM/LLM runners. Port: 8800"
+do_not_edit: false

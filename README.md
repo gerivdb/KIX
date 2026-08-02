@@ -43,13 +43,17 @@ Port: **8800**
   - `remediation_policies` : politiques d’auto‑remédiation actives
   - `notification_metrics` : métriques de notification par canal
 
-### Intégration continue
+### Intégration continue (KIVA-CLI)
 
-Workflow GitHub Actions : `.github/workflows/ci.yml`
+Conformément à l'ADR-024 (CI souveraine), la CI KIX est gérée par KIVA-CLI :
 
-- Déclenché sur `push` et `pull_request` vers `main`
-- Exécute `pytest` sur Python 3.12
-- Variables d’environnement isolées (`KIX_DB`, `KIX_NOTIFICATIONS_DB`, `KIX_METRICS_DB`, `KIX_AUDIT_DB`)
+```powershell
+kiva ci run --dry-run KIX
+```
+
+- Validation souveraine sans dépendance GitHub Actions
+- Tests `pytest` sur Python 3.12
+- Variables d'environnement isolées (`KIX_DB`, `KIX_NOTIFICATIONS_DB`, `KIX_METRICS_DB`, `KIX_AUDIT_DB`)
 
 ### Monitoring cross-service
 
@@ -502,4 +506,5 @@ Paramètres :
 
 - Démarrage/arrêt des runners (`runner_start`, `runner_stop`)
 - Consultation de l'état de remédiation (`remediation_status_view`)
+
 
