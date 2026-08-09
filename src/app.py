@@ -24,14 +24,16 @@ from src.notification_store import NotificationStore
 from src.notification_metrics import NotificationMetricsStore
 from src.auth import login_required, create_token, _load_users
 from src.audit_log import AuditLogStore
+from src.zombie_monitor import zombie_bp
 
 app = Flask(__name__)
+app.register_blueprint(zombie_bp)
 
 STORE = RunnerStateStore(os.environ.get("KIX_DB", str(Path(__file__).resolve().parent.parent / "data" / "kix.sqlite")))
 NOTIFICATIONS = NotificationStore(os.environ.get("KIX_NOTIFICATIONS_DB", str(Path(__file__).resolve().parent.parent / "data" / "notifications.db")))
 METRICS = NotificationMetricsStore(os.environ.get("KIX_METRICS_DB", str(Path(__file__).resolve().parent.parent / "data" / "metrics.db")))
 AUDIT_LOG = AuditLogStore(os.environ.get("KIX_AUDIT_DB", str(Path(__file__).resolve().parent.parent / "data" / "audit.db")))
-KNOWN_REPO_FILE = os.environ.get("KIX_KNOWN_REPOS_FILE", str(Path(__file__).resolve().parents[3] / "L0-CANON" / "GOVERNANCE-HUB" / "known_repositories.yaml"))
+KNOWN_REPO_FILE = Path(os.environ.get("KIX_KNOWN_REPOS_FILE", str(Path(__file__).resolve().parents[3] / "L0-CANON" / "GOVERNANCE-HUB" / "known_repositories.yaml")))
 
 
 @dataclass
