@@ -19,6 +19,22 @@ zombie_bp = Blueprint("zombie_monitor", __name__, url_prefix="/health")
 # WAL NEXUS integration
 WAL_DIR = Path(__file__).resolve().parent.parent / ".kilo" / "wal"
 WAL_FILE = WAL_DIR / "zombie-monitor.jsonl"
+KG_L_EDGE_FILE = WAL_DIR / "kg-l-edges.jsonl"
+
+
+def log_kg_l_edge(src: str, dst: str, kind: str = "prevents", metadata: Optional[dict[str, Any]] = None) -> None:
+    """Émet un edge KG-L pour le graphe unifié d'exécution."""
+    KG_L_EDGE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    edge = {
+        "src": src,
+        "dst": dst,
+        "kind": kind,
+        "metadata": metadata or {},
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "intent_hash": "0xPRD_MOC_META_LOGIC_UNIFIED_EXECUTION_20260813",
+    }
+    with open(KG_L_EDGE_FILE, "a", encoding="utf-8") as f:
+        f.write(json.dumps(edge, ensure_ascii=False) + "\n")
 
 
 def log_wal(event_type: str, data: dict[str, Any]) -> None:
@@ -317,6 +333,31 @@ def purge_zombies(
             "priority": priority,
         },
     )
+
+    # Emit KG-L edges for zombies
+    for z in purged:
+        if z.get("type") in _ZOMBIE_PROCESS_NAMES:
+            log_kg_l_edge(
+                src="guard:zombie-threshold",
+                dst=f"process:{z['pid']}",
+                kind="prevents",
+                metadata={
+                    "zombie_type": z["type"],
+                    "name": z["name"],
+                    "action": z["action"],
+                    "reason": "process_zombie",
+                },
+            )
+        elif z.get("type") == "worktree":
+            log_kg_l_edge(
+                src="guard:worktree-hygiene",
+                dst=f"worktree:{z['path']}",
+                kind="prevents",
+                metadata={
+                    "action": z["action"],
+                    "reason": "worktree_zombie",
+                },
+            )
 
     return {
         "status": "purged" if not dry_run else "dry_run",
