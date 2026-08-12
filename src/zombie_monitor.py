@@ -386,6 +386,30 @@ def list_zombies() -> Any:
     for z in stash_zombies:
         summary["stash"] = summary.get("stash", 0) + 1
 
+    # Émettre edges KG-L pour les zombies détectés (pas seulement purgés)
+    for z in process_zombies:
+        log_kg_l_edge(
+            src="guard:zombie-threshold",
+            dst=f"process:{z['pid']}",
+            kind="prevents",
+            metadata={
+                "zombie_type": z.get("type", "unknown"),
+                "name": z.get("name", ""),
+                "reason": "process_zombie",
+                "age_hours": z.get("age_hours", 0),
+            },
+        )
+    for z in worktree_zombies:
+        log_kg_l_edge(
+            src="guard:worktree-hygiene",
+            dst=f"worktree:{z['path']}",
+            kind="prevents",
+            metadata={
+                "reason": "worktree_zombie",
+                "branch": z.get("branch", ""),
+            },
+        )
+
     return jsonify({
         "service": "kix",
         "timestamp": datetime.now(timezone.utc).isoformat(),
