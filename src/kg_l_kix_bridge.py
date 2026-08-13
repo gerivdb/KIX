@@ -1,282 +1,222 @@
+#!/usr/bin/env python3
 """
-KIX → KG-L Bridge — P6-2 Intégration temps réelle.
+KG-L KIX Bridge — Pont temps réel entre KIX Runner et KG-L.
 
-Appelé depuis :
-- runner_state.py après upsert()  → emit_runner_node()
-- zombie_monitor.py après détection → log_kg_l_edge() (déjà inline)
-- immune.py après calcul φ-CPS      → emit_edge()
+Ce bridge est appelé depuis KIX après:
+- runner_state.upsert() : création/modification runner
+- zombie_monitor.detect_zombies() : détection zombies
+- immune.py calcul φ-CPS : métriques KORX-L1
 
 Usage:
-    from kg_l_kix_bridge import emit_runner_node, emit_edge
-    emit_runner_node(name="gw-brain", status="running", pid=1234, ...)
-    emit_edge(src="korx-sem", dst="kg-l:root", kind="causes", metadata={...})
+    from kg_l_kix_bridge import KIXBridge
+    bridge = KIXBridge()
+    bridge.emit_runner_started(name, pid, port)
+    bridge.emit_zombie_detected(pid, name)
+    bridge.emit_phi_cps_update(phi_cps)
 """
-
 from __future__ import annotations
 
 import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
-# ── Chemin vers le runtime KG-L (GeriCode) ─────────────────────────────────────
+# Runtime KG-L — try multiple paths for cross-repo compatibility
+_RUNTIME_DIR = Path(__file__).resolve().parents[2] / ".kilo" / "skills" / "kg-l-runtime" / "runtime"
+_ALT_RUNTIME_DIR = Path(__file__).resolve().parent.parent / ".kilo" / "skills" / "kg-l-runtime" / "runtime"
+_GERICODE_RUNTIME = Path(r"D:\DO\WEB\TOOLS\L2-PLATFORM\GeriCode\.kilo\skills\kg-l-runtime\runtime")
+if _RUNTIME_DIR.exists():
+    sys.path.insert(0, str(_RUNTIME_DIR))
+elif _ALT_RUNTIME_DIR.exists():
+    sys.path.insert(0, str(_ALT_RUNTIME_DIR))
+elif _GERICODE_RUNTIME.exists():
+    sys.path.insert(0, str(_GERICODE_RUNTIME))
 
-GERICODE_RUNTIME_DIR = Path(
-    r"D:\DO\WEB\TOOLS\L2-PLATFORM\GeriCode\.kilo\worktrees\feat-unified-execution-phase6"
-    r"\.kilo\skills\kg-l-runtime\runtime"
-)
-
-if str(GERICODE_RUNTIME_DIR) not in sys.path:
-    sys.path.insert(0, str(GERICODE_RUNTIME_DIR))
-
-# WAL local KIX (prioritaire sur WAL partagé)
-WAL_DIR = Path(__file__).resolve().parents[1] / ".kilo" / "wal"
-KG_L_EDGE_FILE = WAL_DIR / "kg-l-edges.jsonl"
-WAL_DIR.mkdir(parents=True, exist_ok=True)
+from kg_l import KGLRuntime, KGNode, KGEdge  # noqa: E402
 
 
-# ── Helpers ─────────────────────────────────────────────────────────────────────
+class KIXBridge:
+    """Pont temps réel KIX -> KG-L."""
+
+    def __init__(self, runtime: Optional[KGLRuntime] = None) -> None:
+        self.runtime = runtime or KGLRuntime(name="kix-live")
+        self._edge_log_path = Path(__file__).resolve().parent.parent / ".kilo" / "wal" / "kg-l-edges.jsonl"
+        self._edge_log_path.parent.mkdir(parents=True, exist_ok=True)
+
+    def emit_runner_started(
+        self,
+        name: str,
+        pid: Optional[int] = None,
+        port: Optional[int] = None,
+        status: str = "running",
+    ) -> KGNode:
+        """
+        Émet un nœud runner + edge lors du démarrage.
+
+        Args:
+            name: Nom du runner
+            pid: PID du processus
+            port: Port d'écoute
+            status: Statut initial
+
+        Returns:
+            KGNode créé
+        """
+        node = KGNode(
+            id=f"runner:{name}",
+            kind="runner",
+            metadata={
+                "status": status,
+                "pid": pid,
+                "port": port,
+                "started_at": self._utcnow_iso(),
+                "instance_type": "runner",
+            },
+        )
+        self.runtime.add_node(node.id, kind=node.kind, **node.metadata)
+
+        edge = KGEdge(
+            src=f"runner:{name}:start",
+            dst=f"runner:{name}",
+            kind="causes",
+            metadata={"event": "runner_started", "pid": pid, "port": port, "timestamp": self._utcnow_iso()},
+        )
+        self.runtime.add_edge(edge.src, edge.dst, kind=edge.kind, **edge.metadata)
+        self._log_edge(edge)
+        return node
+
+    def emit_runner_stopped(self, name: str) -> None:
+        """Émet la transition RUNNING -> STOPPED."""
+        runner_id = f"runner:{name}"
+        if runner_id in self.runtime.graph.nodes:
+            self.runtime.graph.nodes[runner_id].metadata["status"] = "stopped"
+
+        edge = KGEdge(
+            src=f"runner:{name}:stop",
+            dst=runner_id,
+            kind="causes",
+            metadata={"event": "runner_stopped", "timestamp": self._utcnow_iso()},
+        )
+        self.runtime.add_edge(edge.src, edge.dst, kind=edge.kind, **edge.metadata)
+        self._log_edge(edge)
+
+    def emit_zombie_detected(
+        self,
+        pid: int,
+        name: str,
+        age_hours: float = 0.0,
+        zombie_type: str = "process",
+    ) -> None:
+        """
+        Émet un edge prevents pour un zombie détecté.
+
+        Args:
+            pid: PID du processus zombie
+            name: Nom du runner/processus
+            age_hours: Âge en heures
+            zombie_type: Type de zombie
+        """
+        dst = f"process:{pid}" if zombie_type == "process" else f"worktree:{name}"
+        edge = KGEdge(
+            src="guard:zombie-threshold",
+            dst=dst,
+            kind="prevents",
+            metadata={
+                "reason": "zombie",
+                "zombie_type": zombie_type,
+                "name": name,
+                "pid": pid,
+                "age_hours": age_hours,
+                "timestamp": self._utcnow_iso(),
+            },
+        )
+        self.runtime.add_edge(edge.src, edge.dst, kind=edge.kind, **edge.metadata)
+        self._log_edge(edge)
+
+    def emit_phi_cps_update(self, phi_cps: float, soma_metrics: Optional[dict[str, Any]] = None) -> None:
+        """
+        Émet un nœud métrique pour φ-CPS.
+
+        Args:
+            phi_cps: Score φ-CPS actuel
+            soma_metrics: Métriques SOMA associées
+        """
+        metric_id = "soma:phi_cps"
+        metadata: dict[str, Any] = {
+            "phi_cps": phi_cps,
+            "timestamp": self._utcnow_iso(),
+            "instance_type": "metric",
+        }
+        if soma_metrics:
+            metadata["soma_metrics"] = soma_metrics
+
+        self.runtime.add_node(metric_id, kind="metric", **metadata)
+
+        edge = KGEdge(
+            src="kix:immune",
+            dst=metric_id,
+            kind="causes",
+            metadata={"event": "phi_cps_update", "phi_cps": phi_cps, "timestamp": self._utcnow_iso()},
+        )
+        self.runtime.add_edge(edge.src, edge.dst, kind=edge.kind, **edge.metadata)
+        self._log_edge(edge)
+
+    def _log_edge(self, edge: KGEdge) -> None:
+        """Log l'edge dans le WAL KG-L."""
+        try:
+            record = {
+                "src": edge.src,
+                "dst": edge.dst,
+                "kind": edge.kind,
+                "metadata": edge.metadata,
+                "timestamp": self._utcnow_iso(),
+                "intent_hash": "0xPRD_MOC_META_LOGIC_UNIFIED_EXECUTION_20260813",
+            }
+            with open(self._edge_log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(record, ensure_ascii=False) + "\n")
+        except Exception:
+            pass
+
+    @staticmethod
+    def _utcnow_iso() -> str:
+        return datetime.now(timezone.utc).isoformat()
 
 
-def _timestamp() -> str:
-    return datetime.now(timezone.utc).isoformat()
-
-
-def _append_wal(record: Dict[str, Any]) -> None:
-    """Ajoute un enregistrement au WAL KG-L (best-effort)."""
-    try:
-        with KG_L_EDGE_FILE.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps({"ts": _timestamp(), **record}, ensure_ascii=False) + "\n")
-    except Exception:
-        pass  # best-effort
-
-
-def _load_runtime() -> Optional[Any]:
-    """
-    Tente d'importer le runtime KG-L en mémoire.
-    Retourne None si les modules ne sont pas disponibles.
-    """
-    try:
-        from kg_l import KGLRuntime  # noqa: F401
-
-        return KGLRuntime(name="kix-runtime")
-    except Exception:
-        return None
-
-
-# ── API publique ───────────────────────────────────────────────────────────────
-
-
+# Aliases de compatibilité pour les callers existants
 def emit_runner_node(
     name: str,
-    status: str,
+    status: str = "unknown",
     pid: Optional[int] = None,
     started_at: Optional[str] = None,
     updated_at: Optional[str] = None,
-    metadata: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
-    """
-    Émet un nœud KG-L pour un runner KIX.
+    port: Optional[int] = None,
+) -> None:
+    """Alias compat: emit_runner_node -> emit_runner_started."""
+    bridge = KIXBridge()
+    bridge.emit_runner_started(name=name, status=status, pid=pid, port=port)
 
-    Args:
-        name: Nom du runner
-        status: Statut (running/stopped/error/...)
-        pid: PID du processus (si démarré)
-        started_at: Timestamp de démarrage (ISO)
-        updated_at: Timestamp de mise à jour (ISO)
-        metadata: Métadonnées additionnelles
 
-    Returns:
-        Dict avec l'enregistrement WAL émis
-    """
-    node_id = f"runner:{name}"
-    node_meta: Dict[str, Any] = {
-        "status": status,
-        "pid": pid,
-        "started_at": started_at,
-        "updated_at": updated_at,
-        "instance_type": "runner",
-        "source": "kix-bridge",
-    }
-    if metadata:
-        node_meta.update(metadata)
-
-    record = {
-        "event": "node_create",
-        "node_id": node_id,
-        "kind": "runner",
-        "metadata": node_meta,
-    }
-    _append_wal(record)
-
-    # Runtime en mémoire (optionnel)
-    runtime = _load_runtime()
-    if runtime is not None:
+def emit_edge(src: str, dst: str, kind: str = "causes", metadata: Optional[dict[str, Any]] = None) -> None:
+    """Alias compat: emit_edge -> emit_phi_cps_update or generic edge."""
+    bridge = KIXBridge()
+    if kind == "prevents":
+        # Generic prevents edge
+        edge = KGEdge(src=src, dst=dst, kind=kind, metadata=metadata or {})
+        bridge.runtime.add_edge(src, dst, kind=kind, **(metadata or {}))
         try:
-            from kg_l_kix_adapter import RunnerAdapter  # noqa: F401
-
-            node = RunnerAdapter.add_runner_to_runtime(
-                runtime,
-                name=name,
-                status=status,
-                pid=pid,
-                started_at=started_at,
-                updated_at=updated_at,
-            )
-            # Edge causes : runner enregistré → runner running (si status=running)
-            if status == "running":
-                runtime.add_edge(
-                    node_id,
-                    node_id,
-                    kind="causes",
-                    metadata={"event": "start", "source": "kix-bridge"},
-                )
+            record = {
+                "src": src,
+                "dst": dst,
+                "kind": kind,
+                "metadata": metadata or {},
+                "timestamp": KIXBridge._utcnow_iso(),
+                "intent_hash": "0xPRD_MOC_META_LOGIC_UNIFIED_EXECUTION_20260813",
+            }
+            with open(bridge._edge_log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(record, ensure_ascii=False) + "\n")
         except Exception:
-            pass  # best-effort
-
-    return record
-
-
-def emit_edge(
-    src: str,
-    dst: str,
-    kind: str = "causes",
-    metadata: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
-    """
-    Émet un edge KG-L générique.
-
-    Args:
-        src: ID du nœud source
-        dst: ID du nœud destination
-        kind: Type d'edge (causes/depends_on/prevents/governed_by/...)
-        metadata: Métadonnées additionnelles
-
-    Returns:
-        Dict avec l'enregistrement WAL émis
-    """
-    record = {
-        "event": "edge_add",
-        "src": src,
-        "dst": dst,
-        "kind": kind,
-        "metadata": metadata or {},
-    }
-    _append_wal(record)
-
-    # Runtime en mémoire (optionnel)
-    runtime = _load_runtime()
-    if runtime is not None:
-        try:
-            runtime.add_edge(src, dst, kind=kind, **(metadata or {}))
-        except Exception:
-            pass  # best-effort
-
-    return record
-
-
-def emit_runner_stop(name: str, exit_code: Optional[int] = None) -> Dict[str, Any]:
-    """
-    Émet un edge causes pour l'arrêt d'un runner.
-
-    Args:
-        name: Nom du runner
-        exit_code: Code de sortie (si disponible)
-
-    Returns:
-        Dict avec l'enregistrement WAL émis
-    """
-    final_state = "error" if exit_code not in (0, None) else "stopped"
-    return emit_edge(
-        src=f"runner:{name}",
-        dst=f"runner:{name}",
-        kind="causes",
-        metadata={
-            "event": "stop",
-            "final_state": final_state,
-            "exit_code": exit_code,
-            "source": "kix-bridge",
-        },
-    )
-
-
-def emit_zombie_prevent(
-    pid: int,
-    zombie_type: str,
-    name: str,
-    age_hours: float = 0.0,
-) -> Dict[str, Any]:
-    """
-    Émet un edge prevents pour un processus zombie détecté.
-
-    Args:
-        pid: PID du processus zombie
-        zombie_type: Type de zombie (git/node/python/...)
-        name: Nom du processus
-        age_hours: Âge en heures
-
-    Returns:
-        Dict avec l'enregistrement WAL émis
-    """
-    return emit_edge(
-        src="guard:zombie-threshold",
-        dst=f"process:{pid}",
-        kind="prevents",
-        metadata={
-            "zombie_type": zombie_type,
-            "name": name,
-            "reason": "process_zombie",
-            "age_hours": age_hours,
-            "source": "kix-bridge",
-        },
-    )
-
-
-# ── CLI (pour tests manuels) ───────────────────────────────────────────────────
-
-
-def main(argv: Optional[list] = None) -> int:
-    import argparse
-
-    parser = argparse.ArgumentParser(
-        prog="kg_l_kix_bridge",
-        description="KIX → KG-L bridge — émet edges depuis runner_state/zombie_monitor/immune.",
-    )
-    sub = parser.add_subparsers(dest="command", required=True)
-
-    # runner-node
-    p_node = sub.add_parser("runner-node", help="Émet un nœud runner KG-L")
-    p_node.add_argument("name")
-    p_node.add_argument("--status", default="running")
-    p_node.add_argument("--pid", type=int, default=None)
-    p_node.add_argument("--started-at", default=None)
-    p_node.add_argument("--updated-at", default=None)
-
-    # edge
-    p_edge = sub.add_parser("edge", help="Émet un edge KG-L générique")
-    p_edge.add_argument("src")
-    p_edge.add_argument("dst")
-    p_edge.add_argument("--kind", default="causes")
-
-    args = parser.parse_args(argv)
-
-    if args.command == "runner-node":
-        rec = emit_runner_node(
-            name=args.name,
-            status=args.status,
-            pid=args.pid,
-            started_at=args.started_at,
-            updated_at=args.updated_at,
-        )
-        print(f"[KIX/KG-L] runner-node emitted: {rec['node_id']}")
-    elif args.command == "edge":
-        rec = emit_edge(src=args.src, dst=args.dst, kind=args.kind)
-        print(f"[KIX/KG-L] edge emitted: {args.src} --{args.kind}-> {args.dst}")
-
-    return 0
-
-
-if __name__ == "__main__":
-    import sys
-    sys.exit(main())
+            pass
+    else:
+        # Default: treat as phi_cps_update-like event
+        bridge.emit_phi_cps_update(phi_cps=0.0, soma_metrics=metadata)
