@@ -1,0 +1,70 @@
+# ONTOLOGY_DECLARATION.yaml — schéma RSS-v2.3
+version: "1.0"
+repo: "KIX"
+type: "consumer"
+last_audited: "2026-08-09"
+
+concepts:
+  - id: "kix"
+    status: "actif"
+    description: "Orchestrateur central des runners RLM/TLM/LLM. Port 8800. Agrège statuts, métriques, alertes et politiques d’auto-remediation."
+    nexus_index: "gerivdb/NEXUS/concepts/kix"
+    last_updated: "2026-08-09"
+    definition_source: "REPO.yaml"
+
+  - id: "orchestrator-runner"
+    status: "actif"
+    description: "Orchestrateur de runners — centralise le cycle de vie des runners RLM/TLM/LLM"
+    nexus_index: "gerivdb/NEXUS/concepts/orchestrator-runner"
+    last_updated: "2026-08-09"
+    definition_source: "REPO.yaml"
+
+  - id: "rlm-runner"
+    status: "actif"
+    description: "RLM Runner — Release Lifecycle Manager, port 8800"
+    nexus_index: "gerivdb/NEXUS/concepts/rlm-runner"
+    last_updated: "2026-08-09"
+    definition_source: "service.py"
+
+  - id: "metrics-collection"
+    status: "actif"
+    description: "Collecte de métriques — aggregation metrics.db via MIMIR"
+    nexus_index: "gerivdb/NEXUS/concepts/metrics-collection"
+    last_updated: "2026-08-09"
+    definition_source: "REPO.yaml"
+
+  - id: "trix"
+    status: "actif"
+    description: "Runtime syscall souverain pour ENV2. Dispatch 243, isolation namespaces/seccomp, cible Windows/WSL1."
+    nexus_index: "gerivdb/NEXUS/concepts/trix"
+    last_updated: "2026-08-09"
+    definition_source: "README.md"
+
+ontology_lifecycle: "SPEC/ontology-lifecycle-protocol.md"
+nexus_indexer: "SPEC/nexus-concept-indexer-protocol.md"
+argus_wiring: "SPEC/argus-wiring-protocol.md"
+
+relationships:
+  - type: "consumes"
+    source: "KIX"
+    target: "ONTOLOGY"
+
+  - type: "depends_on"
+    source: "KIX"
+    target: "RLM"
+
+  - type: "depends_on"
+    source: "KIX"
+    target: "TIMX"
+
+  - type: "depends_on"
+    source: "KIX"
+    target: "PIANO"
+
+  - type: "depends_on"
+    source: "KIX"
+    target: "MIMIR"
+
+  - type: "depends_on"
+    source: "KIX"
+    target: "TRIX"
