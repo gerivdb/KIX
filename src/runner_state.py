@@ -1,4 +1,4 @@
-"""Persistent runner state store (SQLite)."""
+"""Persistent runner state store (SQLite + KORX-L1 binary cache)."""
 
 from __future__ import annotations
 
@@ -26,6 +26,16 @@ class RunnerStateStore:
         Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
         self._local = threading.local()
         self._init_schema()
+        self._korx = None
+
+    def _get_korx(self):
+        if self._korx is None:
+            try:
+                from kix.immune import KORXStateKernel
+                self._korx = KORXStateKernel()
+            except Exception:
+                self._korx = False
+        return self._korx if self._korx else None
 
     def _conn(self) -> sqlite3.Connection:
         if not hasattr(self._local, "conn") or self._local.conn is None:
@@ -69,8 +79,21 @@ class RunnerStateStore:
                     started_at=excluded.started_at,
                     updated_at=excluded.updated_at
                 """,
-                (name, status, pid, started_at, updated_at),
+                                (name, status, pid, started_at, updated_at),
             )
+
+            # P2-2: KG-L KIX bridge â€” emit runner node after upsert
+            try:
+                from kg_l_kix_bridge import emit_runner_node
+                emit_runner_node(
+                    name=name,
+                    status=status,
+                    pid=pid,
+                    started_at=started_at,
+                    updated_at=updated_at,
+                )
+            except Exception:
+                pass  # Best effort
 
     def list_all(self) -> dict[str, RunnerRecord]:
         with self.transaction() as conn:
@@ -98,3 +121,32 @@ class RunnerStateStore:
             started_at=row["started_at"],
             updated_at=row["updated_at"],
         )
+
+    def register_git_process(self, pid: int) -> bool:
+        korx = self._get_korx()
+        if korx is None:
+            return False
+        return korx.register_git_process(pid)
+
+    def unregister_git_process(self, pid: int) -> None:
+        korx = self._get_korx()
+        if korx is None:
+            return
+        korx.unregister_git_process(pid)
+
+    def get_git_semaphore_state(self) -> dict[str, Any]:
+        korx = self._get_korx()
+        if korx is None:
+            return {"available": True, "git_count": 0, "max_git": 4}
+        return {
+            "available": korx.can_spawn_git(),
+            "git_count": korx.read_git_count(),
+            "max_git": 4,
+            "git_pids": korx.read_git_pids(),
+        }
+
+    def get_phi_cps(self) -> float:
+        korx = self._get_korx()
+        if korx is None:
+            return 4.559
+        return korx.read_phi_cps()
