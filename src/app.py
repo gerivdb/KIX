@@ -1038,3 +1038,94 @@ connect();
 </html>
 """
     return html, 200, {"Content-Type": "text/html; charset=utf-8"}
+
+@app.post('/process/release-handles')
+@login_required(roles=['admin', 'operator'])
+def release_handles() -> Any:
+    if not request.is_json:
+        return jsonify({'error': 'body_must_be_json'}), 400
+
+    data = request.get_json() or {}
+    pid = data.get('pid')
+    worktree_path = data.get('worktree_path')
+    timeout = int(data.get('timeout', 5))
+
+    if not pid and not worktree_path:
+        return jsonify({'error': 'missing_fields', 'details': 'pid or worktree_path is required'}), 400
+
+    released = 0
+    details = []
+    status = 'released'
+
+    if pid:
+        try:
+            if sys.platform == 'win32':
+                proc = subprocess.run(
+                    ['taskkill', '/F', '/T', '/PID', str(pid)],
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout,
+                )
+                if proc.returncode == 0:
+                    released += 1
+                    details.append(f'killed_tree_pid={pid}')
+                else:
+                    details.append(f'taskkill_failed_pid={pid}:{proc.stderr.strip()}')
+            else:
+                os.kill(pid, 9)
+                released += 1
+                details.append(f'killed_pid={pid}')
+        except subprocess.TimeoutExpired:
+            status = 'pending_gc'
+            details.append(f'timeout_pid={pid}')
+        except OSError as exc:
+            details.append(f'kill_error_pid={pid}:{exc}')
+
+    if worktree_path:
+        handle_exe = Path(r'C:\Program Files\Sysinternals\handle.exe')
+        if not handle_exe.exists():
+            handle_exe = Path(r'C:\Program Files (x86)\Sysinternals\handle.exe')
+        if handle_exe.exists():
+            try:
+                args = [str(handle_exe), '-nobanner']
+                if pid:
+                    args.extend(['-p', str(pid)])
+                else:
+                    args.append(str(worktree_path))
+                proc = subprocess.run(
+                    args,
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout,
+                )
+                stdout = proc.stdout.strip()
+                if stdout:
+                    details.append(f'handle_scan:{stdout[:200]}')
+            except Exception as exc:
+                details.append(f'handle_error:{exc}')
+        else:
+            details.append('handle_exe_not_found')
+
+    if not details:
+        details.append('noop')
+
+    AUDIT_LOG.record(
+        'release_handles',
+        '/process/release-handles',
+        'POST',
+        getattr(request, 'user', {}).get('sub'),
+        details=';'.join(details),
+        ip_address=request.remote_addr,
+    )
+
+    return jsonify({
+        'status': status,
+        'pid': pid,
+        'worktree_path': worktree_path,
+        'released_handles': released,
+        'details': details,
+    }), 200 if status == 'released' else 202
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=KIX_PORT, debug=False)

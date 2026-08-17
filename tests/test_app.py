@@ -12,6 +12,7 @@ from src.notification_store import NotificationRecord
 from src.notification_metrics import NotificationMetrics
 from src.auto_remediation import RemediationResult
 from src.audit_log import AuditLogStore
+from src.auth import create_token
 
 
 @pytest.fixture
@@ -285,4 +286,60 @@ def test_cross_service_status_returns_snapshot(client, tmp_path: Path) -> None:
             assert "timestamp" in data
             assert data["service"] == "kix"
 
+
+
+
+def test_release_handles_requires_json(client) -> None:
+    token = create_token('admin', 'admin')
+    resp = client.post('/process/release-handles', data='not json', headers={'Authorization': f'Bearer {token}'})
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert data['error'] == 'body_must_be_json'
+
+
+def test_release_handles_requires_pid_or_path(client) -> None:
+    token = create_token('admin', 'admin')
+    resp = client.post('/process/release-handles', json={}, headers={'Authorization': f'Bearer {token}'})
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert data['error'] == 'missing_fields'
+
+
+def test_release_handles_kills_pid(client) -> None:
+    token = create_token('admin', 'admin')
+    with patch('src.app.subprocess.run') as mock_run:
+        mock_run.return_value.returncode = 0
+        mock_run.return_value.stdout = ''
+        mock_run.return_value.stderr = ''
+        resp = client.post('/process/release-handles', json={'pid': 1234}, headers={'Authorization': f'Bearer {token}'})
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data['status'] == 'released'
+        assert data['released_handles'] == 1
+        assert 'killed_tree_pid=1234' in data['details']
+
+
+def test_release_handles_pending_gc_on_timeout(client) -> None:
+    import subprocess
+    token = create_token('admin', 'admin')
+    with patch('src.app.subprocess.run', side_effect=subprocess.TimeoutExpired(cmd='taskkill', timeout=5)):
+        resp = client.post('/process/release-handles', json={'pid': 1234, 'timeout': 5}, headers={'Authorization': f'Bearer {token}'})
+        assert resp.status_code == 202
+        data = resp.get_json()
+        assert data['status'] == 'pending_gc'
+
+
+def test_release_handles_worktree_path_only(client) -> None:
+    token = create_token('admin', 'admin')
+    with patch('src.app.subprocess.run') as mock_run:
+        mock_run.return_value.returncode = 0
+        mock_run.return_value.stdout = ''
+        mock_run.return_value.stderr = ''
+        with patch('src.app.Path') as mock_path:
+            mock_path.return_value.exists.return_value = False
+            resp = client.post('/process/release-handles', json={'worktree_path': r'D:\DO\WEB\TOOLS\L2-PLATFORM\KIX\.kilo\worktrees\wt-kix-process-release'}, headers={'Authorization': f'Bearer {token}'})
+            assert resp.status_code == 200
+            data = resp.get_json()
+            assert data['status'] == 'released'
+            assert 'handle_exe_not_found' in data['details']
 
