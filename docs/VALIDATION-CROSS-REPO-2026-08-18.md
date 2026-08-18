@@ -1,20 +1,20 @@
 # Validation Cross-Repo — KIX Generic Runner Wrapper
 
 Date : 2026-08-18
-Statut : Phase 1 implémentée, Phases 2-4 en attente de validation runtime
+Statut : Phase 1-4 codées et testées unitairement, runtime validation en attente (sauf BUZZ-X bloqué)
 
 ## Résumé
 
 L'architecture KIX Generic Runner Wrapper est codée et testée unitairement dans KIX.
 Les runners suivants sont déclarés dans `config/runners.yaml` :
 
-| Runner | Type | Repo | Validation runtime |
-|--------|------|------|-------------------|
-| `kix` | python | KIX | ✅ KIX lui-même |
-| `gateway-manager` | gateway-exe | GATEWAY-MANAGER | ⏳ Phase 2 |
-| `trixd` | zig-binary | TRIX | ⏳ Phase 3 |
-| `wazaa` | python | WAZAA | ⏳ Phase 4 |
-| `buzz` | python | BUZZ-X | ❌ Phase 4 bloquée (non fonctionnel) |
+| Runner | Type | Repo | Tests unitaires | Validation runtime |
+|--------|------|------|-----------------|-------------------|
+| `kix` | python | KIX | ✅ 134 passed | ✅ KIX lui-même |
+| `gateway-manager` | gateway-exe | GATEWAY-MANAGER | ✅ 11 passed | ⏳ Phase 2 (GM doit être lancé) |
+| `trixd` | zig-binary | TRIX | ✅ 7 passed | ⏳ Phase 3 (zig build trixd requis) |
+| `wazaa` | python | WAZAA | ✅ 4 passed | ⏳ Phase 4 (server.py doit démarrer) |
+| `buzz` | python | BUZZ-X | ❌ N/A | ❌ Phase 4 bloquée (non fonctionnel) |
 
 ## Validation statique
 
@@ -175,12 +175,17 @@ Sortie attendue :
 
 ```powershell
 cd D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
-python -m pytest tests/test_runners.py tests/test_runners_integration.py -v
+python -m pytest tests/ -q -k "not test_known_repositories_loader"
 ```
 
+**Résultat** : 165 passed, 2 skipped, 1 deselected (pré-existant worktree).
+
 Couverture :
-- `test_runners.py` : 21 tests unitaires (RunnerSpec, Registry, PythonRunner, ZigBinaryRunner, GatewayRunner)
-- `test_runners_integration.py` : 9 tests d'intégration (lifecycle, endpoints)
+- `tests/test_runners.py` : 21 tests — RunnerSpec, Registry, PythonRunner, ZigBinaryRunner, GatewayRunner
+- `tests/test_runners_integration.py` : 9 tests — lifecycle runners + endpoints `/swarm/status`, `/doctor`, `/doctor/run`
+- `tests/test_gateway_runner_phase2.py` : 11 tests — GatewayRunner CLI, health, logs, restart, bootstrap
+- `tests/test_trix_runner_phase3.py` : 7 tests — ZigBinaryRunner build pre_start, health, logs
+- `tests/test_wazaa_runner_phase4.py` : 4 tests — PythonRunner WAZAA, dépendance kix uniquement (pas buzz)
 
 ## Gates
 
