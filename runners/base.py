@@ -29,6 +29,7 @@ class RunnerSpec:
     restart_policy: str | None = None
     log_file: Path | None = None
     meta: dict[str, Any] | None = None
+    headers: dict[str, str] | None = None
 
 
 class RunnerBase(ABC):

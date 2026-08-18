@@ -35,7 +35,9 @@ runners:
       required: true
       pre_start: true
     depends_on: [kix]
-    health_path: /healthz
+    health_path: /health
+    headers:
+      Authorization: "Bearer ${TRIX_DAEMON_TOKEN}"
     restart_policy: on-failure
     log_file: D:/DO/WEB/TOOLS/L4-TOOLS/TRIX/data/trixd.log
     meta:

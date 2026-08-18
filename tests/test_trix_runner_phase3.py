@@ -79,7 +79,7 @@ class TestZigBinaryRunnerPhase3:
             working_dir=tmp_path,
             binary="trixd.exe",
             build={"command": ["zig", "build", "trixd"], "required": True, "pre_start": False},
-            health_path="/healthz",
+            health_path="/health",
         )
         (tmp_path / "trixd.exe").write_text("", encoding="utf-8")
         runner = ZigBinaryRunner(spec)

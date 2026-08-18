@@ -49,7 +49,7 @@ class GatewayRunner(RunnerBase):
         return {"status": "running" if alive else "stopped", "pid": pid}
 
     def health(self) -> dict:
-        return _probe_http(self.spec.port, self.spec.health_path, self.spec.health_timeout)
+        return _probe_http(self.spec.port, self.spec.health_path, self.spec.health_timeout, self.spec.headers)
 
     def logs(self, lines: int = 100) -> str:
         log_file = self._resolve_log_file()
@@ -82,12 +82,12 @@ def _is_process_alive(pid: int) -> bool:
         return False
 
 
-def _probe_http(port: int, path: str, timeout: float) -> dict:
+def _probe_http(port: int, path: str, timeout: float, headers: dict[str, str] | None = None) -> dict:
     import requests
 
     url = f"http://localhost:{port}{path}"
     try:
-        resp = requests.get(url, timeout=timeout)
+        resp = requests.get(url, timeout=timeout, headers=headers)
         if resp.status_code == 200:
             return {"status": "ok", "http_status": resp.status_code}
         return {"status": "unhealthy", "http_status": resp.status_code}
