@@ -1,0 +1,64 @@
+runners:
+  - name: kix
+    runner_type: python
+    port: 8800
+    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+    entrypoint: src/app.py
+    bootstrap: true
+    health_path: /healthz
+    restart_policy: always
+    log_file: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX/data/kix.log
+    meta:
+      repo: gerivdb/KIX
+      role: orchestrator
+
+  - name: gateway-manager
+    runner_type: gateway-exe
+    port: 9000
+    working_dir: D:/DO/WEB/TOOLS/L1-INFRA/GATEWAY-MANAGER
+    command: ["gateway-manager", "start", "--port", "9000"]
+    bootstrap: true
+    health_path: /health
+    restart_policy: always
+    log_file: D:/DO/WEB/TOOLS/L1-INFRA/GATEWAY-MANAGER/data/gateway.log
+    meta:
+      repo: gerivdb/GATEWAY-MANAGER
+      role: BDCP proxy, PAT rotation
+
+  - name: trixd
+    runner_type: zig-binary
+    port: 7243
+    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/TRIX
+    binary: zig-out/bin/trixd.exe
+    build:
+      command: ["zig", "build", "trixd"]
+      required: true
+      pre_start: true
+    depends_on: [kix]
+    health_path: /healthz
+    restart_policy: on-failure
+    log_file: D:/DO/WEB/TOOLS/L4-TOOLS/TRIX/data/trixd.log
+    meta:
+      repo: gerivdb/TRIX
+      role: zig runtime
+
+  - name: wazaa
+    runner_type: python
+    port: 5002
+    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/WAZAA
+    entrypoint: tools/mission_control/server.py
+    depends_on: [kix]
+    restart_policy: on-failure
+    log_file: D:/DO/WEB/TOOLS/L4-TOOLS/WAZAA/data/wazaa.log
+    meta:
+      repo: gerivdb/WAZAA
+      role: multi-agent orchestration
+
+  # - name: buzz
+  #   runner_type: python
+  #   port: 60001
+  #   working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/BUZZ-X
+  #   entrypoint: scripts/busrunner.py
+  #   depends_on: [kix, trixd]
+  #   restart_policy: on-failure
+  #   ⚠️ BUZZ-X NON FONCTIONNEL — à activer quand busrunner.py sera opérationnel

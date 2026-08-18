@@ -25,6 +25,8 @@ from src.notification_metrics import NotificationMetricsStore
 from src.auth import login_required, create_token, _load_users
 from src.audit_log import AuditLogStore
 from src.zombie_monitor import zombie_bp
+from runners.registry import load_runners_config, get_runner
+from runners.base import RunnerBase, RunnerSpec
 
 app = Flask(__name__)
 app.register_blueprint(zombie_bp)
@@ -146,6 +148,25 @@ def _sync_runners() -> dict[str, Runner]:
                     updated_at=now,
                 )
     return runners
+
+
+_RUNNERS_CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "runners.yaml"
+_RUNNER_INSTANCES: dict[str, RunnerBase] = {}
+
+
+def _load_runners_config() -> list[RunnerSpec]:
+    """Charge la configuration déclarative des runners depuis runners.yaml."""
+    return load_runners_config(_RUNNERS_CONFIG_PATH)
+
+
+def _get_runner_instance(name: str) -> RunnerBase | None:
+    """Retourne une instance RunnerBase pour le runner nommé, ou None."""
+    if name not in _RUNNER_INSTANCES:
+        for spec in _load_runners_config():
+            if spec.name == name:
+                _RUNNER_INSTANCES[name] = get_runner(spec)
+                break
+    return _RUNNER_INSTANCES.get(name)
 
 
 def _load_phi_cps_history(limit: int = 20) -> list[dict[str, Any]]:
@@ -535,6 +556,144 @@ def stop_runner(name: str) -> Any:
         ip_address=request.remote_addr,
     )
     return jsonify({"status": "stopped", "name": name})
+
+
+@app.get("/runners/<string:name>/health")
+def runner_health(name: str) -> Any:
+    runner = _get_runner_instance(name)
+    if runner is None:
+        return jsonify({"error": "runner_not_found", "name": name}), 404
+    result = runner.health()
+    code = 200 if result.get("status") == "ok" else 503
+    return jsonify(result), code
+
+
+@app.get("/runners/<string:name>/logs")
+def runner_logs(name: str) -> Any:
+    runner = _get_runner_instance(name)
+    if runner is None:
+        return jsonify({"error": "runner_not_found", "name": name}), 404
+    lines = int(request.args.get("lines", "100"))
+    content = runner.logs(lines=lines)
+    return app.response_class(content, mimetype="text/plain; charset=utf-8")
+
+
+@app.post("/runners/<string:name>/restart")
+@login_required(roles=["admin", "operator"])
+def restart_runner(name: str) -> Any:
+    runners = _sync_runners()
+    runner = runners.get(name)
+    if not runner:
+        return jsonify({"error": "runner_not_found", "name": name}), 404
+    instance = _get_runner_instance(name)
+    if instance is None:
+        return jsonify({"error": "runner_not_configured", "name": name}), 404
+    pid = runner.pid
+    if pid:
+        result = instance.restart(pid)
+    else:
+        result = instance.start()
+    now = _utcnow()
+    status = result.get("status", "starting")
+    STORE.upsert(name, status=status, pid=result.get("pid"), started_at=now, updated_at=now)
+    AUDIT_LOG.record(
+        "runner_restart",
+        f"/runners/{name}/restart",
+        "POST",
+        getattr(request, "user", {}).get("sub"),
+        details=f"restarted {name}",
+        ip_address=request.remote_addr,
+    )
+    return jsonify({"status": status, "name": name, "pid": result.get("pid")})
+
+
+@app.get("/doctor")
+def doctor() -> Any:
+    runners = _load_runners_config()
+    results: list[dict[str, Any]] = []
+    for spec in runners:
+        instance = get_runner(spec)
+        health = instance.health()
+        results.append(
+            {
+                "name": spec.name,
+                "runner_type": spec.runner_type,
+                "port": spec.port,
+                "health": health,
+                "restart_policy": spec.restart_policy,
+                "bootstrap": spec.bootstrap,
+            }
+        )
+    unhealthy = [r for r in results if r["health"].get("status") != "ok"]
+    return jsonify(
+        {
+            "service": "kix",
+            "timestamp": _utcnow(),
+            "total": len(results),
+            "healthy": len(results) - len(unhealthy),
+            "unhealthy": len(unhealthy),
+            "runners": results,
+            "unhealthy_runners": unhealthy,
+        }
+    )
+
+
+@app.post("/doctor/run")
+@login_required(roles=["admin", "operator"])
+def doctor_run() -> Any:
+    runners = _load_runners_config()
+    restarted: list[dict[str, Any]] = []
+    for spec in runners:
+        if spec.restart_policy is None:
+            continue
+        instance = get_runner(spec)
+        health = instance.health()
+        if health.get("status") != "ok":
+            stored = STORE.list_all().get(spec.name)
+            pid = stored.pid if stored else None
+            if pid:
+                result = instance.restart(pid)
+                restarted.append(
+                    {
+                        "name": spec.name,
+                        "action": "restarted",
+                        "result": result,
+                    }
+                )
+            else:
+                result = instance.start()
+                restarted.append(
+                    {
+                        "name": spec.name,
+                        "action": "started",
+                        "result": result,
+                    }
+                )
+    return jsonify({"restarted": restarted, "count": len(restarted)})
+
+
+@app.get("/swarm/status")
+def swarm_status() -> Any:
+    runners = _load_runners_config()
+    swarm: dict[str, Any] = {
+        "service": "kix",
+        "timestamp": _utcnow(),
+        "runners": {},
+    }
+    for spec in runners:
+        instance = get_runner(spec)
+        health = instance.health()
+        stored = STORE.list_all().get(spec.name)
+        swarm["runners"][spec.name] = {
+            "runner_type": spec.runner_type,
+            "port": spec.port,
+            "status": health.get("status"),
+            "restart_policy": spec.restart_policy,
+            "bootstrap": spec.bootstrap,
+            "pid": stored.pid if stored else None,
+            "health": health,
+        }
+    return jsonify(swarm)
 
 
 def _probe_runner_health(runner: Runner) -> dict[str, Any]:
