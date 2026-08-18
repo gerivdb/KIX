@@ -19,6 +19,7 @@ from threading import Thread
 import yaml
 from datetime import datetime
 from pathlib import Path
+import requests
 
 app = Flask(__name__)
 
@@ -368,6 +369,100 @@ def vote():
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+# ============================================================================
+# Cycle de vie des processus — Endpoints TRIX (worktree locks)
+# ============================================================================
+
+TRIX_BASE_URL = "http://127.0.0.1:8742"
+TRIX_TIMEOUT = 5
+
+
+def _trix_post(path: str, payload: dict) -> dict:
+    """Appel POST TRIX avec fallback local si indisponible."""
+    url = f"{TRIX_BASE_URL}{path}"
+    try:
+        resp = requests.post(url, json=payload, timeout=TRIX_TIMEOUT)
+        resp.raise_for_status()
+        return resp.json()
+    except requests.RequestException:
+        return {"status": "fallback_local"}
+
+
+def _trix_get(path: str) -> dict:
+    """Appel GET TRIX avec fallback local si indisponible."""
+    url = f"{TRIX_BASE_URL}{path}"
+    try:
+        resp = requests.get(url, timeout=TRIX_TIMEOUT)
+        resp.raise_for_status()
+        return resp.json()
+    except requests.RequestException:
+        return {}
+
+
+@app.route('/process/release-handles', methods=['POST'])
+def process_release_handles():
+    """Relâcher les handles TRIX pour un worktree."""
+    data = request.get_json() or {}
+    worktree_path = data.get('worktree_path')
+    agent_id = data.get('agent_id')
+
+    if not worktree_path:
+        return jsonify({"error": "worktree_path is required"}), 400
+
+    payload = {"worktree_path": worktree_path, "agent_id": agent_id}
+    result = _trix_post("/git/locks/release", payload)
+    status = result.get("status", "fallback_local")
+    return jsonify({"status": status, "worktree_path": worktree_path}), 200
+
+
+@app.route('/worktree/purge', methods=['POST'])
+def worktree_purge():
+    """Purge de worktree après release et vote ternaire."""
+    data = request.get_json() or {}
+    worktree_path = data.get('worktree_path')
+    agent_id = data.get('agent_id')
+
+    if not worktree_path:
+        return jsonify({"error": "worktree_path is required"}), 400
+
+    # Étape 1 : release handles
+    release_payload = {"worktree_path": worktree_path, "agent_id": agent_id}
+    _trix_post("/git/locks/release", release_payload)
+
+    # Étape 2 : vérifier handles libres
+    locks = _trix_get("/git/locks/worktrees")
+    worktree_lock = next(
+        (lock for lock in locks.get("worktrees", []) if lock.get("path") == worktree_path),
+        None,
+    )
+
+    if worktree_lock is None:
+        vote = 2
+    else:
+        state = worktree_lock.get("state", "").lower()
+        if state == "busy":
+            vote = 0
+        elif state == "waiting":
+            vote = 1
+        else:
+            vote = 2
+
+    # Étape 3 : vote ternaire
+    if vote == 0:
+        return jsonify({"vote": 0, "action": "busy", "worktree_path": worktree_path}), 409
+    if vote == 1:
+        return jsonify({"vote": 1, "action": "kill_in_progress", "worktree_path": worktree_path}), 202
+
+    return jsonify({"vote": 2, "action": "purge_allowed", "worktree_path": worktree_path}), 200
+
+
+@app.route('/worktree/status', methods=['GET'])
+def worktree_status():
+    """Liste des verrous worktree actifs depuis TRIX."""
+    locks = _trix_get("/git/locks/worktrees")
+    return jsonify(locks), 200
+
 
 # ============================================================================
 # Fin-Ops Dashboard — Multi-Environment Supervision (INTENT-094)

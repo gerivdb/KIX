@@ -13,8 +13,14 @@ Port: **8800**
 - `GET /vote`
 - `GET /runners`
 - `GET /runners/<name>/status`
+- `GET /runners/<name>/health` — Health-check d'un runner
+- `GET /runners/<name>/logs` — Logs d'un runner (`?lines=100`)
 - `POST /runners/<name>/start` — **Authentification requise** (`admin`, `operator`)
 - `POST /runners/<name>/stop` — **Authentification requise** (`admin`, `operator`)
+- `POST /runners/<name>/restart` — **Authentification requise** (`admin`, `operator`)
+- `GET /doctor` — Vérifie tous les runners
+- `POST /doctor/run` — **Authentification requise** (`admin`, `operator`) — Redémarre les runners en erreur
+- `GET /swarm/status` — État agrégé pour Agent Manager / N+2/N+3
 - `GET /alerts` — Alertes en temps réel (φ-CPS, services en erreur)
   - `?service=<name>` — filtrer les alertes par service
 - `GET /notifications/history` — Historique des notifications envoyées
@@ -76,6 +82,74 @@ Elle peut être consommée par :
 - SQLite
 - PyJWT
 
+## Architecture Generic Runner Wrapper
+
+KIX est l'orchestrateur unique de tous les services applicatifs DevTools/ENV2.
+
+### Principe
+
+- KIX définit une interface `RunnerBase` (start/stop/status/health/logs/restart)
+- Chaque runtime fournit son wrapper dans `runners/` :
+  - `PythonRunner` — services Python (WAZAA, BUZZ-X)
+  - `ZigBinaryRunner` — binaires Zig (TRIX, LLUX, TIMX, ROOTX, TLM-LANG)
+  - `GatewayRunner` — CLI externes (GATEWAY-MANAGER)
+- Le registry est déclaratif dans `config/runners.yaml` — zéro logique de démarrage en dur
+
+### Nouveaux endpoints
+
+| Endpoint | Méthode | Description |
+|----------|---------|-------------|
+| `/runners/<name>/health` | GET | Health-check d'un runner |
+| `/runners/<name>/logs` | GET | Logs d'un runner (`?lines=100`) |
+| `/runners/<name>/restart` | POST | Redémarre un runner |
+| `/doctor` | GET | Vérifie tous les runners, retourne erreurs |
+| `/doctor/run` | POST | Redémarre les runners en erreur |
+| `/swarm/status` | GET | État agrégé pour Agent Manager / N+2/N+3 |
+
+### Validation
+
+```powershell
+# Validation statique (chemins, fichiers)
+python scripts/validate_runners.py
+
+# Démarrage + health-check
+python scripts/validate_runners.py --start
+
+# Arrêt des runners démarrés
+python scripts/validate_runners.py --stop
+```
+
+### Runner types supportés
+
+| Type | Usage | Exemple |
+|------|-------|---------|
+| `python` | Services Python | WAZAA, BUZZ-X, KIX lui-même |
+| `zig-binary` | Binaires Zig compilés | TRIX (`trixd.exe`) |
+| `gateway-exe` | CLIs externes | GATEWAY-MANAGER |
+
+### Build automatique (Zig)
+
+Pour les runners `zig-binary`, ajouter un bloc `build` dans `runners.yaml` :
+
+```yaml
+runners:
+  - name: trixd
+    runner_type: zig-binary
+    binary: zig-out/bin/trixd.exe
+    build:
+      command: ["zig", "build", "trixd"]
+      required: true
+      pre_start: true
+```
+
+`pre_start: true` exécute le build avant chaque démarrage. `required: true` bloque le démarrage si le build échoue.
+
+### Gouvernance
+
+- **Gates** : P-108 (ADR accepted), P-109 (Phase 1 testée), P-110 (BUZZ-X fonctionnel)
+- **BUZZ-X** : exclu de la portée initiale — intégration en Phase 4 seulement après réparation de `busrunner.py`
+- **Documentation** : `PRD-MOC-KIX-GENERIC-RUNNER-WRAPPER-2026-08-18.md` (TRIX)
+
 ## Authentification et contrôle d'accès (RBAC)
 
 KIX utilise **JWT** pour protéger les endpoints sensibles. Trois rôles sont disponibles :
@@ -118,6 +192,8 @@ curl -X POST http://localhost:8800/runners/RLM-GRAPH/start `
 |----------|-----------------|
 | `POST /runners/<name>/start` | `admin`, `operator` |
 | `POST /runners/<name>/stop` | `admin`, `operator` |
+| `POST /runners/<name>/restart` | `admin`, `operator` |
+| `POST /doctor/run` | `admin`, `operator` |
 | `GET /remediation/status` | `admin` |
 | `GET /audit` | `admin` |
 
