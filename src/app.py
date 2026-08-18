@@ -414,6 +414,26 @@ def start_runner(name: str) -> Any:
         return jsonify({"error": "runner_not_found", "name": name}), 404
     if runner.status == "running":
         return jsonify({"status": "running", "name": name, "pid": runner.pid})
+
+    # Phase 1 — préférer le nouveau système runners.yaml
+    instance = _get_runner_instance(name)
+    if instance is not None:
+        result = instance.start()
+        pid = result.get("pid")
+        status = result.get("status", "starting")
+        now = _utcnow()
+        STORE.upsert(name, status=status, pid=pid, started_at=now, updated_at=now)
+        AUDIT_LOG.record(
+            "runner_start",
+            f"/runners/{name}/start",
+            "POST",
+            getattr(request, "user", {}).get("sub"),
+            details=f"started {name} via runner wrapper",
+            ip_address=request.remote_addr,
+        )
+        return jsonify({"status": status, "name": name, "pid": pid})
+
+    # Fallback legacy
     ok, err = _launch_runner(runner)
     if not ok:
         return jsonify({"error": "launch_failed", "detail": err}), 500
