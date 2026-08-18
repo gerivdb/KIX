@@ -377,33 +377,6 @@ def cross_service_status() -> Any:
     return jsonify(snapshot)
 
 
-def _launch_runner(runner: Runner) -> tuple[bool, Optional[str]]:
-    root = Path(__file__).resolve().parents[1] / runner.name
-    if not root.exists():
-        return False, f"runner_dir_missing:{root}"
-    main_py = root / "src" / "app.py"
-    if not main_py.exists():
-        main_py = root / "main.py"
-    if not main_py.exists():
-        return False, "entrypoint_missing"
-    cmd = [sys.executable, str(main_py)]
-    log_file = Path(__file__).resolve().parent.parent / "data" / f"{runner.name}.log"
-    log_file.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        with open(log_file, "a", encoding="utf-8") as log:
-            log.write(f"[KIX] launching {' '.join(cmd)} at {_utcnow()}\n")
-        if sys.platform == "win32":
-            proc = subprocess.Popen(
-                cmd,
-                cwd=root,
-                creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
-            )
-        else:
-            proc = subprocess.Popen(cmd, cwd=root, start_new_session=True)
-        return True, None
-    except (OSError, ValueError) as exc:
-        return False, str(exc)
-
 
 @app.post("/runners/<string:name>/start")
 @login_required(roles=["admin", "operator"])
@@ -432,27 +405,6 @@ def start_runner(name: str) -> Any:
             ip_address=request.remote_addr,
         )
         return jsonify({"status": status, "name": name, "pid": pid})
-
-    # Fallback legacy
-    ok, err = _launch_runner(runner)
-    if not ok:
-        return jsonify({"error": "launch_failed", "detail": err}), 500
-    import time
-
-    time.sleep(0.3)
-    alive = _is_process_alive(runner.pid or 0) if runner.pid else _probe_port(runner.port)
-    status = "running" if alive else "starting"
-    now = _utcnow()
-    STORE.upsert(name, status=status, pid=runner.pid, started_at=runner.started_at or now, updated_at=now)
-    AUDIT_LOG.record(
-        "runner_start",
-        f"/runners/{name}/start",
-        "POST",
-        getattr(request, "user", {}).get("sub"),
-        details=f"started {name}",
-        ip_address=request.remote_addr,
-    )
-    return jsonify({"status": status, "name": name})
 
 
 # ==================== NEW ENDPOINTS FOR P2 ====================
