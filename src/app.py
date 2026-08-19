@@ -106,10 +106,6 @@ def _is_process_alive(pid: int) -> bool:
 
 
 def _probe_port(port: int, timeout: float = 1.0) -> bool:
-    if sys.platform == "win32":
-        cmd = f"Test-NetConnection -ComputerName localhost -Port {port} -WarningAction SilentlyContinue | Select-Object -ExpandProperty TcpTestSucceeded"
-        result = os.popen(f"powershell -Command \"{cmd}\"").read().strip()
-        return result == "True"
     import socket
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -123,30 +119,61 @@ def _probe_port(port: int, timeout: float = 1.0) -> bool:
 
 def _sync_runners() -> dict[str, Runner]:
     runners = {r.name: r for r in _load_known_repositories()}
+
+    # Merge Generic Runner Wrapper config (config/runners.yaml)
+    for spec in _load_runners_config():
+        runners[spec.name] = Runner(
+            name=spec.name,
+            port=spec.port,
+            meta={
+                "runner_type": spec.runner_type,
+                "working_dir": str(spec.working_dir),
+                "entrypoint": spec.entrypoint,
+                "binary": spec.binary,
+                "health_path": spec.health_path,
+                "restart_policy": spec.restart_policy,
+                "bootstrap": spec.bootstrap,
+                "auto_start": spec.auto_start,
+                "log_file": str(spec.log_file) if spec.log_file else None,
+                "repo": (spec.meta or {}).get("repo", ""),
+                "role": (spec.meta or {}).get("role", ""),
+            },
+        )
+
     if "MEM-CORE" not in runners:
         runners["MEM-CORE"] = Runner(name="MEM-CORE", port=8907)
     states = STORE.list_all()
     now = _utcnow()
+
+    # Fusionner l'état STORE (pid/status) puis probe actif sur tous les ports
+    # pour refléter la réalité (running/stopped) au lieu de "unknown".
     for name, runner in runners.items():
         state = states.get(name)
         if state:
             runner.pid = state.pid
-            runner.status = state.status
             runner.started_at = state.started_at
             runner.last_check = state.updated_at
-        if runner.status in {"running", "starting"} and runner.pid:
-            alive = _is_process_alive(runner.pid)
-            port_open = _probe_port(runner.port)
-            if not alive or not port_open:
-                runner.status = "stopped"
-                runner.last_check = now
+
+    def _check(runner: Runner) -> None:
+        port_open = _probe_port(runner.port, timeout=0.3)
+        if port_open:
+            runner.status = "running"
+            runner.last_check = now
+        else:
+            runner.status = "stopped"
+            runner.last_check = now
+            if runner.pid:
                 STORE.upsert(
-                    name,
+                    runner.name,
                     status="stopped",
                     pid=runner.pid,
                     started_at=runner.started_at,
                     updated_at=now,
                 )
+
+    with ThreadPoolExecutor(max_workers=min(8, len(runners) or 1)) as pool:
+        list(pool.map(_check, list(runners.values())))
+
     return runners
 
 
@@ -1257,6 +1284,8 @@ def release_handles() -> Any:
         'details': details,
     }), 200 if status == 'released' else 202
 
+
+KIX_PORT = int(os.environ.get("KIX_PORT", "8800"))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=KIX_PORT, debug=False)

@@ -1,17 +1,4 @@
 runners:
-  - name: kix
-    runner_type: python
-    port: 8800
-    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
-    entrypoint: src/app.py
-    bootstrap: true
-    health_path: /healthz
-    restart_policy: always
-    log_file: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX/data/kix.log
-    meta:
-      repo: gerivdb/KIX
-      role: orchestrator
-
   - name: gateway-manager
     runner_type: gateway-exe
     port: 9000
@@ -31,9 +18,9 @@ runners:
     working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/TRIX
     binary: zig-out/bin/trixd.exe
     build:
-      command: ["zig", "build", "trixd"]
-      required: true
-      pre_start: true
+      command: ["C:/DevTools/bin/zig/zig.exe", "build", "trixd"]
+      required: false
+      pre_start: false
     depends_on: [kix]
     health_path: /health
     headers:
@@ -49,12 +36,25 @@ runners:
     port: 5002
     working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/WAZAA
     entrypoint: tools/mission_control/server.py
+    health_path: /health
     depends_on: [kix]
     restart_policy: on-failure
     log_file: D:/DO/WEB/TOOLS/L4-TOOLS/WAZAA/data/wazaa.log
     meta:
       repo: gerivdb/WAZAA
       role: multi-agent orchestration
+
+  - name: flex-api
+    runner_type: zig-binary
+    port: 8080
+    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/FLEX
+    binary: zig-out/bin/flex-api.exe
+    health_path: /numa/status
+    restart_policy: on-failure
+    log_file: D:/DO/WEB/TOOLS/L4-TOOLS/FLEX/logs/flex-api.log
+    meta:
+      repo: gerivdb/FLEX
+      role: harmony topology ENV2
 
   # - name: buzz
   #   runner_type: python
