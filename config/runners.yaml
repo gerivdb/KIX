@@ -55,12 +55,3 @@ runners:
     meta:
       repo: gerivdb/FLEX
       role: harmony topology ENV2
-
-  # - name: buzz
-  #   runner_type: python
-  #   port: 60001
-  #   working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/BUZZ-X
-  #   entrypoint: scripts/busrunner.py
-  #   depends_on: [kix, trixd]
-  #   restart_policy: on-failure
-  #   ⚠️ BUZZ-X NON FONCTIONNEL — à activer quand busrunner.py sera opérationnel
