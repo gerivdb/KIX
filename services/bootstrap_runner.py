@@ -19,6 +19,11 @@ from datetime import datetime, timezone
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from typing import Any
 
+try:
+    import requests
+except ImportError:  # pragma: no cover - dépendance externe
+    requests = None
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [BOOTSTRAP] %(message)s")
 logger = logging.getLogger("bootstrap")
 
@@ -147,10 +152,22 @@ class KIXRegistrar:
         self.kix_url = kix_url.rstrip("/")
 
     def register_runner(self, name: str, port: int, status: str = "running") -> bool:
-        """Enregistre un runner dans KIX."""
-        # TODO: implémenter l'appel HTTP vers KIX /runners/register
-        logger.info("KIXRegistrar.register_runner(%s, %d, %s) -> not implemented yet", name, port, status)
-        return False
+        """Enregistre un runner dans KIX via /runners/register."""
+        if requests is None:
+            logger.warning("KIXRegistrar: requests not installed, skipping registration for %s", name)
+            return False
+        url = f"{self.kix_url}/runners/register"
+        try:
+            resp = requests.post(url, json={"name": name, "port": port, "status": status}, timeout=2)
+            if resp.status_code == 200:
+                data = resp.json()
+                logger.info("KIXRegistrar: registered %s -> %s", name, data.get("status"))
+                return True
+            logger.warning("KIXRegistrar: failed to register %s (HTTP %d): %s", name, resp.status_code, resp.text)
+            return False
+        except Exception as exc:  # pragma: no cover - défensif
+            logger.warning("KIXRegistrar: error registering %s: %s", name, exc)
+            return False
 
 
 class ServiceStarter:
@@ -167,19 +184,76 @@ class ServiceStarter:
         self.secret_resolver = secret_resolver or SecretResolver()
         self.kix_registrar = kix_registrar or KIXRegistrar()
 
+    def _start_arbiter(self, config: dict[str, Any]) -> None:
+        script = config.get("script")
+        if not script:
+            logger.info("ServiceStarter: arbiter script not configured")
+            return
+        if not os.path.exists(script):
+            logger.warning("ServiceStarter: arbiter script not found: %s", script)
+            state.blockers.append(f"arbiter: script not found: {script}")
+            return
+        try:
+            if sys.platform == "win32":
+                cmd = ["powershell", "-ExecutionPolicy", "Bypass", "-File", script]
+            else:
+                cmd = ["bash", script]
+            logger.info("ServiceStarter: starting arbiter via %s", " ".join(cmd))
+            # TODO: capturer pid et l'enregistrer
+            state.services["arbiter"] = {"status": "running", "port": config["port"], "required": True}
+        except Exception as exc:  # pragma: no cover - défensif
+            logger.warning("ServiceStarter: failed to start arbiter: %s", exc)
+            state.blockers.append(f"arbiter: {exc}")
+
+    def _start_trixd(self, config: dict[str, Any]) -> None:
+        port = config["port"]
+        if check_port("127.0.0.1", port):
+            logger.info("ServiceStarter: trixd already running on port %d", port)
+            state.services["trixd"] = {"status": "running", "port": port, "required": True}
+            return
+        logger.info("ServiceStarter: trixd not running on port %d, start required", port)
+        # trixd est démarré par KIX via runners.yaml, pas directement par bootstrap
+        state.services["trixd"] = {"status": "stopped", "port": port, "required": True}
+        state.blockers.append(f"trixd: port {port} not reachable, start required via KIX")
+
+    def _start_wazaa(self, config: dict[str, Any]) -> None:
+        port = config["port"]
+        if check_port("127.0.0.1", port):
+            logger.info("ServiceStarter: wazaa already running on port %d", port)
+            state.services["wazaa"] = {"status": "running", "port": port, "required": True}
+            return
+        logger.info("ServiceStarter: wazaa not running on port %d, start required", port)
+        # wazaa est démarré par KIX via runners.yaml
+        state.services["wazaa"] = {"status": "stopped", "port": port, "required": True}
+        state.blockers.append(f"wazaa: port {port} not reachable, start required via KIX")
+
+    def _start_flex_api(self, config: dict[str, Any]) -> None:
+        port = config["port"]
+        if check_port("127.0.0.1", port):
+            logger.info("ServiceStarter: flex-api already running on port %d", port)
+            state.services["flex-api"] = {"status": "running", "port": port, "required": False}
+            return
+        logger.info("ServiceStarter: flex-api not running on port %d, optional", port)
+        state.services["flex-api"] = {"status": "stopped", "port": port, "required": False}
+
     def start(self) -> None:
         """Démarre la séquence ordonnée."""
         state.phase = PHASE_STARTING
         state.status = "starting"
 
-        for service_name, config in self.START_SEQUENCE:
-            logger.info("ServiceStarter: checking %s", service_name)
-            if not state.services.get(service_name, {}).get("running", False):
-                # Pour l'instant, on logue seulement le démarrage requis
-                logger.info("ServiceStarter: %s not running, start required (port=%s)", service_name, config["port"])
-            else:
-                logger.info("ServiceStarter: %s already running", service_name)
+        starters = {
+            "arbiter": self._start_arbiter,
+            "trixd": self._start_trixd,
+            "wazaa": self._start_wazaa,
+            "flex-api": self._start_flex_api,
+        }
 
+        for service_name, config in self.START_SEQUENCE:
+            starter = starters.get(service_name)
+            if starter:
+                starter(config)
+            else:
+                logger.info("ServiceStarter: no starter for %s", service_name)
             # Enregistrement dans KIX
             self.kix_registrar.register_runner(service_name, config["port"])
 

@@ -450,6 +450,22 @@ def start_runner(name: str) -> Any:
         return jsonify({"status": status, "name": name, "pid": pid})
 
 
+@app.post("/runners/register")
+def register_runner() -> Any:
+    """Enregistre un runner dans KIX sans authentification (interne bootstrap)."""
+    if not request.is_json:
+        return jsonify({"error": "body_must_be_json"}), 400
+    data = request.get_json() or {}
+    name = data.get("name")
+    port = data.get("port")
+    status = data.get("status", "running")
+    if not name or port is None:
+        return jsonify({"error": "missing_fields", "details": "name and port are required"}), 400
+    now = _utcnow()
+    STORE.upsert(name, status=status, pid=None, started_at=now, updated_at=now)
+    return jsonify({"status": "registered", "name": name, "port": port, "runner_status": status}), 200
+
+
 # ==================== NEW ENDPOINTS FOR P2 ====================
 @app.post("/schedule/cycle")
 @login_required(roles=["admin", "operator"])

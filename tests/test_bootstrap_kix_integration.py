@@ -20,15 +20,29 @@ class TestIntegrationServiceStarter(unittest.TestCase):
 
     def test_service_starter_sequence(self):
         starter = bootstrap.ServiceStarter()
-        starter.start()
+        with patch.object(starter, "_start_arbiter") as mock_arbiter, \
+             patch.object(starter, "_start_trixd") as mock_trixd, \
+             patch.object(starter, "_start_wazaa") as mock_wazaa, \
+             patch.object(starter, "_start_flex_api") as mock_flex:
+            starter.start()
+            mock_arbiter.assert_called_once()
+            mock_trixd.assert_called_once()
+            mock_wazaa.assert_called_once()
+            mock_flex.assert_called_once()
         self.assertEqual(bootstrap.state.phase, bootstrap.PHASE_READY)
         self.assertTrue(bootstrap.state.ready)
 
     def test_kix_registrar_register(self):
         registrar = bootstrap.KIXRegistrar()
-        result = registrar.register_runner("test-runner", 8080)
-        # TODO: implémenter l'appel HTTP vers KIX /runners/register
-        self.assertFalse(result)
+        with patch("requests.post") as mock_post:
+            mock_post.return_value.status_code = 200
+            mock_post.return_value.json.return_value = {"status": "registered"}
+            result = registrar.register_runner("test-runner", 8080)
+            self.assertTrue(result)
+            mock_post.assert_called_once()
+            call_args = mock_post.call_args
+            self.assertIn("json", call_args.kwargs)
+            self.assertEqual(call_args.kwargs["json"], {"name": "test-runner", "port": 8080, "status": "running"})
 
 
 class TestIntegrationBootstrapReady(unittest.TestCase):
