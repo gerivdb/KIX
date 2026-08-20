@@ -13,6 +13,7 @@ import sys
 import json
 import time
 import socket
+import subprocess
 import logging
 import keyring
 from datetime import datetime, timezone
@@ -199,8 +200,9 @@ class ServiceStarter:
             else:
                 cmd = ["bash", script]
             logger.info("ServiceStarter: starting arbiter via %s", " ".join(cmd))
-            # TODO: capturer pid et l'enregistrer
-            state.services["arbiter"] = {"status": "running", "port": config["port"], "required": True}
+            proc = subprocess.Popen(cmd, cwd=os.path.dirname(script), creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0))
+            state.services["arbiter"] = {"status": "running", "port": config["port"], "required": True, "pid": proc.pid}
+            logger.info("ServiceStarter: arbiter started with pid=%d", proc.pid)
         except Exception as exc:  # pragma: no cover - défensif
             logger.warning("ServiceStarter: failed to start arbiter: %s", exc)
             state.blockers.append(f"arbiter: {exc}")
@@ -211,10 +213,11 @@ class ServiceStarter:
             logger.info("ServiceStarter: trixd already running on port %d", port)
             state.services["trixd"] = {"status": "running", "port": port, "required": True}
             return
-        logger.info("ServiceStarter: trixd not running on port %d, start required", port)
-        # trixd est démarré par KIX via runners.yaml, pas directement par bootstrap
-        state.services["trixd"] = {"status": "stopped", "port": port, "required": True}
-        state.blockers.append(f"trixd: port {port} not reachable, start required via KIX")
+        logger.info("ServiceStarter: trixd not running on port %d, starting via KIX", port)
+        started = self._start_via_kix("trixd")
+        if not started:
+            state.blockers.append(f"trixd: port {port} not reachable, start failed via KIX")
+            state.services["trixd"] = {"status": "stopped", "port": port, "required": True}
 
     def _start_wazaa(self, config: dict[str, Any]) -> None:
         port = config["port"]
@@ -222,10 +225,11 @@ class ServiceStarter:
             logger.info("ServiceStarter: wazaa already running on port %d", port)
             state.services["wazaa"] = {"status": "running", "port": port, "required": True}
             return
-        logger.info("ServiceStarter: wazaa not running on port %d, start required", port)
-        # wazaa est démarré par KIX via runners.yaml
-        state.services["wazaa"] = {"status": "stopped", "port": port, "required": True}
-        state.blockers.append(f"wazaa: port {port} not reachable, start required via KIX")
+        logger.info("ServiceStarter: wazaa not running on port %d, starting via KIX", port)
+        started = self._start_via_kix("wazaa")
+        if not started:
+            state.blockers.append(f"wazaa: port {port} not reachable, start failed via KIX")
+            state.services["wazaa"] = {"status": "stopped", "port": port, "required": True}
 
     def _start_flex_api(self, config: dict[str, Any]) -> None:
         port = config["port"]
@@ -233,8 +237,27 @@ class ServiceStarter:
             logger.info("ServiceStarter: flex-api already running on port %d", port)
             state.services["flex-api"] = {"status": "running", "port": port, "required": False}
             return
-        logger.info("ServiceStarter: flex-api not running on port %d, optional", port)
-        state.services["flex-api"] = {"status": "stopped", "port": port, "required": False}
+        logger.info("ServiceStarter: flex-api not running on port %d, optional, starting via KIX", port)
+        started = self._start_via_kix("flex-api")
+        state.services["flex-api"] = {"status": "running" if started else "stopped", "port": port, "required": False}
+
+    def _start_via_kix(self, name: str, timeout: int = 10) -> bool:
+        """Démarre un runner via KIX POST /runners/<name>/start."""
+        if requests is None:
+            logger.warning("ServiceStarter: requests not installed, cannot start %s via KIX", name)
+            return False
+        url = f"{self.kix_registrar.kix_url}/runners/{name}/start"
+        try:
+            resp = requests.post(url, timeout=timeout)
+            if resp.status_code == 200:
+                data = resp.json()
+                logger.info("ServiceStarter: %s started via KIX -> %s", name, data.get("status"))
+                return True
+            logger.warning("ServiceStarter: failed to start %s via KIX (HTTP %d): %s", name, resp.status_code, resp.text)
+            return False
+        except Exception as exc:  # pragma: no cover - défensif
+            logger.warning("ServiceStarter: error starting %s via KIX: %s", name, exc)
+            return False
 
     def start(self) -> None:
         """Démarre la séquence ordonnée."""
