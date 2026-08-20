@@ -4,13 +4,36 @@ runners:
     port: 9000
     working_dir: D:/DO/WEB/TOOLS/L1-INFRA/GATEWAY-MANAGER
     command: ["gateway-manager", "start", "--port", "9000"]
-    bootstrap: true
+    bootstrap: false
     health_path: /health
     restart_policy: always
     log_file: D:/DO/WEB/TOOLS/L1-INFRA/GATEWAY-MANAGER/data/gateway.log
     meta:
       repo: gerivdb/GATEWAY-MANAGER
       role: BDCP proxy, PAT rotation
+
+  - name: bootstrap
+    runner_type: python
+    port: 8810
+    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+    entrypoint: services/bootstrap_runner.py
+    bootstrap: true
+    auto_start: true
+    health_path: /health
+    restart_policy: on-failure
+    log_file: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX/logs/bootstrap.log
+    dependencies:
+      - gateway-manager
+      - kix
+      - arbiter
+      - trixd
+      - wazaa
+      - flex-api
+    kgl_schema: schemas/runners/bootstrap-status.schema.json
+    meta:
+      repo: gerivdb/GOVERNANCE-HUB
+      role: bootstrap orchestrator
+      intent_hash: 0xINTENT_BOOTSTRAP_RUNNER_GOVERNANCE_20260820
 
   - name: trixd
     runner_type: zig-binary
