@@ -15,6 +15,7 @@ import logging
 import os
 import re
 import socket
+import sys
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
@@ -64,13 +65,42 @@ SENSITIVE_PATTERNS = [
     re.compile(r"sk-[A-Za-z0-9]{4,}", re.IGNORECASE),
 ]
 
-# Endpoints runners existants (pour Phase 1)
+# Endpoints runners existants (pour Phase 1, fallback si imports locaux échouent)
 RUNNER_ENDPOINTS = {
     "tlm-lang": "http://127.0.0.1:8812/tlm-lang/analyze",
     "chronox": "http://127.0.0.1:8813/chronox/timeline",
     "referex": "http://127.0.0.1:8814/referex/validate",
     "wazaa": "http://127.0.0.1:5002/wazaa/publish",
 }
+
+
+def _import_local_runners():
+    """Tente d'importer les runners locaux depuis CTULU et GOVERNANCE-HUB."""
+    tlm_lang_cls = None
+    chronox_cls = None
+    referex_cls = None
+    try:
+        ctulu_runners_path = Path(r"D:\DO\WEB\TOOLS\L4-TOOLS\CTULU")
+        if str(ctulu_runners_path) not in sys.path:
+            sys.path.insert(0, str(ctulu_runners_path))
+        from ctulu.runners.tlm_lang_runner import TlmLangRunner  # noqa: F401
+        tlm_lang_cls = TlmLangRunner
+    except Exception:
+        pass
+    try:
+        gov_runners_path = Path(r"D:\DO\WEB\TOOLS\L0-CANON\GOVERNANCE-HUB\runners")
+        if str(gov_runners_path) not in sys.path:
+            sys.path.insert(0, str(gov_runners_path))
+        import chronox as chronox_mod
+        import referex as referex_mod
+        chronox_cls = getattr(chronox_mod, "ChronoxRunner", None)
+        referex_cls = getattr(referex_mod, "ReferexRunner", None)
+    except Exception:
+        pass
+    return tlm_lang_cls, chronox_cls, referex_cls
+
+
+_TLM_LANG_CLS, _CHRONOX_CLS, _REFEREX_CLS = _import_local_runners()
 
 
 def sanitize_text(text: str) -> str:
@@ -114,6 +144,15 @@ def save_decision(decision: dict[str, Any]) -> None:
 
 def call_tlm_lang(text: str) -> dict[str, Any]:
     """Appelle TLM-LANG pour détecter les ambiguïtés (Phase 1)."""
+    if _TLM_LANG_CLS is not None:
+        try:
+            runner = _TLM_LANG_CLS()
+            output = runner.run({"description": text, "messages": [text]})
+            data = output.data if hasattr(output, "data") else output
+            if isinstance(data, dict):
+                return data
+        except Exception:
+            pass
     try:
         resp = requests.post(RUNNER_ENDPOINTS["tlm-lang"], json={"text": text}, timeout=2)
         if resp.status_code == 200:
@@ -125,6 +164,21 @@ def call_tlm_lang(text: str) -> dict[str, Any]:
 
 def call_chronox(decisions: list[dict[str, Any]]) -> dict[str, Any]:
     """Appelle CHRONOX pour timeline (Phase 1)."""
+    if _CHRONOX_CLS is not None:
+        try:
+            runner = _CHRONOX_CLS()
+            results = []
+            for decision in decisions:
+                output = runner.run({
+                    "entity_id": decision.get("intent_hash", "unknown"),
+                    "time_range": {"start": decision.get("date"), "end": decision.get("date")},
+                })
+                data = output.data if hasattr(output, "data") else output
+                if isinstance(data, dict):
+                    results.append(data)
+            return {"timeline": results}
+        except Exception:
+            pass
     try:
         resp = requests.post(RUNNER_ENDPOINTS["chronox"], json={"decisions": decisions}, timeout=2)
         if resp.status_code == 200:
@@ -136,6 +190,18 @@ def call_chronox(decisions: list[dict[str, Any]]) -> dict[str, Any]:
 
 def call_referex(artifacts: list[str]) -> dict[str, Any]:
     """Appelle REFEREX pour validation (Phase 1)."""
+    if _REFEREX_CLS is not None:
+        try:
+            runner = _REFEREX_CLS()
+            output = runner.run({
+                "intent_hash": artifacts[0] if artifacts else "unknown",
+                "document_type": "PRD",
+            })
+            data = output.data if hasattr(output, "data") else output
+            if isinstance(data, dict):
+                return data
+        except Exception:
+            pass
     try:
         resp = requests.post(RUNNER_ENDPOINTS["referex"], json={"artifacts": artifacts}, timeout=2)
         if resp.status_code == 200:
