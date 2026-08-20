@@ -117,6 +117,19 @@ def _probe_port(port: int, timeout: float = 1.0) -> bool:
             return False
 
 
+def _probe_http(port: int, path: str, timeout: float = 1.0, headers: dict | None = None) -> dict:
+    import requests
+
+    url = f"http://localhost:{port}{path}"
+    try:
+        resp = requests.get(url, timeout=timeout, headers=headers or {})
+        if resp.status_code == 200:
+            return {"status": "ok", "http_status": resp.status_code}
+        return {"status": "unhealthy", "http_status": resp.status_code}
+    except Exception as exc:
+        return {"status": "unreachable", "detail": str(exc)}
+
+
 def _sync_runners() -> dict[str, Runner]:
     runners = {r.name: r for r in _load_known_repositories()}
 
@@ -137,6 +150,7 @@ def _sync_runners() -> dict[str, Runner]:
                 "log_file": str(spec.log_file) if spec.log_file else None,
                 "repo": (spec.meta or {}).get("repo", ""),
                 "role": (spec.meta or {}).get("role", ""),
+                "headers": spec.headers,
             },
         )
 
@@ -155,8 +169,10 @@ def _sync_runners() -> dict[str, Runner]:
             runner.last_check = state.updated_at
 
     def _check(runner: Runner) -> None:
-        port_open = _probe_port(runner.port, timeout=0.3)
-        if port_open:
+        headers = (runner.meta or {}).get("headers") or {}
+        health_path = (runner.meta or {}).get("health_path") or "/health"
+        health = _probe_http(runner.port, health_path, timeout=0.5, headers=headers)
+        if health.get("status") == "ok":
             runner.status = "running"
             runner.last_check = now
         else:
@@ -1288,4 +1304,31 @@ def release_handles() -> Any:
 KIX_PORT = int(os.environ.get("KIX_PORT", "8800"))
 
 if __name__ == '__main__':
+    with app.app_context():
+        try:
+            runners = _load_runners_config()
+            # Phase 1 : démarrer les runners bootstrap en priorité
+            for spec in runners:
+                if spec.bootstrap and spec.auto_start:
+                    instance = _get_runner_instance(spec.name)
+                    if instance is not None:
+                        result = instance.start()
+                        status = result.get("status", "starting")
+                        pid = result.get("pid")
+                        now = _utcnow()
+                        STORE.upsert(spec.name, status=status, pid=pid, started_at=now, updated_at=now)
+                        print(f"[KIX] bootstrap {spec.name} -> {status} pid={pid}")
+            # Phase 2 : démarrer les runners auto_start non-bootstrap
+            for spec in runners:
+                if spec.auto_start and not spec.bootstrap:
+                    instance = _get_runner_instance(spec.name)
+                    if instance is not None:
+                        result = instance.start()
+                        status = result.get("status", "starting")
+                        pid = result.get("pid")
+                        now = _utcnow()
+                        STORE.upsert(spec.name, status=status, pid=pid, started_at=now, updated_at=now)
+                        print(f"[KIX] auto_start {spec.name} -> {status} pid={pid}")
+        except Exception as exc:
+            print(f"[KIX] auto_start failed: {exc}")
     app.run(host='0.0.0.0', port=KIX_PORT, debug=False)
