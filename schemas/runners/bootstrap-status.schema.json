@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Bootstrap Status",
+  "type": "object",
+  "required": ["status", "phase", "timestamp", "services", "ready", "blockers"],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["running", "ready", "degraded", "failed"]
+    },
+    "phase": {
+      "type": "string",
+      "enum": ["bootstrap", "operational"]
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "services": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["status", "port"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["running", "stopped", "degraded", "unknown"]
+          },
+          "port": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
