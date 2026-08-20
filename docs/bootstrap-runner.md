@@ -121,6 +121,48 @@ if (-not $bootstrapReady) {
 }
 ```
 
+## Monitoring
+
+### Endpoint de monitoring
+
+| Endpoint | Method | Description | Response |
+|----------|--------|-------------|----------|
+| `/bootstrap/monitor` | GET | Monitoring d'alerte | `200 OK` ou `503` + JSON |
+
+### Script de monitoring
+
+```bash
+python scripts/bootstrap_monitor.py --once
+python scripts/bootstrap_monitor.py --loop --interval 30
+```
+
+### Alertes générées
+
+- `bootstrap failed` : phase FAILED
+- `bootstrap blockers: ...` : blockers présents
+- `bootstrap not ready` : pas prêt hors phase PENDING
+
+### Intégration KIX
+
+L'endpoint `/bootstrap/monitor` peut être interrogé par KIX pour détecter les défaillances bootstrap et déclencher des alertes via le système de notifications existant.
+
+## Runbook
+
+Le runbook complet est disponible dans `docs/runbook-bootstrap.md`.
+
+**Procédure rapide de relance** :
+
+```powershell
+# 1. Vérifier l'état
+Invoke-RestMethod -Uri "http://127.0.0.1:8810/bootstrap/status" -Method Get
+
+# 2. Redémarrer via KIX
+Invoke-RestMethod -Uri "http://127.0.0.1:8800/runners/bootstrap/restart" -Method Post -Headers @{"Authorization"="Bearer <TOKEN>"}
+
+# 3. Vérifier
+Invoke-RestMethod -Uri "http://127.0.0.1:8810/bootstrap/ready" -Method Get
+```
+
 ## Testing
 
 ```bash
@@ -130,8 +172,14 @@ pytest tests/test_bootstrap_runner.py -v
 # Integration tests
 pytest tests/test_bootstrap_kix_integration.py -v
 
-# All bootstrap tests
-pytest tests/test_bootstrap_runner.py tests/test_bootstrap_kix_integration.py -v
+# E2E tests
+pytest tests/test_bootstrap_e2e.py -v
+
+# Validation ENV2
+python tests/validate_bootstrap_env2.py
+
+# Validation PHI_TOTAL
+python tests/validate_phi_total.py
 ```
 
 ## References
@@ -139,5 +187,7 @@ pytest tests/test_bootstrap_runner.py tests/test_bootstrap_kix_integration.py -v
 - **PRD**: `PRD-MOC-BOOTSTRAP-RUNNER-GOVERNANCE-2026-08-20.md`
 - **INTENT**: `INTENT-BOOTSTRAP-RUNNER-GOVERNANCE-2026-08-20.md`
 - **ADR**: `ADR-2026-08-20-001-bootstrap-runner.md`
+- **Runbook**: `docs/runbook-bootstrap.md`
+- **Monitoring**: `scripts/bootstrap_monitor.py`
 - **KIX**: `D:\DO\WEB\TOOLS\L2-PLATFORM\KIX`
 - **ECOS CLI**: `C:\DevTools\bin\ecos.ps1`

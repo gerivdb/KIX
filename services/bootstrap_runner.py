@@ -171,6 +171,86 @@ class KIXRegistrar:
             return False
 
 
+class BootstrapMonitor:
+    """Surveille l'état de bootstrap et génère des alertes en cas d'échec."""
+
+    def __init__(self, check_interval: int = 30) -> None:
+        self.check_interval = check_interval
+        self.alert_count = 0
+        self.last_alert: str | None = None
+
+    def check(self) -> dict[str, Any]:
+        """Vérifie l'état de bootstrap et génère des alertes si nécessaire."""
+        check_all_dependencies()
+        alert = None
+
+        if state.phase == PHASE_FAILED:
+            alert = "bootstrap failed"
+        elif state.blockers:
+            alert = f"bootstrap blockers: {', '.join(state.blockers)}"
+        elif not state.ready and state.phase != PHASE_PENDING:
+            alert = "bootstrap not ready"
+
+        if alert:
+            self.alert_count += 1
+            self.last_alert = alert
+            logger.warning("[MONITOR] ALERTE: %s (count=%d)", alert, self.alert_count)
+        else:
+            if self.alert_count > 0:
+                logger.info("[MONITOR] Retour a la normale apres %d alerte(s)", self.alert_count)
+            self.alert_count = 0
+            self.last_alert = None
+
+        return {
+            "alert": alert,
+            "alert_count": self.alert_count,
+            "last_alert": self.last_alert,
+            "phase": state.phase,
+            "ready": state.ready,
+            "blockers": state.blockers,
+        }
+
+
+class BootstrapMonitor:
+    """Surveille l'état de bootstrap et génère des alertes en cas d'échec."""
+
+    def __init__(self, check_interval: int = 30) -> None:
+        self.check_interval = check_interval
+        self.alert_count = 0
+        self.last_alert: str | None = None
+
+    def check(self) -> dict[str, Any]:
+        """Vérifie l'état de bootstrap et génère des alertes si nécessaire."""
+        check_all_dependencies()
+        alert = None
+
+        if state.phase == PHASE_FAILED:
+            alert = "bootstrap failed"
+        elif state.blockers:
+            alert = f"bootstrap blockers: {', '.join(state.blockers)}"
+        elif not state.ready and state.phase != PHASE_PENDING:
+            alert = "bootstrap not ready"
+
+        if alert:
+            self.alert_count += 1
+            self.last_alert = alert
+            logger.warning("[MONITOR] ALERTE: %s (count=%d)", alert, self.alert_count)
+        else:
+            if self.alert_count > 0:
+                logger.info("[MONITOR] Retour a la normale apres %d alerte(s)", self.alert_count)
+            self.alert_count = 0
+            self.last_alert = None
+
+        return {
+            "alert": alert,
+            "alert_count": self.alert_count,
+            "last_alert": self.last_alert,
+            "phase": state.phase,
+            "ready": state.ready,
+            "blockers": state.blockers,
+        }
+
+
 class ServiceStarter:
     """Séquence ordonnée de démarrage des services."""
 
@@ -313,6 +393,11 @@ class BootstrapHandler(BaseHTTPRequestHandler):
                 self._send_json(200, state.to_dict())
             else:
                 self._send_json(503, state.to_dict())
+        elif self.path == "/bootstrap/monitor":
+            monitor = BootstrapMonitor()
+            report = monitor.check()
+            code = 200 if report.get("alert") is None else 503
+            self._send_json(code, report)
         else:
             self.send_error(404, "Not Found")
 

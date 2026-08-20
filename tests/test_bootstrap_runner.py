@@ -137,6 +137,51 @@ class TestBootstrapHandler(unittest.TestCase):
         handler.do_POST()
         handler.send_response.assert_called_with(202)
 
+    def test_monitor_get_ok(self):
+        bootstrap.state.ready = True
+        bootstrap.state.blockers = []
+        handler = self._make_request("GET", "/bootstrap/monitor")
+        handler.send_response = MagicMock()
+        handler.send_header = MagicMock()
+        handler.end_headers = MagicMock()
+        handler.do_GET()
+        handler.send_response.assert_called_with(200)
+
+    def test_monitor_get_alert(self):
+        bootstrap.state.ready = False
+        bootstrap.state.blockers = ["test: port 1234 not reachable"]
+        handler = self._make_request("GET", "/bootstrap/monitor")
+        handler.send_response = MagicMock()
+        handler.send_header = MagicMock()
+        handler.end_headers = MagicMock()
+        handler.do_GET()
+        handler.send_response.assert_called_with(503)
+
+
+class TestBootstrapMonitor(unittest.TestCase):
+    def setUp(self):
+        bootstrap.state = bootstrap.BootstrapState()
+        bootstrap.monitor = bootstrap.BootstrapMonitor()
+
+    def test_monitor_ok(self):
+        bootstrap.state.ready = True
+        report = bootstrap.monitor.check()
+        self.assertIsNone(report.get("alert"))
+        self.assertEqual(report["alert_count"], 0)
+
+    def test_monitor_alert_on_blockers(self):
+        bootstrap.state.blockers = ["service: port 1234 not reachable"]
+        report = bootstrap.monitor.check()
+        self.assertIsNotNone(report.get("alert"))
+        self.assertEqual(report["alert_count"], 1)
+
+    def test_monitor_alert_on_not_ready(self):
+        bootstrap.state.ready = False
+        bootstrap.state.phase = bootstrap.PHASE_CHECKING
+        report = bootstrap.monitor.check()
+        self.assertIsNotNone(report.get("alert"))
+        self.assertIn("not ready", report["alert"])
+
 
 if __name__ == "__main__":
     unittest.main()
