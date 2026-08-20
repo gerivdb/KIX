@@ -78,3 +78,27 @@ runners:
     meta:
       repo: gerivdb/FLEX
       role: harmony topology ENV2
+
+  - name: conversation-cognitive
+    runner_type: python
+    port: 8811
+    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+    entrypoint: services/conversation_cognitive_runner.py
+    bootstrap: false
+    auto_start: false
+    health_path: /cognitive/conversation/health
+    restart_policy: on-failure
+    log_file: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX/logs/conversation_cognitive.log
+    dependencies:
+      - kix
+      - tlm-lang
+      - chronox
+      - referex
+      - talex
+      - rootx
+      - wazaa
+    kgl_schema: schemas/runners/cognitive-conversation-decision.schema.json
+    meta:
+      repo: gerivdb/GOVERNANCE-HUB
+      role: conversation decision extraction and KG-L publishing
+      intent_hash: 0xINTENT_COGNITIVE_CONVERSATION_RUNNER_KG_L_WAZAA_20260821
