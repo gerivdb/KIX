@@ -130,6 +130,34 @@ def list_runners():
     
     return jsonify({"runners": runners}), 200
 
+
+@app.route('/runners/register', methods=['POST'])
+def register_runner():
+    """Enregistrer un nouveau runner/service dans KIX."""
+    data = request.get_json() or {}
+    runner_id = data.get('id')
+    name = data.get('name')
+    port = data.get('port')
+    health_endpoint = data.get('health_endpoint', '/health')
+
+    if not runner_id or not name or port is None:
+        return jsonify({"error": "id, name and port are required"}), 400
+
+    try:
+        port_int = int(port)
+    except (TypeError, ValueError):
+        return jsonify({"error": "port must be an integer"}), 400
+
+    SERVICE_MAP[port_int] = name
+    return jsonify({
+        "id": runner_id,
+        "name": name,
+        "port": port_int,
+        "health_endpoint": health_endpoint,
+        "status": "registered",
+    }), 200
+
+
 @app.route('/runners/<int:port>/status', methods=['GET'])
 def runner_status(port):
     """Statut détaillé d'un service spécifique"""
