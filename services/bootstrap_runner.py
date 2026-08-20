@@ -131,6 +131,63 @@ def resolve_secret(var_name: str) -> str | None:
     return None
 
 
+class SecretResolver:
+    """Résout les secrets depuis l'environnement, le keyring ou un fichier .env local."""
+
+    @staticmethod
+    def resolve(var_name: str) -> str | None:
+        """Résout un secret par nom."""
+        return resolve_secret(var_name)
+
+
+class KIXRegistrar:
+    """Enregistre les services dans KIX via son API."""
+
+    def __init__(self, kix_url: str = "http://127.0.0.1:8800") -> None:
+        self.kix_url = kix_url.rstrip("/")
+
+    def register_runner(self, name: str, port: int, status: str = "running") -> bool:
+        """Enregistre un runner dans KIX."""
+        # TODO: implémenter l'appel HTTP vers KIX /runners/register
+        logger.info("KIXRegistrar.register_runner(%s, %d, %s) -> not implemented yet", name, port, status)
+        return False
+
+
+class ServiceStarter:
+    """Séquence ordonnée de démarrage des services."""
+
+    START_SEQUENCE = [
+        ("arbiter", {"port": 8742, "script": "D:/DO/WEB/TOOLS/L4-TOOLS/TRIX/start-git-arbiter.ps1"}),
+        ("trixd", {"port": 7243, "required_headers": ["Authorization"]}),
+        ("wazaa", {"port": 5002}),
+        ("flex-api", {"port": 8080}),
+    ]
+
+    def __init__(self, secret_resolver: SecretResolver | None = None, kix_registrar: KIXRegistrar | None = None) -> None:
+        self.secret_resolver = secret_resolver or SecretResolver()
+        self.kix_registrar = kix_registrar or KIXRegistrar()
+
+    def start(self) -> None:
+        """Démarre la séquence ordonnée."""
+        state.phase = PHASE_STARTING
+        state.status = "starting"
+
+        for service_name, config in self.START_SEQUENCE:
+            logger.info("ServiceStarter: checking %s", service_name)
+            if not state.services.get(service_name, {}).get("running", False):
+                # Pour l'instant, on logue seulement le démarrage requis
+                logger.info("ServiceStarter: %s not running, start required (port=%s)", service_name, config["port"])
+            else:
+                logger.info("ServiceStarter: %s already running", service_name)
+
+            # Enregistrement dans KIX
+            self.kix_registrar.register_runner(service_name, config["port"])
+
+        state.phase = PHASE_READY
+        state.ready = True
+        state.status = "ready"
+
+
 class BootstrapHandler(BaseHTTPRequestHandler):
     """Handler HTTP pour le runner bootstrap."""
 
@@ -169,8 +226,7 @@ class BootstrapHandler(BaseHTTPRequestHandler):
                 return
 
             state.phase = PHASE_STARTING
-            # TODO: implémenter la séquence de démarrage ordonnée
-            # (Arbiter, trixd headers dynamiques, KIXRegistrar, etc.)
+            ServiceStarter().start()
             state.phase = PHASE_READY
             state.ready = True
             state.status = "ready"
