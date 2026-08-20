@@ -280,3 +280,33 @@ class TestAnalyzeEndpoint:
             # Vérifier que le token n'apparaît pas dans les décisions
             for decision in data.get("decisions", []):
                 assert "ghp_" not in json.dumps(decision)
+
+
+class TestCognitivePhiEndpoint:
+    """Tests de l'endpoint /cognitive/phi."""
+
+    def test_phi_returns_200(self):
+        with app.test_client() as client:
+            resp = client.get("/cognitive/phi")
+            assert resp.status_code == 200
+            data = resp.get_json()
+            assert "global_score" in data
+            assert "verdict" in data
+            assert "weights" in data
+            assert data["weights"]["CONVERSATION_COGNITIVE"] > 0.0
+
+    def test_phi_total_weight_is_one(self):
+        with app.test_client() as client:
+            resp = client.get("/cognitive/phi")
+            assert resp.status_code == 200
+            data = resp.get_json()
+            total = sum(data["weights"].values())
+            assert abs(total - 1.0) < 0.01
+
+    def test_phi_global_score_above_threshold(self):
+        with app.test_client() as client:
+            resp = client.get("/cognitive/phi")
+            assert resp.status_code == 200
+            data = resp.get_json()
+            # Seuil adapté aux poids normalisés utilisés par le runner.
+            assert data["global_score"] >= 0.82

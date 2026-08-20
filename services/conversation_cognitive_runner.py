@@ -343,6 +343,34 @@ def get_decisions_by_session(session_id: str):
     return jsonify({"session_id": session_id, "decisions": decisions, "count": len(decisions)}), 200
 
 
+@app.route("/cognitive/phi", methods=["GET"])
+def cognitive_phi():
+    """Sanity-check φ_TOTAL via CTULU PhiCognitiveCalculator."""
+    try:
+        ctulu_path = Path(__file__).resolve().parents[3] / "L4-TOOLS" / "CTULU"
+        if str(ctulu_path) not in sys.path:
+            sys.path.insert(0, str(ctulu_path))
+        from ctulu.runners.phi_cognitive import PhiCognitiveCalculator
+    except Exception as exc:
+        return jsonify({"error": f"phi_cognitive import failed: {exc}"}), 500
+
+    try:
+        calc = PhiCognitiveCalculator()
+        sample_outputs = {
+            "TALEX": type("Out", (), {"metrics": {"m_score": 0.9}, "success": True})(),
+            "TIMX": type("Out", (), {"metrics": {"m_score": 0.8}, "success": True})(),
+            "CONVERSATION_COGNITIVE": type("Out", (), {"metrics": {"m_score": 0.9}, "success": True})(),
+            "ROOTX": type("Out", (), {"metrics": {"m_score": 0.85}, "success": True})(),
+            "RLM-243": type("Out", (), {"metrics": {"m_score": 0.8}, "success": True})(),
+            "TLM-LANG": type("Out", (), {"metrics": {"m_score": 0.7}, "success": True})(),
+            "LLUX": type("Out", (), {"metrics": {"m_score": 0.6}, "success": True})(),
+        }
+        result = calc.calculate(sample_outputs)
+        return jsonify(result), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
 def check_port(host: str, port: int, timeout: float = 1.0) -> bool:
     """Vérifie si un port est ouvert."""
     try:
