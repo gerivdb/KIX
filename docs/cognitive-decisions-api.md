@@ -148,13 +148,57 @@ Retourne les décisions d'une session spécifique.
 }
 ```
 
-## Codes d'erreur
+### 5. Sanity-check φ_TOTAL
 
-| Code | Signification |
-|------|---------------|
-| 200 | Succès |
-| 400 | Requête invalide (champ manquant) |
-| 500 | Erreur serveur |
+**`GET /cognitive/phi`**
+
+Calcule φ_TOTAL via `PhiCognitiveCalculator` avec des scores sample.
+
+**Réponse 200** :
+```json
+{
+  "global_score": 0.8326,
+  "per_runner": {
+    "TALEX": {"m_score": 0.9, "w_score": 0.2174, "weighted_contribution": 0.1957},
+    "TIMX": {"m_score": 0.8, "w_score": 0.1304, "weighted_contribution": 0.1043},
+    "CONVERSATION_COGNITIVE": {"m_score": 0.9, "w_score": 0.1739, "weighted_contribution": 0.1565},
+    "ROOTX": {"m_score": 0.85, "w_score": 0.2174, "weighted_contribution": 0.1848},
+    "RLM-243": {"m_score": 0.8, "w_score": 0.1304, "weighted_contribution": 0.1043},
+    "TLM-LANG": {"m_score": 0.7, "w_score": 0.0870, "weighted_contribution": 0.0609},
+    "LLUX": {"m_score": 0.6, "w_score": 0.0435, "weighted_contribution": 0.0261}
+  },
+  "weights": {
+    "TALEX": 0.2174,
+    "TIMX": 0.1304,
+    "CONVERSATION_COGNITIVE": 0.1739,
+    "ROOTX": 0.2174,
+    "RLM-243": 0.1304,
+    "TLM-LANG": 0.0870,
+    "LLUX": 0.0435
+  },
+  "threshold": 0.8,
+  "verdict": "A_VALIDER",
+  "target": 0.85,
+  "calculation_details": {
+    "numerator": 0.8326,
+    "denominator": 1.0,
+    "calculation_steps": [
+      "phi = sum(w_i * m_i) / sum(w_i)",
+      "  TALEX: 0.2174 * 0.9 = 0.1957",
+      "  TIMX: 0.1304 * 0.8 = 0.1043",
+      "  CONVERSATION_COGNITIVE: 0.1739 * 0.9 = 0.1565",
+      "  ROOTX: 0.2174 * 0.85 = 0.1848",
+      "  RLM-243: 0.1304 * 0.8 = 0.1043",
+      "  TLM-LANG: 0.0870 * 0.7 = 0.0609",
+      "  LLUX: 0.0435 * 0.6 = 0.0261",
+      "  phi = 0.8326 / 1.0 = 0.8326"
+    ]
+  }
+}
+```
+
+**Codes d'erreur** :
+- `500` : `phi_cognitive` import failed
 
 ## Limites
 
