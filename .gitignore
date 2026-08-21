@@ -5,6 +5,7 @@ data/*.db
 data/*.db-journal
 data/*.sqlite
 data/*.sqlite-journal
+data/cognitive/
 dist/
 build/
 *.egg-info/

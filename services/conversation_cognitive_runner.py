@@ -6,6 +6,10 @@ Endpoints:
   POST /cognitive/conversation/analyze
   GET  /cognitive/decisions
   GET  /cognitive/decisions/{session_id}
+  POST /cognitive/governance/auto        # Phase 2: auto-génération ADR/PRD/INTENT
+  GET  /cognitive/governance/patterns    # Phase 2: patterns connus
+  GET  /cognitive/dashboard              # Phase 2: tableau de bord
+  POST /cognitive/referex/validate       # Phase 2: validation REFEREX avant commit
 """
 
 from __future__ import annotations
@@ -23,6 +27,15 @@ from typing import Any
 
 import requests
 from flask import Flask, jsonify, request
+
+from auto_governance import (
+    auto_generate,
+    detect_patterns,
+    get_dashboard_stats,
+    load_artifacts,
+    validate_regex_safety,
+    KNOWN_PATTERNS,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [COG] %(message)s")
 logger = logging.getLogger("conversation-cognitive")
@@ -369,6 +382,126 @@ def cognitive_phi():
         return jsonify(result), 200
     except Exception as exc:
         return jsonify({"error": str(exc)}), 500
+
+
+# ============================================================================
+# Phase 2 — Auto-Governance Endpoints
+# ============================================================================
+
+
+@app.route("/cognitive/governance/auto", methods=["POST"])
+def governance_auto():
+    """Phase 2: Auto-génération ADR/PRD/INTENT depuis détection de patterns.
+    
+    Body:
+        conversation_text: str
+        session_id: str (optional)
+        context: dict (optional)
+    
+    Returns:
+        Liste d'artefacts de gouvernance générés
+    """
+    data = request.get_json(force=True)
+    conversation_text = data.get("conversation_text", "")
+    session_id = data.get("session_id", "unknown")
+    context = data.get("context", {})
+    
+    if not conversation_text:
+        return jsonify({"error": "conversation_text is required"}), 400
+    
+    # Sanitization
+    sanitized_text = sanitize_text(conversation_text)
+    
+    # Validation regex safety
+    safety = validate_regex_safety(sanitized_text)
+    if not safety["safe"]:
+        return jsonify({
+            "error": "Unsafe regex patterns detected",
+            "issues": safety["issues"],
+        }), 400
+    
+    # Auto-génération
+    artifacts = auto_generate(sanitized_text, {
+        **context,
+        "session_id": session_id,
+    })
+    
+    return jsonify({
+        "session_id": session_id,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "artifacts": artifacts,
+        "count": len(artifacts),
+        "patterns_detected": len(set(a["pattern_id"] for a in artifacts)),
+    }), 200
+
+
+@app.route("/cognitive/governance/patterns", methods=["GET"])
+def governance_patterns():
+    """Phase 2: Liste des patterns de détection connus.
+    
+    Returns:
+        Liste des patterns configurés pour auto-génération
+    """
+    return jsonify({
+        "patterns": [
+            {
+                "id": p["id"],
+                "name": p["name"],
+                "artifact_type": p["artifact_type"],
+                "template": p["template"],
+            }
+            for p in KNOWN_PATTERNS
+        ],
+        "count": len(KNOWN_PATTERNS),
+    }), 200
+
+
+@app.route("/cognitive/dashboard", methods=["GET"])
+def dashboard():
+    """Phase 2: Tableau de bord auto-gouvernance.
+    
+    Returns:
+        Statistiques: artefacts générés, patterns détectés, décisions extraites
+    """
+    stats = get_dashboard_stats()
+    return jsonify(stats), 200
+
+
+@app.route("/cognitive/referex/validate", methods=["POST"])
+def referex_validate():
+    """Phase 2: Validation REFEREX avant commit.
+    
+    Body:
+        artifacts: list[str] - liste d'intent_hash à valider
+        document_type: str (optional, default: "PRD")
+    
+    Returns:
+        Résultat de validation REFEREX
+    """
+    data = request.get_json(force=True)
+    artifacts = data.get("artifacts", [])
+    document_type = data.get("document_type", "PRD")
+    
+    if not artifacts:
+        return jsonify({"error": "artifacts list is required"}), 400
+    
+    result = call_referex(artifacts)
+    
+    # Déterminer si le commit est bloqué
+    blocked = False
+    broken_links = result.get("broken_links", [])
+    if broken_links:
+        blocked = True
+    
+    return jsonify({
+        "valid": not blocked,
+        "blocked": blocked,
+        "document_type": document_type,
+        "artifacts_checked": len(artifacts),
+        "broken_links": broken_links,
+        "coverage_score": result.get("coverage_score", 0.0),
+        "references": result.get("references", []),
+    }), 200
 
 
 def check_port(host: str, port: int, timeout: float = 1.0) -> bool:
