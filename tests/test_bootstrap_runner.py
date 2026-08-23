@@ -24,6 +24,24 @@ class TestCheckPort(unittest.TestCase):
             self.assertFalse(bootstrap.check_port("127.0.0.1", 8810, timeout=0.1))
 
 
+class TestDependencies(unittest.TestCase):
+    """G1 (PRD-MOC-GEN-002) : le bus WAZAA réel écoute sur 1873."""
+
+    def test_wazaa_bus_port_is_1873(self):
+        self.assertEqual(bootstrap.DEPENDENCIES["wazaa"]["port"], 1873)
+        self.assertTrue(bootstrap.DEPENDENCIES["wazaa"]["required"])
+
+    def test_wazaa_mission_control_optional_5002(self):
+        mc = bootstrap.DEPENDENCIES["wazaa-mc"]
+        self.assertEqual(mc["port"], 5002)
+        self.assertFalse(mc["required"])
+
+    def test_wazaa_threads_informational_8200(self):
+        threads = bootstrap.DEPENDENCIES["wazaa-threads"]
+        self.assertEqual(threads["port"], 8200)
+        self.assertFalse(threads["required"])
+
+
 class TestCheckService(unittest.TestCase):
     def setUp(self):
         bootstrap.state = bootstrap.BootstrapState()
@@ -44,6 +62,27 @@ class TestCheckService(unittest.TestCase):
             result = bootstrap.check_service("flex-api", {"port": 8080, "path": "/health", "required": False})
             self.assertEqual(result["status"], "stopped")
             self.assertNotIn("flex-api", bootstrap.state.blockers)
+
+
+class TestCheckAllDependencies(unittest.TestCase):
+    """Sémantique ready auto-guérie (PRD-MOC-GEN-002 §7.4)."""
+
+    def setUp(self):
+        bootstrap.state = bootstrap.BootstrapState()
+
+    def test_all_up_sets_ready(self):
+        with patch.object(bootstrap, "check_port", return_value=True):
+            self.assertTrue(bootstrap.check_all_dependencies())
+            self.assertTrue(bootstrap.state.ready)
+            self.assertEqual(bootstrap.state.status, bootstrap.PHASE_READY)
+            self.assertEqual(bootstrap.state.phase, "operational")
+
+    def test_required_down_blocks_ready(self):
+        with patch.object(bootstrap, "check_port", return_value=False):
+            self.assertFalse(bootstrap.check_all_dependencies())
+            self.assertFalse(bootstrap.state.ready)
+            self.assertGreater(len(bootstrap.state.blockers), 0)
+            self.assertNotEqual(bootstrap.state.status, bootstrap.PHASE_READY)
 
 
 class TestResolveSecret(unittest.TestCase):
@@ -120,42 +159,53 @@ class TestBootstrapHandler(unittest.TestCase):
         handler.send_response.assert_called_with(200)
 
     def test_ready_get_not_ready(self):
-        bootstrap.state.ready = False
-        handler = self._make_request("GET", "/bootstrap/ready")
-        handler.send_response = MagicMock()
-        handler.send_header = MagicMock()
-        handler.end_headers = MagicMock()
-        handler.do_GET()
-        handler.send_response.assert_called_with(503)
+        # Déterminisme : tous les ports fermés -> ready=False -> 503
+        with patch.object(bootstrap, "check_port", return_value=False):
+            handler = self._make_request("GET", "/bootstrap/ready")
+            handler.send_response = MagicMock()
+            handler.send_header = MagicMock()
+            handler.end_headers = MagicMock()
+            handler.do_GET()
+            handler.send_response.assert_called_with(503)
+
+    def test_ready_get_all_up(self):
+        with patch.object(bootstrap, "check_port", return_value=True):
+            handler = self._make_request("GET", "/bootstrap/ready")
+            handler.send_response = MagicMock()
+            handler.send_header = MagicMock()
+            handler.end_headers = MagicMock()
+            handler.do_GET()
+            handler.send_response.assert_called_with(200)
 
     def test_start_post(self):
-        handler = self._make_request("POST", "/bootstrap/start")
-        handler.send_response = MagicMock()
-        handler.send_header = MagicMock()
-        handler.end_headers = MagicMock()
-        bootstrap.state.phase = bootstrap.PHASE_PENDING
-        handler.do_POST()
-        handler.send_response.assert_called_with(202)
+        # Le starter réel est mocké : pas de démarrage de services pendant les tests
+        with patch.object(bootstrap, "ServiceStarter") as mock_starter:
+            handler = self._make_request("POST", "/bootstrap/start")
+            handler.send_response = MagicMock()
+            handler.send_header = MagicMock()
+            handler.end_headers = MagicMock()
+            bootstrap.state.phase = bootstrap.PHASE_PENDING
+            handler.do_POST()
+            handler.send_response.assert_called_with(202)
+            mock_starter.assert_called_once()
 
     def test_monitor_get_ok(self):
-        bootstrap.state.ready = True
-        bootstrap.state.blockers = []
-        handler = self._make_request("GET", "/bootstrap/monitor")
-        handler.send_response = MagicMock()
-        handler.send_header = MagicMock()
-        handler.end_headers = MagicMock()
-        handler.do_GET()
-        handler.send_response.assert_called_with(200)
+        with patch.object(bootstrap, "check_port", return_value=True):
+            handler = self._make_request("GET", "/bootstrap/monitor")
+            handler.send_response = MagicMock()
+            handler.send_header = MagicMock()
+            handler.end_headers = MagicMock()
+            handler.do_GET()
+            handler.send_response.assert_called_with(200)
 
     def test_monitor_get_alert(self):
-        bootstrap.state.ready = False
-        bootstrap.state.blockers = ["test: port 1234 not reachable"]
-        handler = self._make_request("GET", "/bootstrap/monitor")
-        handler.send_response = MagicMock()
-        handler.send_header = MagicMock()
-        handler.end_headers = MagicMock()
-        handler.do_GET()
-        handler.send_response.assert_called_with(503)
+        with patch.object(bootstrap, "check_port", return_value=False):
+            handler = self._make_request("GET", "/bootstrap/monitor")
+            handler.send_response = MagicMock()
+            handler.send_header = MagicMock()
+            handler.end_headers = MagicMock()
+            handler.do_GET()
+            handler.send_response.assert_called_with(503)
 
 
 class TestBootstrapMonitor(unittest.TestCase):
@@ -163,24 +213,33 @@ class TestBootstrapMonitor(unittest.TestCase):
         bootstrap.state = bootstrap.BootstrapState()
         bootstrap.monitor = bootstrap.BootstrapMonitor()
 
+    def test_single_class_definition(self):
+        """Régression : BootstrapMonitor ne doit être défini qu'une seule fois."""
+        import inspect
+
+        source = inspect.getsource(bootstrap)
+        self.assertEqual(source.count("class BootstrapMonitor"), 1)
+
     def test_monitor_ok(self):
-        bootstrap.state.ready = True
-        report = bootstrap.monitor.check()
-        self.assertIsNone(report.get("alert"))
-        self.assertEqual(report["alert_count"], 0)
+        with patch.object(bootstrap, "check_port", return_value=True):
+            report = bootstrap.monitor.check()
+            self.assertIsNone(report.get("alert"))
+            self.assertEqual(report["alert_count"], 0)
 
     def test_monitor_alert_on_blockers(self):
-        bootstrap.state.blockers = ["service: port 1234 not reachable"]
-        report = bootstrap.monitor.check()
-        self.assertIsNotNone(report.get("alert"))
-        self.assertEqual(report["alert_count"], 1)
+        with patch.object(bootstrap, "check_port", return_value=False):
+            report = bootstrap.monitor.check()
+            self.assertIsNotNone(report.get("alert"))
+            self.assertGreaterEqual(report["alert_count"], 1)
 
     def test_monitor_alert_on_not_ready(self):
-        bootstrap.state.ready = False
-        bootstrap.state.phase = bootstrap.PHASE_CHECKING
-        report = bootstrap.monitor.check()
-        self.assertIsNotNone(report.get("alert"))
-        self.assertIn("not ready", report["alert"])
+        with patch.object(bootstrap, "check_port", side_effect=lambda host, port, timeout=1.0: port == 8810):
+            # Seul 8810 répond : les dépendances requises sont down -> not ready
+            bootstrap.monitor.check()
+            bootstrap.state.ready = False
+            bootstrap.state.phase = bootstrap.PHASE_CHECKING
+            report = bootstrap.monitor.check()
+            self.assertIsNotNone(report.get("alert"))
 
 
 if __name__ == "__main__":
