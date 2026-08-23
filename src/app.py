@@ -22,7 +22,7 @@ from flask import Flask, jsonify, request
 from src.runner_state import RunnerStateStore
 from src.notification_store import NotificationStore
 from src.notification_metrics import NotificationMetricsStore
-from src.auth import login_required, create_token, _load_users
+from src.auth import login_required, create_token, decode_token, _load_users
 from src.audit_log import AuditLogStore
 from src.zombie_monitor import zombie_bp
 from runners.registry import load_runners_config, get_runner
@@ -422,8 +422,22 @@ def cross_service_status() -> Any:
 
 
 @app.post("/runners/<string:name>/start")
-@login_required(roles=["admin", "operator"])
 def start_runner(name: str) -> Any:
+    # Canal interne bootstrap (PRD-MOC-GEN-002 G3) : uniquement depuis
+    # localhost avec l'en-tête dédié X-KIX-Bootstrap. Toute autre requête
+    # passe par l'authentification JWT standard (roles admin/operator).
+    if not (
+        request.remote_addr in ("127.0.0.1", "::1")
+        and request.headers.get("X-KIX-Bootstrap") == "1"
+    ):
+        auth_header = request.headers.get("Authorization", "")
+        payload = decode_token(auth_header.split(" ", 1)[1]) if auth_header.startswith("Bearer ") else None
+        if not payload or payload.get("role") not in ("admin", "operator"):
+            return jsonify({"error": "forbidden", "required_roles": ["admin", "operator"]}), 403
+        request.user = payload
+    else:
+        request.user = {"sub": "bootstrap-internal", "role": "operator"}
+
     runners = _sync_runners()
     runner = runners.get(name)
     if not runner:
