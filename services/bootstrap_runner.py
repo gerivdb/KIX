@@ -10,7 +10,7 @@ Endpoints:
   GET  /bootstrap/monitor
 
 Auto-cicatrisation : watchdog interne re-checke les dépendances toutes les
-BOOTSTRAP_CHECK_INTERVAL secondes (défaut 5) et relance la séquence si une
+BOOTSTRAP_CHECK_INTERVAL secondes (défaut 3) et relance la séquence si une
 dépendance requise tombe (restart_policy on-failure, récupération < 10s).
 """
 
@@ -451,9 +451,10 @@ class BootstrapWatchdog:
     """
 
     def __init__(self, interval: int | None = None) -> None:
-        # Défaut 5 s : détection <= 5 s + séquence ~4 s => récupération < 10 s
-        # (cible PRD-MOC-GEN-002 §11), RAM négligeable.
-        self.interval = interval or int(os.environ.get("BOOTSTRAP_CHECK_INTERVAL", "5"))
+        # Défaut 3 s : détection <= 3 s + spawn/bind ~4 s + settle 1 s
+        # + re-check ~1.5 s => récupération mesurée < 10 s (cible §11),
+        # y compris quand le kill tombe juste après un tick.
+        self.interval = interval or int(os.environ.get("BOOTSTRAP_CHECK_INTERVAL", "3"))
         self._lock = threading.Lock()
         self.restarts = 0
         self.last_tick: dict[str, Any] = {}
