@@ -6,6 +6,12 @@ Endpoints:
   GET  /bootstrap/status
   GET  /bootstrap/ready
   POST /bootstrap/start
+  POST /bootstrap/register   (contrat PRD-MOC-GEN-002 §7.3)
+  GET  /bootstrap/monitor
+
+Auto-cicatrisation : watchdog interne re-checke les dépendances toutes les
+BOOTSTRAP_CHECK_INTERVAL secondes (défaut 5) et relance la séquence si une
+dépendance requise tombe (restart_policy on-failure, récupération < 10s).
 """
 
 import os
@@ -16,8 +22,9 @@ import socket
 import subprocess
 import logging
 import keyring
+import threading
 from datetime import datetime, timezone
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import HTTPServer, ThreadingHTTPServer, BaseHTTPRequestHandler
 from typing import Any
 
 try:
@@ -65,6 +72,9 @@ class BootstrapState:
         self.services: dict[str, dict[str, Any]] = {}
         self.blockers: list[str] = []
         self.ready: bool = False
+        # Verrou logique : une sequence de demarrage est en cours
+        # (POST /start ou re-sequence watchdog). Non expose dans to_dict.
+        self.rebooting: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -392,38 +402,98 @@ class ServiceStarter:
 
     def start(self) -> None:
         """Démarre la séquence ordonnée puis re-checke l'état réel (autoritaire)."""
-        state.phase = PHASE_STARTING
-        state.status = "starting"
+        state.rebooting = True
+        try:
+            state.phase = PHASE_STARTING
+            state.status = "starting"
 
-        starters = {
-            "arbiter": self._start_arbiter,
-            "wazaa": self._start_wazaa_bus,
-            "trixd": self._start_via_kix_runner,
-            "wazaa-mc": self._start_via_kix_runner,
-            "flex-api": self._start_via_kix_runner,
-        }
+            starters = {
+                "arbiter": self._start_arbiter,
+                "wazaa": self._start_wazaa_bus,
+                "trixd": self._start_via_kix_runner,
+                "wazaa-mc": self._start_via_kix_runner,
+                "flex-api": self._start_via_kix_runner,
+            }
 
-        for service_key, config in self.START_SEQUENCE:
-            starter = starters.get(service_key)
-            if starter:
-                starter(service_key, config)
-            else:
-                logger.info("ServiceStarter: no starter for %s", service_key)
-            # Enregistrement dans KIX (nom KIX si défini, sinon la clé d'état)
-            kix_name = config.get("kix_runner", service_key)
-            self.kix_registrar.register_runner(kix_name, config["port"])
+            for service_key, config in self.START_SEQUENCE:
+                starter = starters.get(service_key)
+                if starter:
+                    starter(service_key, config)
+                else:
+                    logger.info("ServiceStarter: no starter for %s", service_key)
+                # Enregistrement dans KIX (nom KIX si défini, sinon la clé d'état)
+                kix_name = config.get("kix_runner", service_key)
+                self.kix_registrar.register_runner(kix_name, config["port"])
 
-        # Laisse respirer les services fraîchement démarrés, puis état final.
-        time.sleep(2.0)
-        all_ok = check_all_dependencies()
-        logger.info(
-            "ServiceStarter: sequence done -> status=%s ready=%s blockers=%s",
-            state.status,
-            state.ready,
-            state.blockers,
-        )
-        if not all_ok:
-            state.status = "degraded"
+            # Laisse respirer les services fraîchement démarrés, puis état final.
+            time.sleep(2.0)
+            all_ok = check_all_dependencies()
+            logger.info(
+                "ServiceStarter: sequence done -> status=%s ready=%s blockers=%s",
+                state.status,
+                state.ready,
+                state.blockers,
+            )
+            if not all_ok:
+                state.status = "degraded"
+        finally:
+            state.rebooting = False
+
+
+class BootstrapWatchdog:
+    """Auto-cicatrisation : re-checke périodiquement et relance la séquence
+    de démarrage si une dépendance requise tombe.
+
+    PRD-MOC-GEN-002 §11 : disponibilité > 99%, récupération < 10s.
+    Intervalle réglable via BOOTSTRAP_CHECK_INTERVAL (défaut 10 s).
+    """
+
+    def __init__(self, interval: int | None = None) -> None:
+        # Défaut 5 s : détection <= 5 s + séquence ~4 s => récupération < 10 s
+        # (cible PRD-MOC-GEN-002 §11), RAM négligeable.
+        self.interval = interval or int(os.environ.get("BOOTSTRAP_CHECK_INTERVAL", "5"))
+        self._lock = threading.Lock()
+        self.restarts = 0
+        self.last_tick: dict[str, Any] = {}
+
+    def tick(self) -> dict[str, Any]:
+        """Un cycle de surveillance. Retourne l'action entreprise."""
+        ok = check_all_dependencies()
+        if ok:
+            self.last_tick = {"action": "none", "ready": True, "restarts": self.restarts}
+            return self.last_tick
+
+        # Dépendance requise down -> tenter une re-séquence, sauf si une
+        # autre séquence est déjà en cours (POST /start ou tick précédent).
+        if getattr(state, "rebooting", False):
+            self.last_tick = {"action": "in_progress", "ready": False, "restarts": self.restarts}
+            return self.last_tick
+
+        if self._lock.acquire(blocking=False):
+            try:
+                logger.warning("[WATCHDOG] dependance requise down, re-sequence (%d)", self.restarts + 1)
+                ServiceStarter().start()
+                self.restarts += 1
+                action = "restarted"
+            except Exception as exc:  # pragma: no cover - défensif
+                logger.warning("[WATCHDOG] re-sequence failed: %s", exc)
+                action = "failed"
+            finally:
+                self._lock.release()
+        else:
+            action = "in_progress"
+
+        self.last_tick = {"action": action, "ready": state.ready, "restarts": self.restarts}
+        return self.last_tick
+
+    def loop(self) -> None:
+        """Boucle daemon de surveillance."""
+        while True:
+            time.sleep(self.interval)
+            try:
+                self.tick()
+            except Exception as exc:  # pragma: no cover - défensif
+                logger.warning("[WATCHDOG] tick error: %s", exc)
 
 
 class BootstrapHandler(BaseHTTPRequestHandler):
@@ -471,18 +541,46 @@ class BootstrapHandler(BaseHTTPRequestHandler):
             ServiceStarter().start()
             # start() a déjà re-checké les dépendances et fixé status/ready.
             self._send_json(202, {"message": "bootstrap sequence executed", "state": state.to_dict()})
+        elif self.path == "/bootstrap/register":
+            # Contrat PRD-MOC-GEN-002 §7.3 : enregistrer un service dans KIX.
+            try:
+                length = int(self.headers.get("Content-Length", "0") or "0")
+                payload = json.loads(self.rfile.read(length).decode("utf-8")) if length else {}
+            except (ValueError, json.JSONDecodeError):
+                self._send_json(400, {"error": "invalid_json"})
+                return
+            name = payload.get("name")
+            port = payload.get("port")
+            if not name or port is None:
+                self._send_json(400, {"error": "missing_fields", "details": "name and port are required"})
+                return
+            registrar = KIXRegistrar()
+            ok = registrar.register_runner(str(name), int(port), str(payload.get("status", "running")))
+            self._send_json(200 if ok else 502, {
+                "registered": ok,
+                "name": name,
+                "port": port,
+            })
         else:
             self.send_error(404, "Not Found")
 
 
 def run() -> None:
-    """Démarre le serveur bootstrap."""
+    """Démarre le serveur bootstrap (threading) + le watchdog de surveillance."""
     host = "127.0.0.1"
-    server = HTTPServer((host, PORT), BootstrapHandler)
+    # ThreadingHTTPServer : les GET /ready ne bloquent pas pendant une
+    # séquence de démarrage longue (POST /start ou re-séquence watchdog).
+    server = ThreadingHTTPServer((host, PORT), BootstrapHandler)
     logger.info("Bootstrap runner starting on %s:%d", host, PORT)
 
     # Check initial au démarrage
     check_all_dependencies()
+
+    # Watchdog auto-cicatrisant (PRD-MOC-GEN-002 §11)
+    watchdog = BootstrapWatchdog()
+    watchdog_thread = threading.Thread(target=watchdog.loop, daemon=True, name="bootstrap-watchdog")
+    watchdog_thread.start()
+    logger.info("Bootstrap watchdog armed (interval=%ds)", watchdog.interval)
 
     try:
         server.serve_forever()

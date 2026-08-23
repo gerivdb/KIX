@@ -189,6 +189,42 @@ class TestBootstrapHandler(unittest.TestCase):
             handler.send_response.assert_called_with(202)
             mock_starter.assert_called_once()
 
+    def _post_json(self, path, payload):
+        import json as _json
+
+        handler = self._make_request("POST", path)
+        body = _json.dumps(payload).encode("utf-8")
+        handler.headers = {"Content-Type": "application/json", "Content-Length": str(len(body))}
+        handler.rfile = BytesIO(body)
+        handler.send_response = MagicMock()
+        handler.send_header = MagicMock()
+        handler.end_headers = MagicMock()
+        return handler
+
+    def test_register_post_ok(self):
+        handler = self._post_json("/bootstrap/register", {"name": "svc-x", "port": 9999})
+        with patch("requests.post") as mock_post:
+            mock_post.return_value.status_code = 200
+            mock_post.return_value.json.return_value = {"status": "registered"}
+            handler.do_POST()
+        handler.send_response.assert_called_with(200)
+
+    def test_register_post_missing_fields(self):
+        handler = self._post_json("/bootstrap/register", {"name": "svc-x"})
+        handler.do_POST()
+        handler.send_response.assert_called_with(400)
+
+    def test_register_post_invalid_json(self):
+        handler = self._make_request("POST", "/bootstrap/register")
+        body = b"not-json"
+        handler.headers = {"Content-Length": str(len(body))}
+        handler.rfile = BytesIO(body)
+        handler.send_response = MagicMock()
+        handler.send_header = MagicMock()
+        handler.end_headers = MagicMock()
+        handler.do_POST()
+        handler.send_response.assert_called_with(400)
+
     def test_monitor_get_ok(self):
         with patch.object(bootstrap, "check_port", return_value=True):
             handler = self._make_request("GET", "/bootstrap/monitor")
@@ -240,6 +276,39 @@ class TestBootstrapMonitor(unittest.TestCase):
             bootstrap.state.phase = bootstrap.PHASE_CHECKING
             report = bootstrap.monitor.check()
             self.assertIsNotNone(report.get("alert"))
+
+
+class TestBootstrapWatchdog(unittest.TestCase):
+    """Auto-cicatrisation PRD-MOC-GEN-002 §11 (dispo >99%, recovery <10s)."""
+
+    def setUp(self):
+        bootstrap.state = bootstrap.BootstrapState()
+
+    def test_tick_no_action_when_all_up(self):
+        wd = bootstrap.BootstrapWatchdog(interval=10)
+        with patch.object(bootstrap, "check_port", return_value=True):
+            report = wd.tick()
+        self.assertEqual(report["action"], "none")
+        self.assertTrue(report["ready"])
+        self.assertEqual(wd.restarts, 0)
+
+    def test_tick_restarts_when_required_down(self):
+        wd = bootstrap.BootstrapWatchdog(interval=10)
+        with patch.object(bootstrap, "check_port", return_value=False), \
+             patch.object(bootstrap, "ServiceStarter") as mock_starter:
+            report = wd.tick()
+        self.assertEqual(report["action"], "restarted")
+        self.assertEqual(wd.restarts, 1)
+        mock_starter.assert_called_once()
+
+    def test_tick_skips_while_starting(self):
+        wd = bootstrap.BootstrapWatchdog(interval=10)
+        bootstrap.state.rebooting = True  # sequence deja en cours
+        with patch.object(bootstrap, "check_port", return_value=False), \
+             patch.object(bootstrap, "ServiceStarter") as mock_starter:
+            report = wd.tick()
+        self.assertEqual(report["action"], "in_progress")
+        mock_starter.assert_not_called()
 
 
 if __name__ == "__main__":
