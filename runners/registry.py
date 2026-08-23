@@ -28,13 +28,27 @@ def _load_yaml(path: Path) -> dict[str, Any]:
 
 
 def _resolve_env(value: Any) -> Any:
-    """Remplace les placeholders ${VAR} par la valeur d'environnement."""
+    """Remplace les placeholders ${VAR} par env, puis fallback keyring gerivdb.
+
+    G4 (PRD-MOC-GEN-002 §5.2) : aucun secret en clair dans runners.yaml.
+    Ordre de résolution : variable d'environnement -> keyring ("gerivdb",
+    nom_de_var en minuscules). Si introuvable partout, le placeholder est
+    conservé tel quel (comportement précédent).
+    """
     if isinstance(value, str):
         import re
 
         def _replace(match: re.Match[str]) -> str:
             var_name = match.group(1)
-            return os.environ.get(var_name, match.group(0))
+            resolved = os.environ.get(var_name)
+            if not resolved:
+                try:
+                    import keyring
+
+                    resolved = keyring.get_password("gerivdb", var_name.lower())
+                except Exception:
+                    resolved = None
+            return resolved if resolved else match.group(0)
 
         return re.sub(r"\$\{([^}]+)\}", _replace, value)
     if isinstance(value, dict):
