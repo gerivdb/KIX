@@ -100,31 +100,52 @@ def main() -> int:
         print(f"[ERREUR] /bootstrap/ready: {exc}")
         return 1
 
-    # 4. Calculer phi-CPS
-    print("\n[ETAPE 4] Calcul de phi-CPS...")
+    # 4. Calculer phi-CPS global (informatif : denominateur = tous les
+    #    runners declares dans la SOT, y compris RLM-* non implementes)
+    print("\n[ETAPE 4] Calcul de phi-CPS global...")
     phi = get_phi_cps()
     if phi is None:
         print("[ERREUR] Impossible de recuperer phi-CPS")
         return 1
-    print(f"  phi-CPS: {phi}")
+    print(f"  phi-CPS global: {phi}")
 
-    # 5. Verifier le seuil
-    print("\n[ETAPE 5] Verification du seuil phi-CPS...")
+    # 5. Verifier les seuils
+    print("\n[ETAPE 5] Verification des seuils...")
     threshold = 0.85
-    if phi >= threshold:
-        print(f"  [OK] phi-CPS {phi} >= {threshold}")
+
+    # 5a. Perimetre gouverne par GEN-002 : dependances requises du bootstrap
+    try:
+        resp = requests.get(f"{BOOTSTRAP_URL}/bootstrap/status", timeout=10)
+        services = resp.json().get("services", {})
+        required = {k: v for k, v in services.items() if v.get("required")}
+        req_up = sum(1 for v in required.values() if v.get("status") == "running")
+        bootstrap_phi = round(req_up / len(required), 3) if required else None
+    except Exception as exc:
+        print(f"[ERREUR] lecture /bootstrap/status: {exc}")
+        return 1
+
+    if bootstrap_phi is not None and bootstrap_phi >= threshold:
+        print(f"  [OK] phi bootstrap ({req_up}/{len(required)}) = {bootstrap_phi} >= {threshold}")
     else:
-        print(f"  [WARN] phi-CPS {phi} < {threshold}")
-        print(f"  [INFO] Ceci est attendu car seuls les services KIX+bootstrap sont demarres.")
-        print(f"  [INFO] Le seuil 0.85 sera atteint quand tous les runners seront demarres.")
+        print(f"  [ECHEC] phi bootstrap = {bootstrap_phi} < {threshold}")
+        print(f"  blockers: voir GET /bootstrap/status")
+        return 1
+
+    if phi >= threshold:
+        print(f"  [OK] phi-CPS global {phi} >= {threshold}")
+    else:
+        print(f"  [WARN] phi-CPS global {phi} < {threshold}")
+        print(f"  [INFO] Attendu : le denominateur inclut les RLM-* (8794-8802)")
+        print(f"  [INFO] non implementes (registre : 'a archiver') - hors scope GEN-002.")
 
     # 6. Resume
     print("\n" + "=" * 60)
-    print("VALIDATION PHI_TOTAL: OK (bootstrap fonctionnel)")
-    print(f"  phi-CPS: {phi}")
-    print(f"  Seuil cible: {threshold}")
-    print(f"  Bootstrap: pret")
-    print(f"  Services critiques: gateway-manager, kix, arbiter, trixd, wazaa, flex-api")
+    print("VALIDATION PHI_TOTAL: OK (bootstrap fonctionnel et auto-cicatrisant)")
+    print(f"  phi bootstrap (requis): {bootstrap_phi}  <- critere GEN-002")
+    print(f"  phi-CPS global       : {phi}          <- informatif")
+    print(f"  Seuil cible          : {threshold}")
+    print(f"  Bootstrap            : pret")
+    print(f"  Services critiques   : gateway-manager, kix, arbiter, trixd, wazaa(1873), flex-api")
     print("=" * 60)
     return 0
 
