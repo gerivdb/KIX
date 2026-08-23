@@ -51,7 +51,9 @@ class TestEndToEndBootstrap(unittest.TestCase):
             handler.send_response.assert_called_with(202)
 
             # 3. Verifier que bootstrap est ready
-            self.assertEqual(bootstrap.state.phase, bootstrap.PHASE_READY)
+            # Semantique PRD-MOC-GEN-002 : status='ready' + phase='operational'
+            self.assertEqual(bootstrap.state.status, bootstrap.PHASE_READY)
+            self.assertEqual(bootstrap.state.phase, "operational")
             self.assertTrue(bootstrap.state.ready)
 
             # 4. Verifier /bootstrap/ready retourne 200

@@ -20,17 +20,24 @@ class TestIntegrationServiceStarter(unittest.TestCase):
 
     def test_service_starter_sequence(self):
         starter = bootstrap.ServiceStarter()
+        # Nouvelle séquence PRD-MOC-GEN-002 : arbiter -> wazaa bus (1873) ->
+        # trixd/wazaa-mc/flex-api via le canal KIX. Le re-check final est
+        # rendu déterministe (ports up) et le sleep supprimé.
         with patch.object(starter, "_start_arbiter") as mock_arbiter, \
-             patch.object(starter, "_start_trixd") as mock_trixd, \
-             patch.object(starter, "_start_wazaa") as mock_wazaa, \
-             patch.object(starter, "_start_flex_api") as mock_flex:
+             patch.object(starter, "_start_wazaa_bus") as mock_wazaa_bus, \
+             patch.object(starter, "_start_via_kix_runner") as mock_kix_runner, \
+             patch.object(bootstrap, "check_port", return_value=True), \
+             patch.object(bootstrap.time, "sleep"), \
+             patch("requests.post") as mock_post:
+            mock_post.return_value.status_code = 200
+            mock_post.return_value.json.return_value = {"status": "registered"}
             starter.start()
             mock_arbiter.assert_called_once()
-            mock_trixd.assert_called_once()
-            mock_wazaa.assert_called_once()
-            mock_flex.assert_called_once()
-        self.assertEqual(bootstrap.state.phase, bootstrap.PHASE_READY)
+            mock_wazaa_bus.assert_called_once()
+            self.assertEqual(mock_kix_runner.call_count, 3)
+        self.assertEqual(bootstrap.state.status, bootstrap.PHASE_READY)
         self.assertTrue(bootstrap.state.ready)
+        self.assertEqual(bootstrap.state.phase, "operational")
 
     def test_kix_registrar_register(self):
         registrar = bootstrap.KIXRegistrar()
