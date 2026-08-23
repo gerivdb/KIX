@@ -12,3 +12,6 @@ build/
 llm_catalog.db
 
 .kilo/wal/
+*.exe
+*.pdb
+logs/
