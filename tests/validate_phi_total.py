@@ -19,7 +19,9 @@ def wait_bootstrap(timeout: int = 60) -> bool:
     """Attend que bootstrap soit pret."""
     for i in range(timeout):
         try:
-            resp = requests.get(f"{BOOTSTRAP_URL}/bootstrap/ready", timeout=1)
+            # Le handler /bootstrap/ready re-sonde 8 ports sequentiels
+            # (~1.4s mesure live) : le timeout client doit couvrir ce cout.
+            resp = requests.get(f"{BOOTSTRAP_URL}/bootstrap/ready", timeout=5)
             if resp.status_code == 200 and resp.json().get("ready"):
                 print(f"[PHI] Bootstrap pret apres {i+1} tentative(s)")
                 return True

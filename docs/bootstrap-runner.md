@@ -28,15 +28,21 @@ ECOS CLI
   -> bootstrap (port 8810) starts automatically
       -> CHECK: gateway-manager (port 9000)
       -> CHECK: KIX self-check (port 8800)
-      -> START: Arbiter (port 8742)
-      -> START/CHECK: trixd (port 7243) with dynamic headers
-      -> CHECK: wazaa (port 5002)
-      -> CHECK: flex-api (port 8080)
+      -> START: Arbiter (port 8742) via start-git-arbiter.ps1 (CMD wrapper + port wait)
+      -> START: wazaa KG-L bus (port 1873) via src/bus_runner.py
+      -> START/CHECK: trixd (port 7243) via KIX internal channel (X-KIX-Bootstrap)
+      -> CHECK: wazaa-mc mission control (port 5002, optional)
+      -> CHECK: flex-api (port 8080, optional)
       -> REGISTER: register all services in KIX
-      -> PUBLISH: /bootstrap/ready = true
-  -> ECOS CLI polls /bootstrap/ready
-  -> Ecosystem operational
+      -> PUBLISH: /bootstrap/ready = true when all required deps are up
+   -> ECOS CLI polls /bootstrap/ready (Invoke-BootstrapGate, budget 30s,
+      escape hatch ECOS_SKIP_BOOTSTRAP=1)
+   -> Ecosystem operational
 ```
+
+Note (PRD-MOC-GEN-002 G1): the real WAZAA bus is `src/bus_runner.py`
+listening on 1873 (`PORT_ASYNC`) and 8200 (`PORT_THREADS`, informational).
+Port 5002 is the separate mission-control HTTP service (`wazaa-mc`).
 
 ## Lifecycle States
 
