@@ -23,6 +23,8 @@ import subprocess
 import logging
 import keyring
 import threading
+import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from http.server import HTTPServer, ThreadingHTTPServer, BaseHTTPRequestHandler
 from typing import Any
@@ -37,6 +39,9 @@ logger = logging.getLogger("bootstrap")
 
 SERVICE_NAME = "bootstrap"
 PORT = 8810
+# Empreinte d'instance (ERR-001) : permet de distinguer deux processus
+# bootstrap dans les diagnostics quand un double-bind a eu lieu.
+BUILD_ID = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 # Dépendances et leurs ports attendus.
 # G1 (PRD-MOC-GEN-002) : le bus WAZAA réel écoute 1873 (WazaaBusAsync /
@@ -130,13 +135,21 @@ def check_all_dependencies() -> bool:
     requises sont joignables, le bootstrap se déclare prêt, même sans
     appel explicite à /bootstrap/start (auto-guérison : des services
     démarrés par un autre chemin publient quand même /bootstrap/ready).
+
+    ERR-002 (session 2026-08-24) : les 8 sondes TCP séquentielles coûtaient
+    ~1.4 s par appel, dépassant les timeouts de clients légitimes
+    (validateur phi, e2e setUpClass). Parallélisées via ThreadPoolExecutor :
+    coût total ≈ la sonde la plus lente (~0.2 s), ce qui élimine la classe
+    entière des bugs « timeout client < latence endpoint ».
     """
     state.phase = PHASE_CHECKING
     state.blockers = []
 
+    with ThreadPoolExecutor(max_workers=min(8, len(DEPENDENCIES))) as pool:
+        list(pool.map(lambda item: check_service(item[0], item[1]), DEPENDENCIES.items()))
+
     all_ok = True
     for name, info in DEPENDENCIES.items():
-        check_service(name, info)
         if state.services[name]["status"] != "running" and info.get("required", True):
             all_ok = False
 
@@ -517,7 +530,7 @@ class BootstrapHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         if self.path == "/health":
-            self._send_json(200, {"status": "ok", "service": SERVICE_NAME})
+            self._send_json(200, {"status": "ok", "service": SERVICE_NAME, "build": BUILD_ID})
         elif self.path == "/bootstrap/status":
             check_all_dependencies()
             self._send_json(200, state.to_dict())
@@ -568,8 +581,36 @@ class BootstrapHandler(BaseHTTPRequestHandler):
             self.send_error(404, "Not Found")
 
 
+def preflight_singleton_guard(host: str = "127.0.0.1", port: int = PORT) -> None:
+    """ERR-001 (session 2026-08-23) : sur Windows, SO_REUSEADDR (posé par
+    TCPServer par défaut) autorise le double-bind silencieux — un zombie
+    peut conserver le port ET recevoir tout le trafic pendant que la
+    nouvelle instance écoute dans le vide, sans aucune erreur.
+
+    Garde-fou : si un service bootstrap répond déjà sur le port, refuser
+    de démarrer avec un message de diagnostic explicite.
+    """
+    try:
+        with urllib.request.urlopen(f"http://{host}:{port}/health", timeout=2) as resp:
+            body = json.loads(resp.read().decode("utf-8"))
+        if body.get("service") == SERVICE_NAME:
+            msg = (
+                f"instance bootstrap DEJA ACTIVE sur {host}:{port} "
+                f"(build distant={body.get('build', '?')}). Arret. "
+                f"Pour identifier le processus: Get-NetTCPConnection -LocalPort {port}"
+            )
+            logger.error("[PREFLIGHT] FATAL: %s", msg)
+            raise SystemExit(2)
+    except SystemExit:
+        raise
+    except Exception:
+        # Rien ne répond (ou réponse illisible) : port libre, on proceed.
+        return
+
+
 def run() -> None:
     """Démarre le serveur bootstrap (threading) + le watchdog de surveillance."""
+    preflight_singleton_guard()
     host = "127.0.0.1"
     # ThreadingHTTPServer : les GET /ready ne bloquent pas pendant une
     # séquence de démarrage longue (POST /start ou re-séquence watchdog).

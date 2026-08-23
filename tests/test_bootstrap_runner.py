@@ -311,5 +311,81 @@ class TestBootstrapWatchdog(unittest.TestCase):
         mock_starter.assert_not_called()
 
 
+class TestPreflightSingletonGuard(unittest.TestCase):
+    """ERR-001 (session 2026-08-23) : double-bind SO_REUSEADDR sous Windows."""
+
+    def test_refuses_when_bootstrap_already_answers(self):
+        import urllib.error
+
+        payload = json.dumps({"status": "ok", "service": "bootstrap", "build": "ZOMBIE"}).encode("utf-8")
+        mock_resp = MagicMock()
+        mock_resp.__enter__.return_value.read.return_value = payload
+        with patch("urllib.request.urlopen", return_value=mock_resp), \
+             patch.object(bootstrap.logger, "error") as mock_log:
+            with self.assertRaises(SystemExit) as ctx:
+                bootstrap.preflight_singleton_guard()
+            self.assertEqual(ctx.exception.code, 2)
+            self.assertIn("DEJA ACTIVE", mock_log.call_args.args[1])
+
+    def test_allows_when_nothing_answers(self):
+        import urllib.error
+
+        with patch("urllib.request.urlopen", side_effect=urllib.error.URLError("conn refused")):
+            # Ne doit pas lever
+            bootstrap.preflight_singleton_guard()
+
+    def test_allows_when_foreign_service_answers(self):
+        payload = json.dumps({"status": "ok", "service": "autre-chose"}).encode("utf-8")
+        mock_resp = MagicMock()
+        mock_resp.__enter__.return_value.read.return_value = payload
+        with patch("urllib.request.urlopen", return_value=mock_resp):
+            bootstrap.preflight_singleton_guard()
+
+    def test_health_exposes_build_id(self):
+        bootstrap.state = bootstrap.BootstrapState()
+        handler = bootstrap.BootstrapHandler.__new__(bootstrap.BootstrapHandler)
+        handler.requestline = "GET /health HTTP/1.1"
+        handler.request_version = "HTTP/1.1"
+        handler.command = "GET"
+        handler.path = "/health"
+        handler.headers = {}
+        handler.wfile = BytesIO()
+        handler.rfile = BytesIO()
+        handler.client_address = ("127.0.0.1", 12345)
+        handler.server = MagicMock()
+        handler.close_connection = False
+        handler.send_response = MagicMock()
+        handler.send_header = MagicMock()
+        handler.end_headers = MagicMock()
+        handler.do_GET()
+        # send_response/send_header sont mockés : wfile ne contient que le corps JSON
+        body = json.loads(handler.wfile.getvalue())
+        self.assertEqual(body["service"], "bootstrap")
+        self.assertIn("build", body)
+
+
+class TestParallelProbeLatency(unittest.TestCase):
+    """ERR-002 : le coût d'un check complet doit rester borné même si les
+    sondes individuelles sont lentes (parallélisation ThreadPoolExecutor)."""
+
+    def setUp(self):
+        bootstrap.state = bootstrap.BootstrapState()
+
+    def test_parallel_check_completes_quickly_with_slow_probes(self):
+        import time as _time
+
+        def slow_probe(host, port, timeout=1.0):
+            _time.sleep(0.3)
+            return True
+
+        t0 = _time.time()
+        with patch.object(bootstrap, "check_port", side_effect=slow_probe):
+            ok = bootstrap.check_all_dependencies()
+        elapsed = _time.time() - t0
+        self.assertTrue(ok)
+        # 8 sondes x 0.3s séquentielles = 2.4s ; parallélisé ~0.4s max
+        self.assertLess(elapsed, 1.5, f"check trop lent: {elapsed:.2f}s (probablement sequentiel)")
+
+
 if __name__ == "__main__":
     unittest.main()
