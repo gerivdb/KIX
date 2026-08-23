@@ -425,8 +425,10 @@ class ServiceStarter:
                 kix_name = config.get("kix_runner", service_key)
                 self.kix_registrar.register_runner(kix_name, config["port"])
 
-            # Laisse respirer les services fraîchement démarrés, puis état final.
-            time.sleep(2.0)
+            # Laisse respirer les services fraîchement démarrés avant l'état
+            # final. wait_for_port ayant déjà confirmé les ports critiques,
+            # 1 s suffit — et maintient la récupération watchdog < 10 s.
+            time.sleep(1.0)
             all_ok = check_all_dependencies()
             logger.info(
                 "ServiceStarter: sequence done -> status=%s ready=%s blockers=%s",
