@@ -160,12 +160,18 @@ def resolve_secret(var_name: str) -> str | None:
     return None
 
 
-def wait_for_port(port: int, attempts: int = 6, delay: float = 1.0) -> bool:
-    """Attend qu'un port local devienne joignable (retry avec backoff léger)."""
+def wait_for_port(port: int, attempts: int = 4, delay: float = 1.0) -> bool:
+    """Attend qu'un port local devienne joignable (retry avec backoff léger).
+
+    Budget pire cas par service : ~7 s (sleeps 1+2+3 + check final), ce qui
+    maintient toute la séquence sous le timeout de 25 s de POST /bootstrap/start
+    côté gate ECOS CLI.
+    """
     for attempt in range(attempts):
         if check_port("127.0.0.1", port, timeout=1.0):
             return True
-        time.sleep(delay * (attempt + 1))
+        if attempt < attempts - 1:
+            time.sleep(delay * (attempt + 1))
     return check_port("127.0.0.1", port, timeout=1.0)
 
 
