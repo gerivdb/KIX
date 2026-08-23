@@ -7,7 +7,7 @@ The bootstrap runner is a dedicated Python service integrated into KIX that orch
 **Port**: 8810  
 **Service**: `bootstrap`  
 **Role**: Bootstrap orchestrator  
-**Status**: Proposed  
+**Status**: Active (PRD-MOC-GEN-002 implemented, S1+S2+closure)  
 **Strate**: L2-PLATFORM
 
 ## Endpoints
@@ -18,6 +18,17 @@ The bootstrap runner is a dedicated Python service integrated into KIX that orch
 | `/bootstrap/status` | GET | Detailed status of all services | `200 OK` + JSON |
 | `/bootstrap/ready` | GET | Check if system is ready | `200 OK` or `503 Service Unavailable` |
 | `/bootstrap/start` | POST | Trigger manual startup | `202 Accepted` |
+| `/bootstrap/register` | POST | Register a service in KIX (`{"name","port","status?"}`) | `200 OK` / `400` / `502` |
+| `/bootstrap/monitor` | GET | One-shot monitoring report with alert status | `200 OK` or `503` |
+
+## Self-Healing Watchdog
+
+A daemon thread re-checks all dependencies every
+`BOOTSTRAP_CHECK_INTERVAL` seconds (default **3**) and automatically
+re-runs the startup sequence when a required dependency is down and no
+sequence is already running. Measured recovery (kill WAZAA bus -> port
+back up): **8.1 s**, under the PRD §11 target of 10 s. To decommission a
+service permanently, stop the bootstrap runner itself first.
 
 ## Startup Sequence
 
