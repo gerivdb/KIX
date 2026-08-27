@@ -102,3 +102,21 @@ runners:
       repo: gerivdb/GOVERNANCE-HUB
       role: conversation decision extraction and KG-L publishing
       intent_hash: 0xINTENT_COGNITIVE_CONVERSATION_RUNNER_KG_L_WAZAA_20260821
+
+  - name: kg-l-coherence-watchdog
+    runner_type: python
+    port: 8841
+    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/KG-L
+    entrypoint: scripts/coherence_watchdog.py
+    bootstrap: false
+    auto_start: false
+    health_path: /health
+    restart_policy: on-failure
+    log_file: D:/DO/WEB/TOOLS/L4-TOOLS/KG-L/docs/watchdog_stdout.log
+    dependencies:
+      - kix
+      - wazaa
+    meta:
+      repo: gerivdb/KG-L
+      role: metacoherence observatory - publie alertes governance.pathology sur WAZAA
+      intent_hash: 0xPRD_MOC_KG_L_GOVERNANCE_WIRING_20260827
