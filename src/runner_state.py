@@ -82,9 +82,9 @@ class RunnerStateStore:
                                 (name, status, pid, started_at, updated_at),
             )
 
-            # P2-2: KG-L KIX bridge â€” emit runner node after upsert
+            # KG-L via WAZAA bridge (remplace kg_l_kix_bridge direct)
             try:
-                from kg_l_kix_bridge import emit_runner_node
+                from kix_bridge_wazaa import emit_runner_node
                 emit_runner_node(
                     name=name,
                     status=status,

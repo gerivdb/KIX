@@ -167,9 +167,9 @@ class BernsteinG1:
         else:
             self.phi_cps = min(4.559, self.phi_cps + 0.1)
 
-        # P5-2: KG-L KIX bridge - emit korx-sem node after phi_cps calculation
+        # KG-L via WAZAA bridge (remplace kg_l_kix_bridge direct)
         try:
-            from kg_l_kix_bridge import emit_edge
+            from kix_bridge_wazaa import emit_edge
             emit_edge(
                 src="korx-sem",
                 dst="kg-l:root",
