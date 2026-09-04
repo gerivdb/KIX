@@ -120,3 +120,164 @@ runners:
       repo: gerivdb/KG-L
       role: metacoherence observatory - publie alertes governance.pathology sur WAZAA
       intent_hash: 0xPRD_MOC_KG_L_GOVERNANCE_WIRING_20260827
+
+  # Added for STALE_REGISTRY sync (PRD-MOC GEN-030b)
+  - name: nodex
+    runner_type: python
+    port: 8821
+    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/ARGUS
+    entrypoint: runners/nodex.py
+    bootstrap: false
+    auto_start: false
+    health_path: /health
+    restart_policy: on-failure
+    log_file: D:/DO/WEB/TOOLS/L4-TOOLS/ARGUS/logs/nodex.log
+    env:
+      PYTHONPATH: D:/DO/WEB/TOOLS/L0-CANON/GOVERNANCE-HUB
+    dependencies:
+      - ontology
+      - knowledge-graph-memory
+    meta:
+      repo: gerivdb/ARGUS
+      role: node nature classification
+      intent_hash: 0xINTENT_NODEX_20260828
+
+  - name: talex
+    runner_type: python
+    port: 8822
+    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/TALEX
+    entrypoint: runners/talex.py
+    bootstrap: false
+    auto_start: false
+    health_path: /health
+    restart_policy: on-failure
+    log_file: D:/DO/WEB/TOOLS/L4-TOOLS/TALEX/logs/talex.log
+    env:
+      PYTHONPATH: D:/DO/WEB/TOOLS/L0-CANON/GOVERNANCE-HUB
+    dependencies:
+      - llux
+      - rlm243
+      - timx-feature-store
+      - rootx
+      - llm-core
+    meta:
+      repo: gerivdb/TALEX
+      role: narrative post-mortem generation
+      intent_hash: 0xINTENT_TALEX_20260828
+
+  - name: rootx
+    runner_type: python
+    port: 8823
+    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/ARGUS
+    entrypoint: runners/rootx.py
+    bootstrap: false
+    auto_start: false
+    health_path: /health
+    restart_policy: on-failure
+    log_file: D:/DO/WEB/TOOLS/L4-TOOLS/ARGUS/logs/rootx.log
+    env:
+      PYTHONPATH: D:/DO/WEB/TOOLS/L0-CANON/GOVERNANCE-HUB
+    dependencies:
+      - knowledge-graph-memory
+    meta:
+      repo: gerivdb/ARGUS
+      role: root cause analysis
+      intent_hash: 0xINTENT_ROOTX_20260828
+
+  - name: friction-analyzer
+    runner_type: python
+    port: 8815
+    working_dir: D:/DO/WEB/TOOLS/L0-CANON/GOVERNANCE-HUB
+    entrypoint: runners/friction_analyzer_server.py
+    bootstrap: false
+    auto_start: false
+    health_path: /health
+    restart_policy: on-failure
+    log_file: D:/DO/WEB/TOOLS/L0-CANON/GOVERNANCE-HUB/logs/friction_analyzer.log
+    env:
+      PYTHONPATH: D:/DO/WEB/TOOLS/L0-CANON/GOVERNANCE-HUB
+    dependencies:
+      - conversation-cognitive
+      - rlm-incident
+      - rootx
+      - prognex
+      - referex
+    meta:
+      repo: gerivdb/GOVERNANCE-HUB
+      role: session friction analysis and auto-correction
+      intent_hash: 0xINTENT_FRICTION_ANALYZER_RUNNER_20260821
+
+  - name: agent-manager
+    runner_type: python
+    port: 18000
+    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/GeriCode
+    entrypoint: .kilo/skills/geri-manager-api/server.py
+    bootstrap: false
+    auto_start: false
+    health_path: /health
+    restart_policy: on-failure
+    log_file: D:/DO/WEB/TOOLS/L2-PLATFORM/GeriCode/logs/agent_manager.log
+    env:
+      PYTHONPATH: D:/DO/WEB/TOOLS/L0-CANON/GOVERNANCE-HUB
+    dependencies:
+      - kix
+    meta:
+      repo: gerivdb/GeriCode
+      role: KiloCode session orchestration
+      intent_hash: 0xINTENT_AGENT_MANAGER_20260828
+
+  # === VOLTX 2e cerveau services ===
+  - name: kg-l
+    runner_type: python
+    port: 8888
+    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/KG-L
+    entrypoint: src/runtime/kg_l.py
+    args: ["serve"]
+    health_path: /health
+    restart_policy: on-failure
+    log_file: D:/DO/WEB/TOOLS/L4-TOOLS/KG-L/logs/kg-l.log
+    env:
+      PYTHONPATH: D:/DO/WEB/TOOLS/L4-TOOLS/KG-L
+    dependencies:
+      - kix
+    meta:
+      repo: gerivdb/KG-L
+      role: Knowledge Graph causal SOT
+      intent_hash: 0xINTENT_KG_L_VOLTX_20260904
+
+  - name: wazaa-bus
+    runner_type: python
+    port: 1874
+    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/WAZAA
+    entrypoint: scripts/wazaa_bus_server.py
+    health_path: /health
+    restart_policy: on-failure
+    log_file: D:/DO/WEB/TOOLS/L4-TOOLS/WAZAA/logs/wazaa-bus.log
+    env:
+      PYTHONPATH: D:/DO/WEB/TOOLS/L4-TOOLS/WAZAA
+    dependencies:
+      - kix
+      - kg-l
+    meta:
+      repo: gerivdb/WAZAA
+      role: Cognitive bus async TCP (WAZAA Bus) + HTTP health
+      intent_hash: 0xINTENT_WAZAA_BUS_VOLTX_20260904
+
+  - name: nexus
+    runner_type: python
+    port: 8801
+    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/NEXUS
+    entrypoint: scripts/nexus_server.py
+    health_path: /health
+    restart_policy: on-failure
+    log_file: D:/DO/WEB/TOOLS/L4-TOOLS/NEXUS/logs/nexus.log
+    env:
+      PYTHONPATH: D:/DO/WEB/TOOLS/L4-TOOLS/NEXUS
+    dependencies:
+      - kix
+      - kg-l
+      - wazaa-bus
+    meta:
+      repo: gerivdb/NEXUS
+      role: NEXUS WAL anchoring
+      intent_hash: 0xINTENT_NEXUS_VOLTX_20260904
