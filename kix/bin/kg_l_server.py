@@ -144,7 +144,101 @@ def create_app():
         result = engine.get_graph_stats()
         return jsonify(result)
     
+    # Register holgram routes (port 8796)
+    create_hologram_routes(app, engine)
+    
     return app, engine
+
+
+# =====================================================
+# HOLOGRAM API (PRD-MOC-027/028) — port 8796
+# IntentHash: 0xPRD_MOC_028_VOLTX_HOLO_20260910
+# =====================================================
+
+def create_hologram_routes(app, engine):
+    """Add hologram endpoints to Flask app (port 8796)."""
+    try:
+        import sys, os
+        _kix_src = os.path.join(os.path.dirname(__file__), "..", "..", "src")
+        if _kix_src not in sys.path:
+            sys.path.insert(0, _kix_src)
+        from holograms.bateau import holographe_bateau
+        HAS_GENERATOR = True
+    except ImportError:
+        HAS_GENERATOR = False
+
+    @app.get("/hologram/<repo>")
+    def hologram_repo(repo: str):
+        """Retourne l'hologramme bateau d'un repo.
+
+        GET /hologram/KIX
+        GET /hologram/VERSES
+        GET /hologram/CTULU
+        """
+        if not HAS_GENERATOR:
+            return jsonify({"error": "holographe_bateau non disponible"}), 503
+
+        try:
+            from pathlib import Path
+            # Repo path mapping (voltx:8796)
+            repo_paths = {
+                "KIX": Path(r"D:\DO\WEB\TOOLS\L2-PLATFORM\KIX"),
+                "VERSES": Path(r"D:\DO\WEB\TOOLS\L4-TOOLS\VERSES"),
+                "CTULU": Path(r"D:\DO\WEB\TOOLS\L4-TOOLS\CTULU"),
+                "GOVERNANCE-HUB": Path(r"D:\DO\WEB\TOOLS\L0-CANON\GOVERNANCE-HUB"),
+            }
+            repo_path = repo_paths.get(repo.upper())
+            if not repo_path or not repo_path.exists():
+                return jsonify({"error": f"repo {repo} introuvable"}), 404
+
+            hologramme = holographe_bateau(repo_path)
+            return jsonify({"repo": repo, "port": 8796, "hologramme": hologramme})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.get("/hologram/<repo>/zones")
+    def hologram_zones(repo: str):
+        """Liste les 7 zones holographiques d'un repo."""
+        zones_def = {
+            "coque": "registre/manifest",
+            "vagues": "fichiers actifs",
+            "gouvernail": "validation/tests",
+            "vigie": "coverage/scanner",
+            "ancre": "archive/WAL",
+            "equipage": "agents/experts",
+            "pilote": "audit/navigation",
+        }
+        return jsonify({"repo": repo, "zones": zones_def})
+
+    @app.post("/hologram/generate")
+    def hologram_generate():
+        """Génère un hologramme via CTULU/tools/holographe_bateau.py.
+
+        POST /hologram/generate
+        Body: {"repo": "KIX", "zone": "all"}
+        """
+        body = request.json or {}
+        repo_name = (body.get("repo") or "").upper()
+        zone = body.get("zone", "all")
+
+        if not HAS_GENERATOR:
+            return jsonify({"error": "generator non disponible"}), 503
+
+        repo_paths = {
+            "KIX": Path(r"D:\DO\WEB\TOOLS\L2-PLATFORM\KIX"),
+            "VERSES": Path(r"D:\DO\WEB\TOOLS\L4-TOOLS\VERSES"),
+            "CTULU": Path(r"D:\DO\WEB\TOOLS\L4-TOOLS\CTULU"),
+            "GOVERNANCE-HUB": Path(r"D:\DO\WEB\TOOLS\L0-CANON\GOVERNANCE-HUB"),
+        }
+        repo_path = repo_paths.get(repo_name)
+        if not repo_path:
+            return jsonify({"error": f"repo {repo_name} non supporté"}), 400
+
+        try:
+            result = holographe_bateau(repo_path)
+            return jsonify({"status": "generated", "repo": repo_name, "zone": zone, "hologramme": result}), 201
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
 
 def create_mock_app():
@@ -152,10 +246,10 @@ def create_mock_app():
     class MockApp:
         def __init__(self):
             self.engine = KGLEngine()
-        
+
         def run(self, *args, **kwargs):
             print("[KG-L] Server mock — Flask not installed")
-    
+
     return MockApp(), KGLEngine()
 
 
