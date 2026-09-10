@@ -17,9 +17,8 @@ if sys.stdout.encoding != 'utf-8':
 if sys.stderr.encoding != 'utf-8':
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', effects='replace')
 
-# Add runtime to path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent / "kg_l" / "src" / "runtime"))
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent / "kg_l" / "src"))
+# Add shared-clients to path — local kg_l.py contains KGLEngine (ERR_054-fix)
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from kg_l import KGLEngine as _KGLEngine
 

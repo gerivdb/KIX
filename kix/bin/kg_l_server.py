@@ -29,10 +29,12 @@ if sys.stdout.encoding != 'utf-8':
 if sys.stderr.encoding != 'utf-8':
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+# Add libs to path — KIX structure
+_KIX_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(_KIX_ROOT / "libs" / "src"))
+sys.path.insert(0, str(_KIX_ROOT / "libs" / "shared-clients"))
 
-from kg_l import KGLEngine
+from kg_l_client import KGLEngine
 
 
 def create_app():
