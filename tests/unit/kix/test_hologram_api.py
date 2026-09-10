@@ -140,3 +140,35 @@ class TestHologramZones:
         assert "vagues" in zones
         assert "gouvernail" in zones
 
+
+class TestCrossRepoHologram:
+    """Phase 11 — Cross-repo integration (VERSES, CTULU)."""
+
+    def test_hologram_verses(self, app):
+        """GET /hologram/VERSES → 200 + 7 zones."""
+        response = app.test_client().get("/hologram/VERSES")
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data.get("repo") == "VERSES"
+        zones = data.get("hologramme", {})
+        for z in ["coque", "vagues", "gouvernail", "vigie", "ancre", "equipage", "pilote"]:
+            assert z in zones
+
+    def test_hologram_ctulu(self, app):
+        """GET /hologram/CTULU → 200 + coque."""
+        response = app.test_client().get("/hologram/CTULU")
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data.get("repo") == "CTULU"
+        assert "coque" in data.get("hologramme", {})
+
+    def test_cross_repo_consistency(self, app):
+        """All repos return same 7-zone structure."""
+        for repo in ["KIX", "VERSES", "CTULU"]:
+            resp = app.test_client().get(f"/hologram/{repo}")
+            assert resp.status_code == 200
+            zones = resp.get_json().get("hologramme", {})
+            assert set(zones.keys()) == {
+                "coque", "vagues", "gouvernail", "vigie", "ancre", "equipage", "pilote"
+            }
+

@@ -41,7 +41,11 @@ def create_app():
     """Create Flask app with OpenAPI 3.0."""
     try:
         from flask import Flask, request, jsonify
-        from flask_openapi3 import OpenAPI, Info, MERGED
+        from flask_openapi3 import OpenAPI, Info
+        try:
+            from flask_openapi3 import MERGED
+        except ImportError:
+            MERGED = None
     except ImportError:
         # Fallback to minimal mock
         return create_mock_app()
@@ -166,6 +170,22 @@ def create_hologram_routes(app, engine):
         HAS_GENERATOR = True
     except ImportError:
         HAS_GENERATOR = False
+
+    @app.get("/hologram/health")
+    def hologram_health():
+        """Health check for hologram API (port 8796).
+
+        GET /hologram/health
+        """
+        repos = ["KIX", "VERSES", "CTULU", "GOVERNANCE-HUB"]
+        return jsonify({
+            "status": "healthy",
+            "service": "hologram-api",
+            "port": 8796,
+            "repos": repos,
+            "generator": "holographe_bateau" if HAS_GENERATOR else "unavailable",
+            "zones": 7
+        })
 
     @app.get("/hologram/<repo>")
     def hologram_repo(repo: str):
