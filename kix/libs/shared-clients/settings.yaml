@@ -1,0 +1,43 @@
+# kix/libs/shared-clients/settings.yaml
+# Centralised configuration for shared clients and runners
+# Phase 1 — Shared Libraries Standardisation
+
+# KG-L Engine
+kgl:
+  host: "local"                          # or "http://localhost:8888" for remote
+  data_path: "kg_l/data"
+
+# WAZAA Bus
+wazaa:
+  host: "local"                          # or "http://localhost:1874" for remote
+  queue_size: 10000
+  worker_threads: 4
+
+# Vault
+vault:
+  path: "D:/DO/WEB/TOOLS/L0-CANON/VOLTX"
+
+# KIX Runners default
+runner:
+  port: 8000
+  health_path: "/health"
+  metrics_path: "/metrics"
+  log_level: "INFO"
+
+# DI (Dependency Injection)
+di:
+  shared_clients: true
+  auto_inject: true
+
+# WAZAA Subscriptions (per-runner config)
+wazaa_subscriptions:
+  - topic: "graph.mutated"
+    handler: "on_graph_mutated"
+  - topic: "vault.ingested"
+    handler: "on_vault_ingested"
+
+# Logging
+logging:
+  level: "INFO"
+  format: "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+  file: ""
