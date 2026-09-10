@@ -1,0 +1,53 @@
+{
+  "coque": {
+    "type": "registre",
+    "source": null,
+    "found": false
+  },
+  "vagues": {
+    "type": "fichiers_actifs",
+    "count": 40,
+    "dirs": [
+      "src",
+      "scripts",
+      "lib",
+      "kix/bin"
+    ]
+  },
+  "gouvernail": {
+    "type": "validation",
+    "tests_dir": true,
+    "dirs": [
+      "tests",
+      "test",
+      "spec",
+      "__tests__"
+    ]
+  },
+  "vigie": {
+    "type": "observation",
+    "seekers_found": []
+  },
+  "ancre": {
+    "type": "historique",
+    "wal_files": 0,
+    "dirs": [
+      "archive",
+      "migrated",
+      "wal",
+      "REPORTS"
+    ]
+  },
+  "equipage": {
+    "type": "experts",
+    "dirs_found": [
+      "D:\\DO\\WEB\\TOOLS\\L2-PLATFORM\\KIX\\skills"
+    ]
+  },
+  "pilote": {
+    "type": "navigation",
+    "scripts_found": [
+      "D:\\DO\\WEB\\TOOLS\\L2-PLATFORM\\KIX\\scripts"
+    ]
+  }
+}
