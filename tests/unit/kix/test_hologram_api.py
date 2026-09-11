@@ -101,6 +101,28 @@ def make_test_app():
         resp.headers["X-Cache"] = "MISS"
         return resp
 
+    @app.get("/federation/status")
+    def federation_status():
+        """Mock federation status for test."""
+        return jsonify({
+            "status": "ok",
+            "peers": ["KIX", "VERSES", "CTULU", "GOVERNANCE-HUB"],
+            "synced": [],
+            "last_sync": 0.0
+        })
+
+    @app.post("/federation/sync")
+    def federation_sync():
+        """Mock federation sync for test."""
+        body = flask_request_json()
+        repo = body.get("repo", "_all")
+        return jsonify({
+            "status": "ok",
+            "peers": ["KIX", "VERSES", "CTULU", "GOVERNANCE-HUB"],
+            "synced": [repo] if repo != "_all" else ["KIX", "VERSES", "CTULU", "GOVERNANCE-HUB"],
+            "last_sync": 0.0
+        })
+
     return app
 
 
@@ -228,6 +250,26 @@ class TestHologramV2:
             assert spec["bits"] == 64
         except ImportError:
             pytest.skip("hologram_v2 not available")
+
+
+class TestHologramV4:
+    """Phase 17 — Federation status + sync tests."""
+
+    def test_federation_status(self, app):
+        """GET /federation/status → 200 + status ok."""
+        response = app.test_client().get("/federation/status")
+        assert response.status_code == 200
+        data = response.get_json()
+        assert "peers" in data
+        assert "KIX" in data["peers"]
+
+    def test_federation_sync(self, app):
+        """POST /federation/sync → 200 + sync result."""
+        body = {"repo": "_all"}
+        response = app.test_client().post("/federation/sync", json=body)
+        assert response.status_code == 200
+        data = response.get_json()
+        assert "synced" in data
 
 
 class TestHologramV3:
