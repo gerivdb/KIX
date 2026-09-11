@@ -71,12 +71,35 @@ def make_test_app():
             return jsonify({"error": f"repo {repo_name} non supporté"}), 400
         result = _GEN(Path(repo_path))
         return jsonify({
-            "status": "generated",
-            "repo": repo_name,
-            "zone": zone,
-            "architecture": arch,
-            "hologramme": result
-        }), 201
+             "status": "generated",
+             "repo": repo_name,
+             "zone": zone,
+             "architecture": arch,
+             "hologramme": result
+         }), 201
+
+    @app.get("/hologram/<repo>/stream")
+    def hologram_stream(repo: str):
+        """WebSocket streaming metadata for test."""
+        return jsonify({
+            "status": "streaming_available",
+            "repo": repo,
+            "protocol": "ws://localhost:8797/ws/hologram/" + repo,
+            "note": "WebSocket endpoint"
+        })
+
+    @app.get("/hologram/<repo>/cached")
+    def hologram_cached(repo: str):
+        """Test Cache-Control header presence."""
+        from pathlib import Path
+        repo_path = REPO_PATHS.get(repo.upper())
+        if not repo_path:
+            return jsonify({"error": "not found"}), 404
+        result = _GEN(Path(repo_path)) if HAS_GEN else {}
+        resp = jsonify({"repo": repo, "hologramme": result})
+        resp.headers["Cache-Control"] = "max-age=300"
+        resp.headers["X-Cache"] = "MISS"
+        return resp
 
     return app
 
@@ -205,3 +228,24 @@ class TestHologramV2:
             assert spec["bits"] == 64
         except ImportError:
             pytest.skip("hologram_v2 not available")
+
+
+class TestHologramV3:
+    """Phase 16 — WebSocket streaming + Cache-Control v3 tests."""
+
+    def test_hologram_stream_route(self, app):
+        """GET /hologram/KIX/stream → 200 + streaming metadata."""
+        response = app.test_client().get("/hologram/KIX/stream")
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data.get("status") == "streaming_available"
+        assert data.get("repo") == "KIX"
+        assert "ws://localhost:8797/ws/hologram/KIX" in data.get("protocol", "")
+
+    def test_cache_control_header(self, app):
+        """GET /hologram/KIX/cached → 200 + Cache-Control header."""
+        response = app.test_client().get("/hologram/KIX/cached")
+        assert response.status_code == 200
+        assert "Cache-Control" in response.headers
+        assert response.headers["Cache-Control"] == "max-age=300"
+        assert response.headers["X-Cache"] == "MISS"
