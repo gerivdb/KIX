@@ -325,3 +325,22 @@ class TestHologramV3:
         assert "Cache-Control" in response.headers
         assert response.headers["Cache-Control"] == "max-age=300"
         assert response.headers["X-Cache"] == "MISS"
+
+
+class TestHologramV6:
+    """Phase 19 — OAuth2 token validation tests."""
+
+    def test_token_validation(self, app):
+        """validate_token returns claims for test_token."""
+        from pathlib import Path
+        _holo_dir = Path(__file__).parent.parent.parent.parent / "src"
+        if str(_holo_dir) not in sys.path:
+            sys.path.insert(0, str(_holo_dir))
+
+        try:
+            from holograms.auth.v1.hologram_auth import validate_token
+            claims = validate_token("test_token")
+            assert claims["sub"] == "dev-user"
+            assert claims["scope"] == "hologram:read"
+        except ImportError:
+            pytest.skip("hologram_auth not available")
