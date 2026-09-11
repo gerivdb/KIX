@@ -194,12 +194,25 @@ def create_hologram_routes(app, engine):
         GET /hologram/KIX
         GET /hologram/VERSES
         GET /hologram/CTULU
+
+        Cache-Control: max-age=300 (5 min cache via HologramCache v3)
         """
         if not HAS_GENERATOR:
             return jsonify({"error": "holographe_bateau non disponible"}), 503
 
+        resp = jsonify({"cached": False})  # placeholder for response building
         try:
             from pathlib import Path
+            from holograms.cache.v1.hologram_cache import HologramCache
+
+            _cache = HologramCache(ttl=300)
+            cached = _cache.get(repo)
+            if cached is not None:
+                resp = jsonify(cached)
+                resp.headers["Cache-Control"] = "max-age=300"
+                resp.headers["X-Cache"] = "HIT"
+                return resp
+
             # Repo path mapping (voltx:8796)
             repo_paths = {
                 "KIX": Path(r"D:\DO\WEB\TOOLS\L2-PLATFORM\KIX"),
@@ -207,12 +220,17 @@ def create_hologram_routes(app, engine):
                 "CTULU": Path(r"D:\DO\WEB\TOOLS\L4-TOOLS\CTULU"),
                 "GOVERNANCE-HUB": Path(r"D:\DO\WEB\TOOLS\L0-CANON\GOVERNANCE-HUB"),
             }
-            repo_path = repo_paths.get(repo.upper())
+            repo_path = REPO_PATHS.get(repo.upper())
             if not repo_path or not repo_path.exists():
                 return jsonify({"error": f"repo {repo} introuvable"}), 404
 
             hologramme = holographe_bateau(repo_path)
-            return jsonify({"repo": repo, "port": 8796, "hologramme": hologramme})
+            result = {"repo": repo, "port": 8796, "hologramme": hologramme}
+            _cache.set(repo, "all", result)
+            resp = jsonify(result)
+            resp.headers["Cache-Control"] = "max-age=300"
+            resp.headers["X-Cache"] = "MISS"
+            return resp
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
