@@ -299,8 +299,6 @@ def create_hologram_routes(app, engine):
             }), 201
         except Exception as e:
             return jsonify({"error": str(e)}), 500
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
 
     @app.post("/hologram/<repo>/stream")
     def hologram_stream(repo: str):
@@ -319,8 +317,22 @@ def create_hologram_routes(app, engine):
             "repo": repo,
             "zone": zone,
             "protocol": "ws://localhost:8797/ws/hologram/<repo>",
-            "note": "WebSocket endpoint — requires flask-socketio for actual streaming"
+            "note": "WebSocket endpoint — requires flask-socketio"
         })
+
+    @app.get("/federation/status")
+    def federation_status():
+        """GET /federation/status — Distributed federation status.
+
+        Returns peer sync state across hologram cluster.
+        IntentHash: 0xPHASE_17_FEDERATION_20260911
+        """
+        try:
+            from src.holograms.federation.v1.holo_federation import HoloFederation
+            fed = HoloFederation()
+            return jsonify(fed.status())
+        except ImportError:
+            return jsonify({"error": "federation module non disponible"}), 503
 
 
 def create_mock_app():
