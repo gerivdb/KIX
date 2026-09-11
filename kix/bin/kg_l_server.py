@@ -248,34 +248,34 @@ def create_hologram_routes(app, engine):
         }
         return jsonify({"repo": repo, "zones": zones_def})
 
-     @app.post("/hologram/generate")
-     def hologram_generate():
-         """Génère un hologramme via CTULU/tools/holographe_bateau.py.
+    @app.post("/hologram/generate")
+    def hologram_generate():
+        """Génère un hologramme via CTULU/tools/holographe_bateau.py.
 
-         POST /hologram/generate
-         Body: {"repo": "KIX", "zone": "all", "architecture": "x86_64"}
+        POST /hologram/generate
+        Body: {"repo": "KIX", "zone": "all", "architecture": "x86_64"}
 
-         architecture supportées : x86_64, arm64, aarch64
-         platform   supportées : linux, windows, macos
-         """
-         body = request.json or {}
-         repo_name = (body.get("repo") or "").upper()
-         zone = body.get("zone", "all")
-         arch = body.get("architecture", "x86_64")
-         platform = body.get("platform", "linux")
+        architecture supportées : x86_64, arm64, aarch64
+        platform supportées : linux, windows, macos
+        """
+        body = request.json or {}
+        repo_name = (body.get("repo") or "").upper()
+        zone = body.get("zone", "all")
+        arch = body.get("architecture", "x86_64")
+        platform = body.get("platform", "linux")
 
-         # Validate architecture
-         try:
-             from holograms.hologram_v2 import get_arch_spec, get_platform_spec
-             arch_spec = get_arch_spec(arch)
-             plat_spec = get_platform_spec(platform)
-         except ImportError:
-             return jsonify({"error": "hologram_v2 module non disponible"}), 503
-         except ValueError as e:
-             return jsonify({"error": str(e)}), 400
+        # Validate architecture
+        try:
+            from holograms.hologram_v2 import get_arch_spec, get_platform_spec
+            arch_spec = get_arch_spec(arch)
+            plat_spec = get_platform_spec(platform)
+        except ImportError:
+            return jsonify({"error": "hologram_v2 module non disponible"}), 503
+        except ValueError as e:
+            return jsonify({"error": str(e)}), 400
 
-         if not HAS_GENERATOR:
-             return jsonify({"error": "generator non disponible"}), 503
+        if not HAS_GENERATOR:
+            return jsonify({"error": "generator non disponible"}), 503
 
         repo_paths = {
             "KIX": Path(r"D:\DO\WEB\TOOLS\L2-PLATFORM\KIX"),
@@ -287,18 +287,40 @@ def create_hologram_routes(app, engine):
         if not repo_path:
             return jsonify({"error": f"repo {repo_name} non supporté"}), 400
 
-         try:
-             result = holographe_bateau(repo_path)
-             return jsonify({
-                 "status": "generated",
-                 "repo": repo_name,
-                 "zone": zone,
-                 "architecture": arch,
-                 "platform": platform,
-                 "hologramme": result
-             }), 201
+        try:
+            result = holographe_bateau(repo_path)
+            return jsonify({
+                "status": "generated",
+                "repo": repo_name,
+                "zone": zone,
+                "architecture": arch,
+                "platform": platform,
+                "hologramme": result
+            }), 201
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.post("/hologram/<repo>/stream")
+    def hologram_stream(repo: str):
+        """WebSocket streaming hologram updates.
+
+        POST /hologram/<repo>/stream
+        Body: {"zone": "all"}
+
+        Returns JSON with stream metadata (WebSocket upgrade handled client-side).
+        ERR_101 : WebSocket stub — use flask-socketio for real streaming.
+        """
+        body = request.json or {}
+        zone = body.get("zone", "all")
+        return jsonify({
+            "status": "streaming_available",
+            "repo": repo,
+            "zone": zone,
+            "protocol": "ws://localhost:8797/ws/hologram/<repo>",
+            "note": "WebSocket endpoint — requires flask-socketio for actual streaming"
+        })
 
 
 def create_mock_app():
