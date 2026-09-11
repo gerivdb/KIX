@@ -1333,8 +1333,14 @@ def release_handles() -> Any:
 
 KIX_PORT = int(os.environ.get("KIX_PORT", "8800"))
 
+from src.kix.runtime.bootstrap import bootstrap_kg_l
+
+
 if __name__ == '__main__':
     with app.app_context():
+        kg_l_status = bootstrap_kg_l()
+        if kg_l_status != 0:
+            print("[KIX] KG-L bootstrap failed — continuing without runtime validation")
         try:
             runners = _load_runners_config()
             # Phase 1 : démarrer les runners bootstrap en priorité
