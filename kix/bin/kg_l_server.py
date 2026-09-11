@@ -334,6 +334,23 @@ def create_hologram_routes(app, engine):
         except ImportError:
             return jsonify({"error": "federation module non disponible"}), 503
 
+    @app.post("/federation/sync")
+    def federation_sync():
+        """POST /federation/sync — Trigger federation sync.
+
+        Body: {"repo": "KIX"} or {} for all peers.
+        IntentHash: 0xPHASE_17_SYNC_20260911
+        """
+        try:
+            from src.holograms.federation.v1.holo_federation import HoloFederation
+            fed = HoloFederation()
+            body = request.json or {}
+            repo = body.get("repo", "_all")
+            result = fed.sync(repo=repo)
+            return jsonify(result), 200
+        except ImportError:
+            return jsonify({"error": "federation module non disponible"}), 503
+
 
 def create_mock_app():
     """Minimal mock app for environments without Flask."""
