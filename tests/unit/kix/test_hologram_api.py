@@ -62,17 +62,24 @@ def make_test_app():
     def hologram_zones(repo: str):
         return jsonify({"repo": repo, "zones": ZONES_DEFS})
 
-    @app.post("/hologram/generate")
-    def hologram_generate():
-        from pathlib import Path
-        body = flask_request_json()
-        repo_name = (body.get("repo") or "").upper()
-        zone = body.get("zone", "all")
-        repo_path = REPO_PATHS.get(repo_name)
-        if not repo_path:
-            return jsonify({"error": f"repo {repo_name} non supporté"}), 400
-        result = _GEN(Path(repo_path))
-        return jsonify({"status": "generated", "repo": repo_name, "zone": zone, "hologramme": result}), 201
+     @app.post("/hologram/generate")
+     def hologram_generate():
+         from pathlib import Path
+         body = flask_request_json()
+         repo_name = (body.get("repo") or "").upper()
+         zone = body.get("zone", "all")
+         arch = body.get("architecture", "x86_64")
+         repo_path = REPO_PATHS.get(repo_name)
+         if not repo_path:
+             return jsonify({"error": f"repo {repo_name} non supporté"}), 400
+         result = _GEN(Path(repo_path))
+         return jsonify({
+             "status": "generated",
+             "repo": repo_name,
+             "zone": zone,
+             "architecture": arch,
+             "hologramme": result
+         }), 201
 
     return app
 
@@ -162,15 +169,15 @@ class TestCrossRepoHologram:
         assert data.get("repo") == "CTULU"
         assert "coque" in data.get("hologramme", {})
 
-     def test_cross_repo_consistency(self, app):
-         """All repos return same 7-zone structure."""
-         for repo in ["KIX", "VERSES", "CTULU"]:
-             resp = app.test_client().get(f"/hologram/{repo}")
-             assert resp.status_code == 200
-             zones = resp.get_json().get("hologramme", {})
-             assert set(zones.keys()) == {
-                 "coque", "vagues", "gouvernail", "vigie", "ancre", "equipage", "pilote"
-             }
+    def test_cross_repo_consistency(self, app):
+        """All repos return same 7-zone structure."""
+        for repo in ["KIX", "VERSES", "CTULU"]:
+            resp = app.test_client().get(f"/hologram/{repo}")
+            assert resp.status_code == 200
+            zones = resp.get_json().get("hologramme", {})
+            assert set(zones.keys()) == {
+                "coque", "vagues", "gouvernail", "vigie", "ancre", "equipage", "pilote"
+            }
 
 
 class TestHologramV2:
