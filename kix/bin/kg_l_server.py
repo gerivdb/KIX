@@ -167,9 +167,12 @@ def create_hologram_routes(app, engine):
         if _kix_src not in sys.path:
             sys.path.insert(0, _kix_src)
         from holograms.bateau import holographe_bateau
+        from holograms.auth.v1.hologram_auth import validate_token
         HAS_GENERATOR = True
+        HAS_AUTH = True
     except ImportError:
         HAS_GENERATOR = False
+        HAS_AUTH = False
 
     @app.get("/hologram/health")
     def hologram_health():
@@ -253,11 +256,24 @@ def create_hologram_routes(app, engine):
         """Génère un hologramme via CTULU/tools/holographe_bateau.py.
 
         POST /hologram/generate
+        Headers: Authorization: Bearer <token>
         Body: {"repo": "KIX", "zone": "all", "architecture": "x86_64"}
 
         architecture supportées : x86_64, arm64, aarch64
         platform supportées : linux, windows, macos
+        ERR_107 : OAuth2 bearer token required for /hologram/generate
         """
+        # OAuth2 token check (v6)
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return jsonify({"error": "Authorization header required (Bearer token)"}), 401
+        token = auth_header[7:]  # Strip "Bearer "
+        if HAS_AUTH:
+            try:
+                validate_token(token)
+            except ValueError:
+                return jsonify({"error": "Invalid or expired token"}), 403
+
         body = request.json or {}
         repo_name = (body.get("repo") or "").upper()
         zone = body.get("zone", "all")
