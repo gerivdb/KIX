@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """Tests unitaires pour l'API Hologram (PRD-MOC-027/028).
 
-Test 1: GET /hologram/KIX → 200 + coque/vagues/gouvernail présents
-Test 2: GET /hologram/INVALID → 404
-Test 3: POST /hologram/generate → 201 + status="generated"
+Phase 15 — Multi-architecture v2 tests added.
 """
 import pytest
 import sys
@@ -35,7 +33,6 @@ def make_test_app():
     app = Flask(__name__)
 
     try:
-        # Path is <KIX_ROOT>\src\holograms
         _holo_dir = os.path.join(
             os.path.dirname(__file__), "..", "..", "..", "src", "holograms"
         )
@@ -62,24 +59,24 @@ def make_test_app():
     def hologram_zones(repo: str):
         return jsonify({"repo": repo, "zones": ZONES_DEFS})
 
-     @app.post("/hologram/generate")
-     def hologram_generate():
-         from pathlib import Path
-         body = flask_request_json()
-         repo_name = (body.get("repo") or "").upper()
-         zone = body.get("zone", "all")
-         arch = body.get("architecture", "x86_64")
-         repo_path = REPO_PATHS.get(repo_name)
-         if not repo_path:
-             return jsonify({"error": f"repo {repo_name} non supporté"}), 400
-         result = _GEN(Path(repo_path))
-         return jsonify({
-             "status": "generated",
-             "repo": repo_name,
-             "zone": zone,
-             "architecture": arch,
-             "hologramme": result
-         }), 201
+    @app.post("/hologram/generate")
+    def hologram_generate():
+        from pathlib import Path
+        body = flask_request_json()
+        repo_name = (body.get("repo") or "").upper()
+        zone = body.get("zone", "all")
+        arch = body.get("architecture", "x86_64")
+        repo_path = REPO_PATHS.get(repo_name)
+        if not repo_path:
+            return jsonify({"error": f"repo {repo_name} non supporté"}), 400
+        result = _GEN(Path(repo_path))
+        return jsonify({
+            "status": "generated",
+            "repo": repo_name,
+            "zone": zone,
+            "architecture": arch,
+            "hologramme": result
+        }), 201
 
     return app
 
@@ -110,7 +107,6 @@ class TestHologramRepo:
         assert response.status_code == 200
         data = response.get_json()
         assert "repo" in data and data["repo"] == "KIX"
-        # Check all 7 zones in the returned hologram
         hologram_str = str(data.get("hologramme", ""))
         for z in ["coque", "vagues", "gouvernail", "vigie", "ancre", "equipage", "pilote"]:
             assert z in hologram_str, f"zone {z} manquante"
@@ -122,7 +118,7 @@ class TestHologramRepo:
 
 
 class TestHologramGenerate:
-    """Test 3: POST /hologram/generate → 201 + status='generated'."""
+    """Test POST /hologram/generate → 201."""
     def test_hologram_generate(self, app):
         """POST /hologram/generate → 201 + status='generated'."""
         response = app.test_client().post(
@@ -136,7 +132,7 @@ class TestHologramGenerate:
 
 
 class TestHologramZones:
-    """Test 2: GET /hologram/<repo>/zones → liste des 7 zones."""
+    """Test GET /hologram/<repo>/zones → 7 zones."""
     def test_hologram_zones(self, app):
         """GET /hologram/KIX/zones → 200 + 7 zones."""
         response = app.test_client().get("/hologram/KIX/zones")
@@ -196,23 +192,16 @@ class TestHologramV2:
         assert data.get("architecture") == "arm64"
 
     def test_hologram_valid_invalid_arch(self, app):
-        """POST /hologram/generate with arch=invalid → 400."""
-        # Simulate v2 validation without modifying existing routes
+        """get_arch_spec raises ValueError for invalid arch."""
         from pathlib import Path
-
-        # Direct call to get_arch_spec from hologram_v2
         _holo_dir = Path(__file__).parent.parent.parent.parent / "src" / "holograms"
-        import sys as _sys
-        if str(_holo_dir) not in _sys.path:
-            _sys.path.insert(0, str(_holo_dir))
-
+        if str(_holo_dir) not in sys.path:
+            sys.path.insert(0, str(_holo_dir))
         try:
             from hologram_v2 import get_arch_spec
             with pytest.raises(ValueError):
                 get_arch_spec("mips")
-            # Valid arch
             spec = get_arch_spec("arm64")
             assert spec["bits"] == 64
         except ImportError:
             pytest.skip("hologram_v2 not available")
-
