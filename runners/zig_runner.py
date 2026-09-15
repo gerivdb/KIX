@@ -53,6 +53,10 @@ class ZigBinaryRunner(RunnerBase):
                 )
             else:
                 proc = subprocess.Popen(cmd, cwd=str(self.spec.working_dir), start_new_session=True)
+            if self.spec.pid_file:
+                pid_path = Path(self.spec.pid_file)
+                pid_path.parent.mkdir(parents=True, exist_ok=True)
+                pid_path.write_text(str(proc.pid), encoding="utf-8")
             return {"status": "starting", "pid": proc.pid}
         except (OSError, ValueError) as exc:
             return {"status": "error", "detail": str(exc)}
