@@ -1,283 +1,65 @@
+bootstrap:
+  - gateway-manager
+  - kix
+
 runners:
-  - name: gateway-manager
-    runner_type: gateway-exe
-    port: 9000
-    working_dir: D:/DO/WEB/TOOLS/L1-INFRA/GATEWAY-MANAGER
-    command: ["gateway-manager", "start", "--port", "9000"]
-    bootstrap: false
-    health_path: /health
-    restart_policy: always
-    log_file: D:/DO/WEB/TOOLS/L1-INFRA/GATEWAY-MANAGER/data/gateway.log
-    meta:
-      repo: gerivdb/GATEWAY-MANAGER
-      role: BDCP proxy, PAT rotation
-
-  - name: bootstrap
+  - name: kg-l-coherence-watchdog
     runner_type: python
-    port: 8810
-    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
-    entrypoint: services/bootstrap_runner.py
-    bootstrap: true
-    auto_start: true
-    health_path: /health
-    restart_policy: on-failure
-    log_file: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX/logs/bootstrap.log
-    dependencies:
-      - gateway-manager
+    port: 8841
+    depends_on:
       - kix
-      - arbiter
-      - trixd
       - wazaa
-      - flex-api
-    kgl_schema: schemas/runners/bootstrap-status.schema.json
-    meta:
-      repo: gerivdb/GOVERNANCE-HUB
-      role: bootstrap orchestrator
-      intent_hash: 0xINTENT_BOOTSTRAP_RUNNER_GOVERNANCE_20260820
-
+  - name: nodex
+    runner_type: python
+    port: 8821
+    depends_on:
+      - ontology
+      - knowledge-graph-memory
+  - name: rootx
+    runner_type: python
+    port: 8823
+    depends_on:
+      - knowledge-graph-memory
+  - name: talex
+    runner_type: python
+    port: 8822
+    depends_on:
+      - llux
+      - rlm243
+      - timx-feature-store
+      - rootx
+      - llm-core
+  - name: friction-analyzer
+    runner_type: python
+    port: 8815
+    depends_on:
+      - conversation-cognitive
+      - rlm-incident
+      - rootx
+      - prognex
+      - referex
+  - name: agent-manager
+    runner_type: gateway-exe
+    port: 18000
+    depends_on:
+      - kix
   - name: trixd
     runner_type: zig-binary
     port: 7243
     working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/TRIX
     binary: zig-out/bin/trixd.exe
     build:
-      command: ["C:/DevTools/bin/zig/zig.exe", "build", "trixd"]
-      required: false
-      pre_start: false
-    depends_on: [kix]
+      command: ["zig", "build", "trixd"]
+      required: true
+      pre_start: true
+    depends_on:
+      - kix
     health_path: /health
     headers:
       Authorization: "Bearer ${TRIX_DAEMON_TOKEN}"
     restart_policy: on-failure
     log_file: D:/DO/WEB/TOOLS/L4-TOOLS/TRIX/data/trixd.log
+    pid_file: D:/DO/WEB/TOOLS/L4-TOOLS/TRIX/data/trixd.pid
     meta:
       repo: gerivdb/TRIX
       role: zig runtime
-
-  - name: wazaa
-    runner_type: python
-    port: 5002
-    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/WAZAA
-    entrypoint: tools/mission_control/server.py
-    health_path: /health
-    depends_on: [kix]
-    restart_policy: on-failure
-    log_file: D:/DO/WEB/TOOLS/L4-TOOLS/WAZAA/data/wazaa.log
-    meta:
-      repo: gerivdb/WAZAA
-      role: multi-agent orchestration
-
-  - name: flex-api
-    runner_type: zig-binary
-    port: 8080
-    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/FLEX
-    binary: zig-out/bin/flex-api.exe
-    health_path: /numa/status
-    restart_policy: on-failure
-    log_file: D:/DO/WEB/TOOLS/L4-TOOLS/FLEX/logs/flex-api.log
-    meta:
-      repo: gerivdb/FLEX
-      role: harmony topology ENV2
-
-  - name: conversation-cognitive
-    runner_type: python
-    port: 8811
-    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
-    entrypoint: services/conversation_cognitive_runner.py
-    bootstrap: false
-    auto_start: false
-    health_path: /cognitive/conversation/health
-    restart_policy: on-failure
-    log_file: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX/logs/conversation_cognitive.log
-    dependencies:
-      - kix
-      - tlm-lang
-      - chronox
-      - referex
-      - talex
-      - rootx
-      - wazaa
-    kgl_schema: schemas/runners/cognitive-conversation-decision.schema.json
-    meta:
-      repo: gerivdb/GOVERNANCE-HUB
-      role: conversation decision extraction and KG-L publishing
-      intent_hash: 0xINTENT_COGNITIVE_CONVERSATION_RUNNER_KG_L_WAZAA_20260821
-
-  - name: kg-l-coherence-watchdog
-    runner_type: python
-    port: 8841
-    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/KG-L
-    entrypoint: scripts/coherence_watchdog.py
-    bootstrap: false
-    auto_start: false
-    health_path: /health
-    restart_policy: on-failure
-    log_file: D:/DO/WEB/TOOLS/L4-TOOLS/KG-L/docs/watchdog_stdout.log
-    dependencies:
-      - kix
-      - wazaa
-    meta:
-      repo: gerivdb/KG-L
-      role: metacoherence observatory - publie alertes governance.pathology sur WAZAA
-      intent_hash: 0xPRD_MOC_KG_L_GOVERNANCE_WIRING_20260827
-
-  # Added for STALE_REGISTRY sync (PRD-MOC GEN-030b)
-  - name: nodex
-    runner_type: python
-    port: 8821
-    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/ARGUS
-    entrypoint: runners/nodex.py
-    bootstrap: false
-    auto_start: false
-    health_path: /health
-    restart_policy: on-failure
-    log_file: D:/DO/WEB/TOOLS/L4-TOOLS/ARGUS/logs/nodex.log
-    env:
-      PYTHONPATH: D:/DO/WEB/TOOLS/L0-CANON/GOVERNANCE-HUB
-    dependencies:
-      - ontology
-      - knowledge-graph-memory
-    meta:
-      repo: gerivdb/ARGUS
-      role: node nature classification
-      intent_hash: 0xINTENT_NODEX_20260828
-
-  - name: talex
-    runner_type: python
-    port: 8822
-    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/TALEX
-    entrypoint: runners/talex.py
-    bootstrap: false
-    auto_start: false
-    health_path: /health
-    restart_policy: on-failure
-    log_file: D:/DO/WEB/TOOLS/L4-TOOLS/TALEX/logs/talex.log
-    env:
-      PYTHONPATH: D:/DO/WEB/TOOLS/L0-CANON/GOVERNANCE-HUB
-    dependencies:
-      - llux
-      - rlm243
-      - timx-feature-store
-      - rootx
-      - llm-core
-    meta:
-      repo: gerivdb/TALEX
-      role: narrative post-mortem generation
-      intent_hash: 0xINTENT_TALEX_20260828
-
-  - name: rootx
-    runner_type: python
-    port: 8823
-    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/ARGUS
-    entrypoint: runners/rootx.py
-    bootstrap: false
-    auto_start: false
-    health_path: /health
-    restart_policy: on-failure
-    log_file: D:/DO/WEB/TOOLS/L4-TOOLS/ARGUS/logs/rootx.log
-    env:
-      PYTHONPATH: D:/DO/WEB/TOOLS/L0-CANON/GOVERNANCE-HUB
-    dependencies:
-      - knowledge-graph-memory
-    meta:
-      repo: gerivdb/ARGUS
-      role: root cause analysis
-      intent_hash: 0xINTENT_ROOTX_20260828
-
-  - name: friction-analyzer
-    runner_type: python
-    port: 8815
-    working_dir: D:/DO/WEB/TOOLS/L0-CANON/GOVERNANCE-HUB
-    entrypoint: runners/friction_analyzer_server.py
-    bootstrap: false
-    auto_start: false
-    health_path: /health
-    restart_policy: on-failure
-    log_file: D:/DO/WEB/TOOLS/L0-CANON/GOVERNANCE-HUB/logs/friction_analyzer.log
-    env:
-      PYTHONPATH: D:/DO/WEB/TOOLS/L0-CANON/GOVERNANCE-HUB
-    dependencies:
-      - conversation-cognitive
-      - rlm-incident
-      - rootx
-      - prognex
-      - referex
-    meta:
-      repo: gerivdb/GOVERNANCE-HUB
-      role: session friction analysis and auto-correction
-      intent_hash: 0xINTENT_FRICTION_ANALYZER_RUNNER_20260821
-
-  - name: agent-manager
-    runner_type: python
-    port: 18000
-    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/GeriCode
-    entrypoint: .kilo/skills/geri-manager-api/server.py
-    bootstrap: false
-    auto_start: false
-    health_path: /health
-    restart_policy: on-failure
-    log_file: D:/DO/WEB/TOOLS/L2-PLATFORM/GeriCode/logs/agent_manager.log
-    env:
-      PYTHONPATH: D:/DO/WEB/TOOLS/L0-CANON/GOVERNANCE-HUB
-    dependencies:
-      - kix
-    meta:
-      repo: gerivdb/GeriCode
-      role: KiloCode session orchestration
-      intent_hash: 0xINTENT_AGENT_MANAGER_20260828
-
-  # === VOLTX 2e cerveau services ===
-  - name: kg-l
-    runner_type: python
-    port: 8888
-    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/KG-L
-    entrypoint: src/runtime/kg_l.py
-    args: ["serve"]
-    health_path: /health
-    restart_policy: on-failure
-    log_file: D:/DO/WEB/TOOLS/L4-TOOLS/KG-L/logs/kg-l.log
-    env:
-      PYTHONPATH: D:/DO/WEB/TOOLS/L4-TOOLS/KG-L
-    dependencies:
-      - kix
-    meta:
-      repo: gerivdb/KG-L
-      role: Knowledge Graph causal SOT
-      intent_hash: 0xINTENT_KG_L_VOLTX_20260904
-
-  - name: wazaa-bus
-    runner_type: python
-    port: 1874
-    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/WAZAA
-    entrypoint: scripts/wazaa_bus_server.py
-    health_path: /health
-    restart_policy: on-failure
-    log_file: D:/DO/WEB/TOOLS/L4-TOOLS/WAZAA/logs/wazaa-bus.log
-    env:
-      PYTHONPATH: D:/DO/WEB/TOOLS/L4-TOOLS/WAZAA
-    dependencies:
-      - kix
-      - kg-l
-    meta:
-      repo: gerivdb/WAZAA
-      role: Cognitive bus async TCP (WAZAA Bus) + HTTP health
-      intent_hash: 0xINTENT_WAZAA_BUS_VOLTX_20260904
-
-  - name: nexus
-    runner_type: python
-    port: 8801
-    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/NEXUS
-    entrypoint: scripts/nexus_server.py
-    health_path: /health
-    restart_policy: on-failure
-    log_file: D:/DO/WEB/TOOLS/L4-TOOLS/NEXUS/logs/nexus.log
-    env:
-      PYTHONPATH: D:/DO/WEB/TOOLS/L4-TOOLS/NEXUS
-    dependencies:
-      - kix
-      - kg-l
-      - wazaa-bus
-    meta:
-      repo: gerivdb/NEXUS
-      role: NEXUS WAL anchoring
-      intent_hash: 0xINTENT_NEXUS_VOLTX_20260904

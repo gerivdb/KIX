@@ -30,6 +30,7 @@ class RunnerSpec:
     log_file: Path | None = None
     meta: dict[str, Any] | None = None
     headers: dict[str, str] | None = None
+    pid_file: Path | None = None
 
 
 class RunnerBase(ABC):
