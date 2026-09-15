@@ -286,7 +286,6 @@ class ServiceStarter:
     START_SEQUENCE = [
         ("arbiter", {"port": 8742, "script": "D:/DO/WEB/TOOLS/L4-TOOLS/TRIX/start-git-arbiter.ps1"}),
         ("wazaa", {"port": 1873}),  # bus async réel, démarré en direct
-        ("trixd", {"port": 7243, "kix_runner": "trixd"}),
         ("wazaa-mc", {"port": 5002, "kix_runner": "wazaa"}),
         ("flex-api", {"port": 8080, "kix_runner": "flex-api"}),
     ]
@@ -423,7 +422,6 @@ class ServiceStarter:
             starters = {
                 "arbiter": self._start_arbiter,
                 "wazaa": self._start_wazaa_bus,
-                "trixd": self._start_via_kix_runner,
                 "wazaa-mc": self._start_via_kix_runner,
                 "flex-api": self._start_via_kix_runner,
             }
