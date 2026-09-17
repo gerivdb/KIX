@@ -1,0 +1,13 @@
+# Settings centralisés KIX
+kg_l:
+  graph: "D:/DO/WEB/TOOLS/L4-TOOLS/KG-L/docs/ecosystem_kg_full.json"
+
+wazaa:
+  url: "http://localhost:8765"
+
+logging:
+  level: "INFO"
+
+runners:
+  auto_start: true
+  health_timeout: 5.0

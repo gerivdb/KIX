@@ -1,0 +1,4 @@
+"""Runtime KG-L pour KIX.
+
+IntentHash: 0xPRD_MOC_VOLTX_PHASE2_KG_L_ENGINE_20260905
+"""

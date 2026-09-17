@@ -1,0 +1,47 @@
+{
+  "repo": "KIX",
+  "scope_dir": "D:\\DO\\WEB\\TOOLS\\L2-PLATFORM\\KIX",
+  "targets": [
+    {
+      "category": "routine",
+      "name": "zig_runner",
+      "status": "missing",
+      "path": null,
+      "references": [
+        "PRD-MOC\\PRD-MOC-KIX-MASTER.md"
+      ],
+      "rationale": "Mentionné dans contexte KG (KG-L/VOLTX/VERSES) mais routine non formalisée"
+    },
+    {
+      "category": "routine",
+      "name": "auto_start",
+      "status": "missing",
+      "path": null,
+      "references": [
+        "PRD-MOC\\PRD-MOC-KIX-ORCHESTRATOR-2026-08-18.md"
+      ],
+      "rationale": "Mentionné dans contexte KG (KG-L/VOLTX/VERSES) mais routine non formalisée"
+    },
+    {
+      "category": "routine",
+      "name": "bootstrap_runner",
+      "status": "missing",
+      "path": null,
+      "references": [
+        "docs\\bootstrap-runner.md"
+      ],
+      "rationale": "Mentionné dans contexte KG (KG-L/VOLTX/VERSES) mais routine non formalisée"
+    },
+    {
+      "category": "routine",
+      "name": "auto_index",
+      "status": "missing",
+      "path": null,
+      "references": [
+        "kix\\libs\\shared-clients\\base_runner.py"
+      ],
+      "rationale": "Mentionné dans contexte KG (KG-L/VOLTX/VERSES) mais routine non formalisée"
+    }
+  ],
+  "patterns": []
+}
