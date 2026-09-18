@@ -47,12 +47,19 @@ PORT = 8811
 DATA_DIR = Path(os.environ.get("COGNITIVE_DATA_DIR", str(Path(__file__).resolve().parent.parent / "data" / "cognitive")))
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 DECISIONS_FILE = DATA_DIR / "cognitive_decisions.json"
+FRICTIONS_FILE = DATA_DIR / "cognitive_frictions.json"
 
 # Patterns d'extraction
 DECISION_PATTERNS = [
     r"(?:décision|decision|choix|choisi|retenu|retenue|option)\s*[:\-]\s*(.+)",
     r"(?:nous (?:avons|allons|devons) (?:choisi|retenu|opté|décidé))\s+(.+)",
     r"(?:arbitrage|arbitrer)\s*[:\-]\s*(.+)",
+]
+FRICTION_PATTERNS = [
+    r"(?:ERR_[0-9]{3})\b",
+    r"(?:friction|erreur|bug|timeout|crash|fail|exception|traceback)\b",
+    r"(?:WinError|ConnectionResetError|ConnectionAbortedError|FileNotFoundError|SyntaxError)\b",
+    r"(?:stderr|EAP=Stop|Set-Content|preflight|zombie|bind|port)\b",
 ]
 ACTOR_PATTERNS = [
     r"(?:par|par\s+l'|par\s+la|par\s+les?)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)",
@@ -333,6 +340,40 @@ def analyze():
         "tlm_lang": tlm_result,
         "chronox": chronox_result,
         "referex": referex_result,
+    }), 200
+
+
+@app.route("/cognitive/friction/extract", methods=["POST"])
+def extract_frictions():
+    """Extrait les frictions d'une conversation et retourne des candidats ERR."""
+    data = request.get_json(force=True)
+    conversation_text = data.get("conversation_text", "")
+    session_id = data.get("session_id", "unknown")
+    if not conversation_text:
+        return jsonify({"error": "conversation_text is required"}), 400
+    sanitized_text = sanitize_text(conversation_text)
+    friction_ids = extract_patterns(sanitized_text, FRICTION_PATTERNS)
+    frictions = []
+    for idx, fid in enumerate(friction_ids[:10]):
+        frictions.append({
+            "type": "friction",
+            "id": fid,
+            "source": "conversation",
+            "session_id": session_id,
+            "intent_hash": "0xKG_ERR_TRIANGULATION_2026",
+            "status": "documented",
+            "metadata": {
+                "t_world": datetime.now(timezone.utc).isoformat(),
+                "t_kg": datetime.now(timezone.utc).isoformat(),
+                "t_detect": datetime.now(timezone.utc).isoformat(),
+                "t_correct": None,
+            },
+        })
+    return jsonify({
+        "session_id": session_id,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "frictions": frictions,
+        "count": len(frictions),
     }), 200
 
 
