@@ -63,3 +63,17 @@ runners:
     meta:
       repo: gerivdb/TRIX
       role: zig runtime
+  - name: batmcp
+    runner_type: python
+    port: 8000
+    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/BatMCP
+    entrypoint: src/server.py
+    depends_on:
+      - kix
+    health_path: /health
+    restart_policy: on-failure
+    log_file: D:/DO/WEB/TOOLS/L4-TOOLS/BatMCP/logs/batmcp.log
+    pid_file: D:/DO/WEB/TOOLS/L4-TOOLS/BatMCP/logs/batmcp.pid
+    meta:
+      repo: gerivdb/BatMCP
+      role: mcp-server
