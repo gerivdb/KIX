@@ -85,3 +85,99 @@ runners:
     meta:
       repo: gerivdb/BatMCP
       role: mcp-server
+  - name: kix
+    runner_type: orchestrator
+    port: 8800
+    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+    entrypoint: service.py
+    depends_on: []
+    health_path: /health
+    restart_policy: on-failure
+    log_file: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX/logs/kix.log
+    pid_file: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX/logs/kix.pid
+    meta:
+      repo: gerivdb/KIX
+      role: orchestrator
+  - name: bootstrap
+    runner_type: orchestrator
+    port: 8810
+    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+    entrypoint: service.py
+    depends_on:
+      - gateway-manager
+      - kix
+    health_path: /bootstrap/status
+    restart_policy: on-failure
+    meta:
+      repo: gerivdb/KIX
+      role: bootstrap orchestrator
+  - name: rlm-metrics
+    runner_type: service
+    port: 8802
+    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+    entrypoint: service.py
+    depends_on:
+      - kix
+    meta:
+      repo: gerivdb/KIX
+      role: metrics collector
+  - name: rlm-config
+    runner_type: service
+    port: 8794
+    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+    entrypoint: service.py
+    depends_on:
+      - kix
+    meta:
+      repo: gerivdb/KIX
+      role: configuration service
+  - name: rlm-deploy
+    runner_type: service
+    port: 8795
+    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+    entrypoint: service.py
+    depends_on:
+      - kix
+    meta:
+      repo: gerivdb/KIX
+      role: deployment service
+  - name: rlm-graph
+    runner_type: service
+    port: 8797
+    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+    entrypoint: service.py
+    depends_on:
+      - kix
+    meta:
+      repo: gerivdb/KIX
+      role: graph service
+  - name: rlm-secure
+    runner_type: service
+    port: 8796
+    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+    entrypoint: service.py
+    depends_on:
+      - kix
+    meta:
+      repo: gerivdb/KIX
+      role: security service
+  - name: rlm-incident
+    runner_type: service
+    port: 8798
+    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+    entrypoint: service.py
+    depends_on:
+      - kix
+    meta:
+      repo: gerivdb/KIX
+      role: incident service
+  - name: rlm-release
+    runner_type: service
+    port: 8799
+    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+    entrypoint: service.py
+    depends_on:
+      - kix
+    meta:
+      repo: gerivdb/KIX
+      role: release service
