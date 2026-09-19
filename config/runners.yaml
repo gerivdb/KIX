@@ -64,10 +64,18 @@ runners:
       repo: gerivdb/TRIX
       role: zig runtime
   - name: batmcp
-    runner_type: python
+    runner_type: gateway-exe
     port: 8000
     working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/BatMCP
-    entrypoint: src/server.py
+    command:
+      - "python"
+      - "-m"
+      - "uvicorn"
+      - "src.server:app"
+      - "--host"
+      - "localhost"
+      - "--port"
+      - "8000"
     depends_on:
       - kix
     health_path: /health
