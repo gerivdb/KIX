@@ -355,7 +355,7 @@ def extract_frictions():
     friction_ids = extract_patterns(sanitized_text, FRICTION_PATTERNS)
     frictions = []
     for idx, fid in enumerate(friction_ids[:10]):
-        frictions.append({
+        friction = {
             "type": "friction",
             "id": fid,
             "source": "conversation",
@@ -368,7 +368,20 @@ def extract_frictions():
                 "t_detect": datetime.now(timezone.utc).isoformat(),
                 "t_correct": None,
             },
-        })
+        }
+        frictions.append(friction)
+        try:
+            publish_waazaa({"topic": "topic:friction.detected", "payload": friction})
+        except Exception:
+            pass
+    try:
+        existing = []
+        if FRICTIONS_FILE.exists():
+            existing = json.loads(FRICTIONS_FILE.read_text(encoding="utf-8"))
+        existing.extend(frictions)
+        FRICTIONS_FILE.write_text(json.dumps(existing, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception:
+        pass
     return jsonify({
         "session_id": session_id,
         "timestamp": datetime.now(timezone.utc).isoformat(),
