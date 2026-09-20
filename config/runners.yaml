@@ -181,3 +181,13 @@ runners:
     meta:
       repo: gerivdb/KIX
       role: release service
+  - name: jevx
+    runner_type: service
+    port: 8080
+    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/JEVX
+    entrypoint: src/server.ts
+    depends_on:
+      - kix
+    meta:
+      repo: gerivdb/JEVX
+      role: decision-engine
