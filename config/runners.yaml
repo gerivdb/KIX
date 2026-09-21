@@ -86,10 +86,10 @@ runners:
       repo: gerivdb/BatMCP
       role: mcp-server
   - name: kix
-    runner_type: orchestrator
+    runner_type: python
     port: 8800
     working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
-    entrypoint: service.py
+    entrypoint: src/app.py
     depends_on: []
     health_path: /health
     restart_policy: on-failure
@@ -98,11 +98,13 @@ runners:
     meta:
       repo: gerivdb/KIX
       role: orchestrator
+    bootstrap: true
+    auto_start: false
   - name: bootstrap
-    runner_type: orchestrator
+    runner_type: python
     port: 8810
     working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
-    entrypoint: service.py
+    entrypoint: services/bootstrap_runner.py
     depends_on:
       - gateway-manager
       - kix
@@ -111,6 +113,8 @@ runners:
     meta:
       repo: gerivdb/KIX
       role: bootstrap orchestrator
+    bootstrap: true
+    auto_start: false
   - name: rlm-metrics
     runner_type: service
     port: 8802
@@ -181,6 +185,20 @@ runners:
     meta:
       repo: gerivdb/KIX
       role: release service
+  - name: kg-l
+    runner_type: python
+    port: 8888
+    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/KG-L
+    entrypoint: kg_l_server.py
+    depends_on:
+      - kix
+    health_path: /health
+    restart_policy: on-failure
+    log_file: D:/DO/WEB/TOOLS/L4-TOOLS/KG-L/logs/kg_l.log
+    pid_file: D:/DO/WEB/TOOLS/L4-TOOLS/KG-L/logs/kg_l.pid
+    meta:
+      repo: gerivdb/KG-L
+      role: knowledge-graph service
   - name: jevx
     runner_type: service
     port: 8080

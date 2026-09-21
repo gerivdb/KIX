@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-19T05:15:09.662356+00:00",
+  "generated_at_utc": "2026-09-20T18:54:03.342922+00:00",
   "count": 30,
   "nodes": [
     {
@@ -82,8 +82,8 @@
         "known_repositories"
       ],
       "layer": "L4_TOOLS",
-      "status": "ACTIVE",
-      "local_path": "D:\\DO\\WEB\\TOOLS\\L4-TOOLS\\ATLAS",
+      "status": "dormant",
+      "local_path": "",
       "remote": "https://github.com/gerivdb/ATLAS",
       "role": "Atlas",
       "intent_hash": "",
@@ -191,7 +191,7 @@
       "status": "ACTIVE",
       "local_path": "D:\\DO\\WEB\\TOOLS\\L1-INFRA\\ECOS-CLI",
       "remote": "https://github.com/gerivdb/ECOS-CLI",
-      "role": "Orchestrateur local CLI, workflows EECS",
+      "role": "ECOS CLI",
       "intent_hash": "",
       "logical_layers": [
         "N1",
@@ -326,7 +326,7 @@
       "sources": [
         "known_repositories"
       ],
-      "layer": "L0-CANON",
+      "layer": "L0_CANON",
       "status": "active",
       "local_path": "D:\\DO\\WEB\\TOOLS\\L0-CANON\\personae",
       "remote": "https://github.com/gerivdb/personae",
@@ -465,7 +465,7 @@
       ],
       "layer": "L0_CONSTITUTIONAL",
       "status": "dormant",
-      "local_path": null,
+      "local_path": "",
       "remote": "https://github.com/gerivdb/ATLAS",
       "role": "Infrastructure as Code",
       "intent_hash": "",
@@ -482,7 +482,7 @@
       ],
       "layer": "L0_CONSTITUTIONAL",
       "status": "dormant",
-      "local_path": null,
+      "local_path": "",
       "remote": "https://github.com/gerivdb/FORGE",
       "role": "Forge",
       "intent_hash": "",
@@ -516,7 +516,7 @@
       ],
       "layer": "L0_CONSTITUTIONAL",
       "status": "dormant",
-      "local_path": null,
+      "local_path": "",
       "remote": "https://github.com/gerivdb/MATRIX",
       "role": "ML/AI Orchestration",
       "intent_hash": "",
