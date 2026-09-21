@@ -201,7 +201,7 @@ runners:
       role: knowledge-graph service
   - name: jevx
     runner_type: service
-    port: 8080
+    port: 8889
     working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/JEVX
     entrypoint: src/server.ts
     depends_on:
