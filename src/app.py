@@ -27,9 +27,12 @@ from src.audit_log import AuditLogStore
 from src.zombie_monitor import zombie_bp
 from runners.registry import load_runners_config, get_runner
 from runners.base import RunnerBase, RunnerSpec
+from src.process_manager import ProcessManager, PIDRegistry, SingletonBindManager
 
 app = Flask(__name__)
 app.register_blueprint(zombie_bp)
+
+PROCESS_MANAGER = ProcessManager()
 
 STORE = RunnerStateStore(os.environ.get("KIX_DB", str(Path(__file__).resolve().parent.parent / "data" / "kix.sqlite")))
 NOTIFICATIONS = NotificationStore(os.environ.get("KIX_NOTIFICATIONS_DB", str(Path(__file__).resolve().parent.parent / "data" / "notifications.db")))
@@ -1329,6 +1332,81 @@ def release_handles() -> Any:
         'released_handles': released,
         'details': details,
     }), 200 if status == 'released' else 202
+
+
+# ============================================================================
+# Process Manager — Endpoints P0 GEN-041
+# ============================================================================
+
+@app.route('/process/pids', methods=['GET'])
+def list_processes():
+    """Liste tous les processus enregistrés dans le PID Registry."""
+    processes = PROCESS_MANAGER.list_processes()
+    return jsonify({"processes": processes, "count": len(processes)}), 200
+
+
+@app.route('/process/<int:pid>', methods=['GET'])
+def get_process(pid):
+    """Détail d'un processus par PID."""
+    entry = PROCESS_MANAGER.get_process(pid)
+    if entry is None:
+        return jsonify({"error": "Processus inconnu"}), 404
+    return jsonify(entry), 200
+
+
+@app.route('/process/singleton-check', methods=['POST'])
+def check_singleton():
+    """Vérifie le singleton bind sur un port."""
+    data = request.get_json() or {}
+    port = data.get('port')
+    service_name = data.get('service_name', 'unknown')
+    expected_fingerprint = data.get('expected_fingerprint')
+    if port is None:
+        return jsonify({"error": "port requis"}), 400
+    result = PROCESS_MANAGER.check_singleton(int(port), service_name, expected_fingerprint)
+    return jsonify(result), 200 if result.get('ok') else 409
+
+
+@app.route('/process/<int:pid>/terminate', methods=['POST'])
+def terminate_process(pid):
+    """Termine un processus par PID."""
+    result = PROCESS_MANAGER.terminate(pid)
+    if result.get('ok'):
+        PROCESS_MANAGER.unregister_process(pid)
+    return jsonify(result), 200 if result.get('ok') else 500
+
+
+@app.route('/process/fingerprint', methods=['GET'])
+def probe_fingerprint():
+    """Retourne le fingerprint d'un service sur un port."""
+    port = request.args.get('port', type=int)
+    if port is None:
+        return jsonify({"error": "port requis"}), 400
+    fp = PROCESS_MANAGER.probe_fingerprint(port)
+    return jsonify({"port": port, "fingerprint": fp}), 200
+
+
+# ============================================================================
+# Bootstrap auto-enregistrement des runners KIX
+# ============================================================================
+
+@app.before_request
+def _auto_register_kix_runners():
+    """Enregistre automatiquement les runners KIX dans le PID Registry."""
+    try:
+        states = STORE.list_all()
+        for name, state in states.items():
+            if state.get('pid'):
+                PROCESS_MANAGER.register_process(
+                    pid=int(state['pid']),
+                    name=name,
+                    repo='KIX',
+                    role='runner',
+                    port=int(state.get('port', 0)),
+                    meta=state,
+                )
+    except Exception:
+        pass
 
 
 KIX_PORT = int(os.environ.get("KIX_PORT", "8800"))
