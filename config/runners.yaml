@@ -1,279 +1,718 @@
 bootstrap:
+- gateway-manager
+- kix
+runners:
+- name: kg-l-coherence-watchdog
+  runner_type: python
+  port: 8841
+  depends_on:
+  - kix
+  - wazaa
+- name: nodex
+  runner_type: python
+  port: 8821
+  depends_on:
+  - ontology
+  - knowledge-graph-memory
+- name: rootx
+  runner_type: python
+  port: 8823
+  depends_on:
+  - knowledge-graph-memory
+- name: talex
+  runner_type: python
+  port: 8822
+  depends_on:
+  - llux
+  - rlm243
+  - timx-feature-store
+  - rootx
+  - llm-core
+- name: friction-analyzer
+  runner_type: python
+  port: 8815
+  depends_on:
+  - conversation-cognitive
+  - rlm-incident
+  - rootx
+  - prognex
+  - referex
+- name: agent-manager
+  runner_type: gateway-exe
+  port: 18000
+  depends_on:
+  - kix
+- name: batmcp
+  runner_type: gateway-exe
+  port: 8000
+  working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/BatMCP
+  command:
+  - python
+  - -m
+  - uvicorn
+  - src.server:app
+  - --host
+  - localhost
+  - --port
+  - '8000'
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  log_file: D:/DO/WEB/TOOLS/L4-TOOLS/BatMCP/logs/batmcp.log
+  pid_file: D:/DO/WEB/TOOLS/L4-TOOLS/BatMCP/logs/batmcp.pid
+  meta:
+    repo: gerivdb/BatMCP
+    role: mcp-server
+- name: kix
+  runner_type: python
+  port: 8800
+  working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+  entrypoint: src/app.py
+  depends_on: []
+  health_path: /health
+  restart_policy: on-failure
+  log_file: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX/logs/kix.log
+  pid_file: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX/logs/kix.pid
+  meta:
+    repo: gerivdb/KIX
+    role: orchestrator
+  bootstrap: true
+  auto_start: false
+- name: bootstrap
+  runner_type: python
+  port: 8810
+  working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+  entrypoint: services/bootstrap_runner.py
+  depends_on:
   - gateway-manager
   - kix
-
-runners:
-  - name: kg-l-coherence-watchdog
-    runner_type: python
-    port: 8841
-    depends_on:
-      - kix
-      - wazaa
-  - name: nodex
-    runner_type: python
-    port: 8821
-    depends_on:
-      - ontology
-      - knowledge-graph-memory
-  - name: rootx
-    runner_type: python
-    port: 8823
-    depends_on:
-      - knowledge-graph-memory
-  - name: talex
-    runner_type: python
-    port: 8822
-    depends_on:
-      - llux
-      - rlm243
-      - timx-feature-store
-      - rootx
-      - llm-core
-  - name: friction-analyzer
-    runner_type: python
-    port: 8815
-    depends_on:
-      - conversation-cognitive
-      - rlm-incident
-      - rootx
-      - prognex
-      - referex
-  - name: agent-manager
-    runner_type: gateway-exe
-    port: 18000
-    depends_on:
-      - kix
-  - name: batmcp
-    runner_type: gateway-exe
-    port: 8000
-    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/BatMCP
+  health_path: /bootstrap/status
+  restart_policy: on-failure
+  meta:
+    repo: gerivdb/KIX
+    role: bootstrap orchestrator
+  bootstrap: true
+  auto_start: false
+- name: rlm-metrics
+  runner_type: service
+  port: 8802
+  working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+  entrypoint: service.py
+  depends_on:
+  - kix
+  meta:
+    repo: gerivdb/KIX
+    role: metrics collector
+- name: rlm-config
+  runner_type: service
+  port: 8794
+  working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+  entrypoint: service.py
+  depends_on:
+  - kix
+  meta:
+    repo: gerivdb/KIX
+    role: configuration service
+- name: rlm-deploy
+  runner_type: service
+  port: 8795
+  working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+  entrypoint: service.py
+  depends_on:
+  - kix
+  meta:
+    repo: gerivdb/KIX
+    role: deployment service
+- name: rlm-graph
+  runner_type: service
+  port: 8797
+  working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+  entrypoint: service.py
+  depends_on:
+  - kix
+  meta:
+    repo: gerivdb/KIX
+    role: graph service
+- name: rlm-secure
+  runner_type: service
+  port: 8796
+  working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+  entrypoint: service.py
+  depends_on:
+  - kix
+  meta:
+    repo: gerivdb/KIX
+    role: security service
+- name: rlm-incident
+  runner_type: service
+  port: 8798
+  working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+  entrypoint: service.py
+  depends_on:
+  - kix
+  meta:
+    repo: gerivdb/KIX
+    role: incident service
+- name: rlm-release
+  runner_type: service
+  port: 8799
+  working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+  entrypoint: service.py
+  depends_on:
+  - kix
+  meta:
+    repo: gerivdb/KIX
+    role: release service
+- name: kg-l
+  runner_type: python
+  port: 8888
+  working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/KG-L
+  entrypoint: kg_l_server.py
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  log_file: D:/DO/WEB/TOOLS/L4-TOOLS/KG-L/logs/kg_l.log
+  pid_file: D:/DO/WEB/TOOLS/L4-TOOLS/KG-L/logs/kg_l.pid
+  meta:
+    repo: gerivdb/KG-L
+    role: knowledge-graph service
+- name: jevx
+  runner_type: service
+  port: 8889
+  working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/JEVX
+  entrypoint: src/server.ts
+  depends_on:
+  - kix
+  meta:
+    repo: gerivdb/JEVX
+    role: decision-engine
+- name: flex-rust
+  runner_type: rust
+  port: 7718
+  working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/FLEX
+  binary: cargo
+  command:
+  - cargo
+  - run
+  - --bin
+  - flex-api
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  meta:
+    repo: gerivdb/FLEX
+    role: rust-service
+- name: go-service
+  runner_type: go
+  port: 7717
+  working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/GO-SERVICE
+  goroot: C:/DevTools/go
+  entrypoint: main.go
+  command:
+  - go
+  - run
+  - .
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  meta:
+    repo: gerivdb/GO-SERVICE
+    role: go-service
+- name: node-service
+  runner_type: node
+  port: 7716
+  working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/NODE-SERVICE
+  entrypoint: server.js
+  command:
+  - node
+  - server.js
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  meta:
+    repo: gerivdb/NODE-SERVICE
+    role: node-service
+- name: kix-ecosystem
+  runner_type: python
+  port: 8811
+  working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+  entrypoint: src/app.py
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  meta:
+    repo: gerivdb/KIX
+    role: ecosystem-orchestrator
+- name: wazaa-bus
+  runner_type: python
+  port: 1874
+  working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/WAZAA
+  entrypoint: -m wazaa.wazaa_server
+  depends_on:
+  - kix
+  restart_policy: on-failure
+  meta:
+    repo: gerivdb/WAZAA
+    role: event-bus
+- name: trixd
+  runner_type: zig-binary
+  port: 7243
+  working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/TRIX
+  binary: zig-out/bin/trixd.exe
+  build:
     command:
-      - "python"
-      - "-m"
-      - "uvicorn"
-      - "src.server:app"
-      - "--host"
-      - "localhost"
-      - "--port"
-      - "8000"
-    depends_on:
-      - kix
-    health_path: /health
-    restart_policy: on-failure
-    log_file: D:/DO/WEB/TOOLS/L4-TOOLS/BatMCP/logs/batmcp.log
-    pid_file: D:/DO/WEB/TOOLS/L4-TOOLS/BatMCP/logs/batmcp.pid
-    meta:
-      repo: gerivdb/BatMCP
-      role: mcp-server
-  - name: kix
-    runner_type: python
-    port: 8800
-    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
-    entrypoint: src/app.py
-    depends_on: []
-    health_path: /health
-    restart_policy: on-failure
-    log_file: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX/logs/kix.log
-    pid_file: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX/logs/kix.pid
-    meta:
-      repo: gerivdb/KIX
-      role: orchestrator
-    bootstrap: true
-    auto_start: false
-  - name: bootstrap
-    runner_type: python
-    port: 8810
-    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
-    entrypoint: services/bootstrap_runner.py
-    depends_on:
-      - gateway-manager
-      - kix
-    health_path: /bootstrap/status
-    restart_policy: on-failure
-    meta:
-      repo: gerivdb/KIX
-      role: bootstrap orchestrator
-    bootstrap: true
-    auto_start: false
-  - name: rlm-metrics
-    runner_type: service
-    port: 8802
-    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
-    entrypoint: service.py
-    depends_on:
-      - kix
-    meta:
-      repo: gerivdb/KIX
-      role: metrics collector
-  - name: rlm-config
-    runner_type: service
-    port: 8794
-    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
-    entrypoint: service.py
-    depends_on:
-      - kix
-    meta:
-      repo: gerivdb/KIX
-      role: configuration service
-  - name: rlm-deploy
-    runner_type: service
-    port: 8795
-    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
-    entrypoint: service.py
-    depends_on:
-      - kix
-    meta:
-      repo: gerivdb/KIX
-      role: deployment service
-  - name: rlm-graph
-    runner_type: service
-    port: 8797
-    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
-    entrypoint: service.py
-    depends_on:
-      - kix
-    meta:
-      repo: gerivdb/KIX
-      role: graph service
-  - name: rlm-secure
-    runner_type: service
-    port: 8796
-    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
-    entrypoint: service.py
-    depends_on:
-      - kix
-    meta:
-      repo: gerivdb/KIX
-      role: security service
-  - name: rlm-incident
-    runner_type: service
-    port: 8798
-    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
-    entrypoint: service.py
-    depends_on:
-      - kix
-    meta:
-      repo: gerivdb/KIX
-      role: incident service
-  - name: rlm-release
-    runner_type: service
-    port: 8799
-    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
-    entrypoint: service.py
-    depends_on:
-      - kix
-    meta:
-      repo: gerivdb/KIX
-      role: release service
-  - name: kg-l
-    runner_type: python
-    port: 8888
-    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/KG-L
-    entrypoint: kg_l_server.py
-    depends_on:
-      - kix
-    health_path: /health
-    restart_policy: on-failure
-    log_file: D:/DO/WEB/TOOLS/L4-TOOLS/KG-L/logs/kg_l.log
-    pid_file: D:/DO/WEB/TOOLS/L4-TOOLS/KG-L/logs/kg_l.pid
-    meta:
-      repo: gerivdb/KG-L
-      role: knowledge-graph service
-  - name: jevx
-    runner_type: service
-    port: 8889
-    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/JEVX
-    entrypoint: src/server.ts
-    depends_on:
-      - kix
-    meta:
-      repo: gerivdb/JEVX
-      role: decision-engine
-  - name: flex-rust
-    runner_type: rust
-    port: 7718
-    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/FLEX
-    binary: cargo
-    command:
-      - "cargo"
-      - "run"
-      - "--bin"
-      - "flex-api"
-    depends_on:
-      - kix
-    health_path: /health
-    restart_policy: on-failure
-    meta:
-      repo: gerivdb/FLEX
-      role: rust-service
-  - name: go-service
-    runner_type: go
-    port: 7717
-    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/GO-SERVICE
-    goroot: C:/DevTools/go
-    entrypoint: main.go
-    command:
-      - "go"
-      - "run"
-      - "."
-    depends_on:
-      - kix
-    health_path: /health
-    restart_policy: on-failure
-    meta:
-      repo: gerivdb/GO-SERVICE
-      role: go-service
-  - name: node-service
-    runner_type: node
-    port: 7716
-    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/NODE-SERVICE
-    entrypoint: server.js
-    command:
-      - "node"
-      - "server.js"
-    depends_on:
-      - kix
-    health_path: /health
-    restart_policy: on-failure
-    meta:
-      repo: gerivdb/NODE-SERVICE
-      role: node-service
-  - name: kix-ecosystem
-    runner_type: python
-    port: 8811
-    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
-    entrypoint: src/app.py
-    depends_on:
-      - kix
-    health_path: /health
-    restart_policy: on-failure
-    meta:
-      repo: gerivdb/KIX
-      role: ecosystem-orchestrator
-  - name: wazaa-bus
-    runner_type: python
-    port: 1874
-    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/WAZAA
-    entrypoint: -m wazaa.wazaa_server
-    depends_on:
-      - kix
-    restart_policy: on-failure
-    meta:
-      repo: gerivdb/WAZAA
-      role: event-bus
-  - name: trixd
-    runner_type: zig-binary
-    port: 7243
-    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/TRIX
-    binary: zig-out/bin/trixd.exe
-    build:
-      command: ["zig", "build", "trixd"]
-      required: true
-      pre_start: true
-    depends_on:
-      - kix
-    health_path: /health
-    restart_policy: on-failure
-    meta:
-      repo: gerivdb/TRIX
-      role: zig-runtime
+    - zig
+    - build
+    - trixd
+    required: true
+    pre_start: true
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  meta:
+    repo: gerivdb/TRIX
+    role: zig-runtime
+- name: gitex
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/gitex
+    role: governance
+- name: repoxt
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/repoxt
+    role: governance
+- name: syncx
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/syncx
+    role: governance
+- name: referex
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/referex
+    role: governance
+- name: kglx
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/kglx
+    role: governance
+- name: harnex
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/harnex
+    role: governance
+- name: telox
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/telox
+    role: cognitive
+- name: timx
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/timx
+    role: cognitive
+- name: rlm243
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/rlm243
+    role: operational
+- name: causex
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/causex
+    role: cognitive
+- name: morphex
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/morphex
+    role: cognitive
+- name: identx
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/identx
+    role: cognitive
+- name: topex
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/topex
+    role: cognitive
+- name: chronox
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/chronox
+    role: cognitive
+- name: llux-match
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/llux-match
+    role: cognitive
+- name: llux-index
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/llux-index
+    role: cognitive
+- name: gateway-manager
+  runner_type: custom
+  port: 9000
+  working_dir: D:/DO/WEB/TOOLS/L1-INFRA/GATEWAY-MANAGER
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/gateway-manager
+    role: gateway
+  entrypoint: src/
+- name: wazaa
+  runner_type: custom
+  port: 5002
+  working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/WAZAA
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/wazaa
+    role: dashboard
+  entrypoint: src/
+- name: flex-api
+  runner_type: custom
+  port: 8080
+  working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/FLEX
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/flex-api
+    role: api
+  entrypoint: src/
+- name: prognex
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/prognex
+    role: cognitive
+- name: llux-learn
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/llux-learn
+    role: cognitive
+- name: llux-replay
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/llux-replay
+    role: cognitive
+- name: timx-feature-store
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/timx-feature-store
+    role: operational
+- name: rlm-mdu
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/rlm-mdu
+    role: operational
+- name: deployex
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/deployex
+    role: cognitive
+- name: flowx
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/flowx
+    role: cognitive
+- name: llm-core
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/llm-core
+    role: llm
+- name: piano
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/piano
+    role: operational
+- name: trix
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/trix
+    role: operational
+- name: conversation-cognitive
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/conversation-cognitive
+    role: cognitive
+- name: flex
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/flex
+    role: infrastructure
+- name: infx
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/infx
+    role: citizen
+- name: codedb-e5620
+  runner_type: custom
+  port: 0
+  working_dir: ''
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/codedb-e5620
+    role: infrastructure
+- name: nexus
+  runner_type: custom
+  port: 8801
+  working_dir: D:/DO/WEB/TOOLS/L1-INFRA/NEXUS
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/nexus
+    role: governance
+- name: anamorphoser
+  runner_type: python
+  port: 8831
+  working_dir: D:\DO\WEB\TOOLS\L0-CANON\GOVERNANCE-HUB
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/anamorphoser
+    role: cognitive
+  entrypoint: runners/anamorphoser_fastapi.py
+- name: tlm-lang
+  runner_type: python
+  port: 8803
+  working_dir: D:\DO\WEB\TOOLS\L0-CANON\unified-design\designs\tlm-lang
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/tlm-lang
+    role: cognitive
+  entrypoint: runners/tlm_lang_fastapi.py
