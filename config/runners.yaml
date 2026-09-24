@@ -257,3 +257,42 @@ runners:
     meta:
       repo: gerivdb/NODE-SERVICE
       role: node-service
+  - name: kix-ecosystem
+    runner_type: python
+    port: 8811
+    working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
+    entrypoint: src/app.py
+    depends_on:
+      - kix
+    health_path: /health
+    restart_policy: on-failure
+    meta:
+      repo: gerivdb/KIX
+      role: ecosystem-orchestrator
+  - name: wazaa
+    runner_type: python
+    port: 1873
+    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/WAZAA
+    entrypoint: -m wazaa.wazaa_server
+    depends_on:
+      - kix
+    restart_policy: on-failure
+    meta:
+      repo: gerivdb/WAZAA
+      role: event-bus
+  - name: trixd
+    runner_type: zig-binary
+    port: 7243
+    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/TRIX
+    binary: zig-out/bin/trixd.exe
+    build:
+      command: ["zig", "build", "trixd"]
+      required: true
+      pre_start: true
+    depends_on:
+      - kix
+    health_path: /health
+    restart_policy: on-failure
+    meta:
+      repo: gerivdb/TRIX
+      role: zig-runtime
