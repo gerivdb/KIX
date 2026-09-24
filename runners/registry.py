@@ -12,11 +12,19 @@ from runners.base import RunnerBase, RunnerSpec
 from runners.python_runner import PythonRunner
 from runners.zig_runner import ZigBinaryRunner
 from runners.gateway_runner import GatewayRunner
+from runners.rust_runner import RustRunner
+from runners.go_runner import GoRunner
+from runners.node_runner import NodeRunner
+from runners.custom_runner import CustomRunner
 
 RUNNER_CLASSES: dict[str, type[RunnerBase]] = {
     "python": PythonRunner,
     "zig-binary": ZigBinaryRunner,
     "gateway-exe": GatewayRunner,
+    "rust": RustRunner,
+    "go": GoRunner,
+    "node": NodeRunner,
+    "custom": CustomRunner,
 }
 
 
