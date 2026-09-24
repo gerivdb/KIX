@@ -39,9 +39,22 @@ runners:
   - referex
 - name: agent-manager
   runner_type: gateway-exe
-  port: 18000
+  port: 18001
   depends_on:
   - kix
+- name: llm-gateway
+  runner_type: gateway-exe
+  port: 18000
+  working_dir: D:/DO/WEB/TOOLS/L1-INFRA/ECOS-CLI
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  log_file: D:/DO/WEB/TOOLS/L1-INFRA/ECOS-CLI/logs/llm-gateway.log
+  pid_file: D:/DO/WEB/TOOLS/L1-INFRA/ECOS-CLI/logs/llm-gateway.pid
+  meta:
+    repo: gerivdb/ECOS-CLI
+    role: llm-gateway
 - name: batmcp
   runner_type: gateway-exe
   port: 8000
