@@ -43,26 +43,6 @@ runners:
     port: 18000
     depends_on:
       - kix
-  - name: trixd
-    runner_type: zig-binary
-    port: 7243
-    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/TRIX
-    binary: zig-out/bin/trixd.exe
-    build:
-      command: ["zig", "build", "trixd"]
-      required: true
-      pre_start: true
-    depends_on:
-      - kix
-    health_path: /health
-    headers:
-      Authorization: "Bearer ${TRIX_DAEMON_TOKEN}"
-    restart_policy: on-failure
-    log_file: D:/DO/WEB/TOOLS/L4-TOOLS/TRIX/data/trixd.log
-    pid_file: D:/DO/WEB/TOOLS/L4-TOOLS/TRIX/data/trixd.pid
-    meta:
-      repo: gerivdb/TRIX
-      role: zig runtime
   - name: batmcp
     runner_type: gateway-exe
     port: 8000
@@ -269,9 +249,9 @@ runners:
     meta:
       repo: gerivdb/KIX
       role: ecosystem-orchestrator
-  - name: wazaa
+  - name: wazaa-bus
     runner_type: python
-    port: 1873
+    port: 1874
     working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/WAZAA
     entrypoint: -m wazaa.wazaa_server
     depends_on:
