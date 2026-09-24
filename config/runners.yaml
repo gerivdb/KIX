@@ -210,6 +210,7 @@ runners:
     runner_type: go
     port: 7717
     working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/GO-SERVICE
+    goroot: C:/DevTools/go
     entrypoint: main.go
     command:
       - "go"
