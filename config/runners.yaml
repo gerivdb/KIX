@@ -209,3 +209,51 @@ runners:
     meta:
       repo: gerivdb/JEVX
       role: decision-engine
+  - name: flex-rust
+    runner_type: rust
+    port: 7718
+    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/FLEX
+    binary: cargo
+    command:
+      - "cargo"
+      - "run"
+      - "--bin"
+      - "flex-api"
+    depends_on:
+      - kix
+    health_path: /health
+    restart_policy: on-failure
+    meta:
+      repo: gerivdb/FLEX
+      role: rust-service
+  - name: go-service
+    runner_type: go
+    port: 7717
+    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/GO-SERVICE
+    entrypoint: main.go
+    command:
+      - "go"
+      - "run"
+      - "."
+    depends_on:
+      - kix
+    health_path: /health
+    restart_policy: on-failure
+    meta:
+      repo: gerivdb/GO-SERVICE
+      role: go-service
+  - name: node-service
+    runner_type: node
+    port: 7716
+    working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/NODE-SERVICE
+    entrypoint: server.js
+    command:
+      - "node"
+      - "server.js"
+    depends_on:
+      - kix
+    health_path: /health
+    restart_policy: on-failure
+    meta:
+      repo: gerivdb/NODE-SERVICE
+      role: node-service
