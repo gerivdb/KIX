@@ -1,6 +1,6 @@
 {
-  "generated_at_utc": "2026-09-20T18:54:03.342922+00:00",
-  "count": 30,
+  "generated_at_utc": "2026-09-24T19:45:08.672240+00:00",
+  "count": 29,
   "nodes": [
     {
       "id": "VOLTX",
@@ -50,42 +50,6 @@
       "local_path": "D:\\DO\\WEB\\TOOLS\\L4-TOOLS\\KORX",
       "remote": "https://github.com/gerivdb/KORX",
       "role": "State Machine Compiler",
-      "intent_hash": "",
-      "logical_layers": [
-        "N1",
-        "N2"
-      ],
-      "entity_type": "REPO"
-    },
-    {
-      "id": "OBSCURA",
-      "name": "OBSCURA",
-      "sources": [
-        "known_repositories"
-      ],
-      "layer": "L4_TOOLS",
-      "status": "ACTIVE",
-      "local_path": "D:\\DO\\WEB\\TOOLS\\L4-TOOLS\\OBSCURA",
-      "remote": "https://github.com/gerivdb/OBSCURA",
-      "role": "Obscura",
-      "intent_hash": "",
-      "logical_layers": [
-        "N1",
-        "N2"
-      ],
-      "entity_type": "REPO"
-    },
-    {
-      "id": "ATLAS",
-      "name": "ATLAS",
-      "sources": [
-        "known_repositories"
-      ],
-      "layer": "L4_TOOLS",
-      "status": "dormant",
-      "local_path": "",
-      "remote": "https://github.com/gerivdb/ATLAS",
-      "role": "Atlas",
       "intent_hash": "",
       "logical_layers": [
         "N1",
@@ -313,7 +277,7 @@
       "status": "active",
       "local_path": "D:\\DO\\WEB\\TOOLS\\L0-CANON\\unified-design",
       "remote": "https://github.com/gerivdb/unified-design",
-      "role": "Meta-Design (MDU) -- Atlas global des invariants architecturaux",
+      "role": "Meta-Design (MDU) -- Atlas global des invariants architecturaux + contrats d'interface entre régimes",
       "intent_hash": "0xUNIFIED_DESIGN_20260715",
       "logical_layers": [
         "N1"
@@ -414,7 +378,7 @@
       ],
       "layer": "L0_CONSTITUTIONAL",
       "status": "archived",
-      "local_path": null,
+      "local_path": "D:\\DO\\WEB\\TOOLS\\L0-CANON\\APOLLO",
       "remote": "https://github.com/gerivdb/APOLLO",
       "role": "Apollo",
       "intent_hash": "",
@@ -431,7 +395,7 @@
       ],
       "layer": "L0_CONSTITUTIONAL",
       "status": "archived",
-      "local_path": null,
+      "local_path": "D:\\DO\\WEB\\TOOLS\\L0-CANON\\ARES",
       "remote": "https://github.com/gerivdb/ARES",
       "role": "Moteur de decision Diamond v16",
       "intent_hash": "",
@@ -448,7 +412,7 @@
       ],
       "layer": "L0_CONSTITUTIONAL",
       "status": "archived",
-      "local_path": null,
+      "local_path": "D:\\DO\\WEB\\TOOLS\\L0-CANON\\ATHENA",
       "remote": "https://github.com/gerivdb/ATHENA",
       "role": "Hub central Diamond v16",
       "intent_hash": "",
@@ -465,7 +429,7 @@
       ],
       "layer": "L0_CONSTITUTIONAL",
       "status": "dormant",
-      "local_path": "",
+      "local_path": "D:\\DO\\WEB\\TOOLS\\L0-CANON\\ATLAS",
       "remote": "https://github.com/gerivdb/ATLAS",
       "role": "Infrastructure as Code",
       "intent_hash": "",
@@ -482,7 +446,7 @@
       ],
       "layer": "L0_CONSTITUTIONAL",
       "status": "dormant",
-      "local_path": "",
+      "local_path": "D:\\DO\\WEB\\TOOLS\\L0-CANON\\FORGE",
       "remote": "https://github.com/gerivdb/FORGE",
       "role": "Forge",
       "intent_hash": "",
@@ -516,12 +480,30 @@
       ],
       "layer": "L0_CONSTITUTIONAL",
       "status": "dormant",
-      "local_path": "",
+      "local_path": "D:\\DO\\WEB\\TOOLS\\L0-CANON\\MATRIX",
       "remote": "https://github.com/gerivdb/MATRIX",
       "role": "ML/AI Orchestration",
       "intent_hash": "",
       "logical_layers": [
         "N1"
+      ],
+      "entity_type": "REPO"
+    },
+    {
+      "id": "MIMIR",
+      "name": "MIMIR",
+      "sources": [
+        "known_repositories"
+      ],
+      "layer": "L3_CITIZENS",
+      "status": "ACTIVE",
+      "local_path": "D:\\\\DO\\\\WEB\\\\TOOLS\\\\L3-CITIZENS\\\\MIMIR",
+      "remote": "https://github.com/gerivdb/MIMIR",
+      "role": "Wiki vivant, fractal et visuel de l ecosysteme — source de verite unique navigable",
+      "intent_hash": "",
+      "logical_layers": [
+        "N1",
+        "N2"
       ],
       "entity_type": "REPO"
     }

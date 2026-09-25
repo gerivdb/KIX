@@ -33,8 +33,8 @@ Ce PRD MOC couvre l'intégration complète de l'écosystème gerivdb via KIX com
 | L2_PLATFORM | 20+ | KIX, PLIX, KEEL, CURX, BIRDY, EMIT, auto-dev |
 | L2b_SENSOR/QUALIFIER | 3 | IRIS, KRONOS, RLM-MDU |
 | L3_CITIZENS | 10+ | FLUENCE, WAZAA, LLUX, TALEX, STYX, BUZZ-X |
-| L4_TOOLS | 25+ | TRIX, FLEX, KG-L, N243, CTULU, BAT-MCP, SKILLS |
-| L5_ARCHIVE | 2 | localjev-upstream, archives |
+| L4_TOOLS | 26+ | TRIX, FLEX, KG-L, N243, CTULU, BAT-MCP, SKILLS, localjev-upstream |
+| L5_ARCHIVE | 1 | archives |
 
 ### 2.2 Intégration Actuelle
 
@@ -126,6 +126,7 @@ Ce PRD MOC couvre l'intégration complète de l'écosystème gerivdb via KIX com
 - `KIX/config/runners.yaml` : configuration déclarative
 - `KIX/libs/shared-clients/win32_process.py` : primitives Win32
 - `GOVERNANCE-HUB/known_repositories.yaml` : SOT des repos
+- PRD-MOC-KIX-EXE-ORCHESTRATION-2026-09-24.md : Orchestration exécutables / preflight / zombie monitor
 
 ### 5.2 Externes
 - `C:\DevTools\.cargo\bin\rustc.exe` : Rust
@@ -150,7 +151,7 @@ thought_chain:
 |------|---------|--------|
 | **P-101** | Conformité schéma YAML | ⏳ PENDING |
 | **P-102** | Forward references valides | ⏳ PENDING |
-| **P-103** | Tests unitaires ≥ 80% | ⏸️ BLOCKED |
+| **P-103** | Tests unitaires ≥ 80% | ⏸️ PENDING |
 
 ## 7. REFERENCES
 
@@ -159,3 +160,7 @@ thought_chain:
 - `PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md` : Intégration multi-langages
 - `ADR-2026-09-24-KIX-MULTI-LANG-RUNNERS.md` : ADR runners
 - `GOVERNANCE-HUB/known_repositories.yaml` : SOT des repos
+- PRD-MOC-KIX-EXE-ORCHESTRATION-2026-09-24.md : Orchestration exécutables / preflight / zombie monitor
+
+
+
