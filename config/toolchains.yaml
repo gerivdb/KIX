@@ -1,0 +1,50 @@
+toolchains:
+  - name: zig
+    binary: C:/DevTools/bin/zig/zig.exe
+    version_flag: version
+    expected_major: 0
+    expected_minor: 15
+    health_timeout: 5.0
+    sha256: ""
+    required: true
+
+  - name: python
+    binary: C:/Users/GG/AppData/Local/Programs/Python/Python312/python.exe
+    version_flag: --version
+    expected_major: 3
+    expected_minor: 12
+    health_timeout: 5.0
+    sha256: ""
+    required: true
+
+  - name: node
+    binary: node
+    version_flag: --version
+    expected_prefix: v24
+    health_timeout: 5.0
+    sha256: ""
+    required: false
+
+  - name: cargo
+    binary: C:/DevTools/.cargo/bin/cargo.exe
+    version_flag: --version
+    expected_prefix: cargo 1
+    health_timeout: 5.0
+    sha256: ""
+    required: false
+
+  - name: git
+    binary: C:/DevTools/git/cmd/git.exe
+    version_flag: --version
+    expected_prefix: git version
+    health_timeout: 5.0
+    sha256: ""
+    required: true
+
+  - name: pwsh
+    binary: pwsh
+    version_flag: -Command '$PSVersionTable.PSVersion.ToString()'
+    expected_prefix: 7
+    health_timeout: 5.0
+    sha256: ""
+    required: true
