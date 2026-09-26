@@ -23,6 +23,16 @@ Ce MOC **MASTER** synthétise l'ensemble de la gouvernance **KIX (L2-PLATFORM)**
 
 **Statut** : **completed** (2026-09-02) — Implémentation 100% fonctionnelle (Phases 1-5 terminées)
 
+## 11. Subordonnés directs
+
+| PRD-MOC | Rôle | Statut |
+|---|---|---|
+| PRD-MOC-KIX-ORCHESTRATOR-2026-08-18.md | Generic runner wrapper | completed |
+| PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md | Multi-lang runners | proposed |
+| PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-2026-09-24.md | Écosystème integration master | proposed |
+| PRD-MOC-KIX-EXE-ORCHESTRATION-2026-09-24.md | Exe orchestration / preflight / zombie monitor | proposed |
+| PRD-MOC-VEX-KIX-BOUNDARIES-20260927.md | Frontières KIX/VEX | draft |
+
 ---
 
 ## 1. Identité KIX
@@ -70,6 +80,20 @@ Ce MOC **MASTER** synthétise l'ensemble de la gouvernance **KIX (L2-PLATFORM)**
 | **Swarm Status** | `src/app.py` | ✅ **IMPLÉMENTÉ** | `/swarm/status` — état agrégé pour Agent Manager / N+2/N+3 |
 | **Tests** | `tests/test_runners*.py` | ✅ **IMPLÉMENTÉ** | 52 tests passants (runners, intégration, gateway, trixd, wazaa) |
 | **Cleanup legacy** | `src/app.py` | ✅ **IMPLÉMENTÉ** | Supprimé `_launch_runner()` legacy, `cognitive_runners.py` conservée |
+
+### 2.3 Relation avec VEX (L3-CITIZENS)
+
+**VEX** est l'orchestrateur L3 des daemons/agents autonomes. KIX et VEX partagent des concepts d'orchestration et de gestion de processus, mais leurs périmètres sont strictement séparés :
+
+- **KIX** : runners RLM (services applicatifs L2), alerting, auto-remédiation, dashboard, auth, audit
+- **VEX** : daemons L3, déploiement multi-OS (NSSM/schtasks/systemd), clients d'intégration
+
+Le contrat de frontières est défini dans `PRD-MOC-VEX-KIX-BOUNDARIES-20260927.md`.
+
+Points d'intégration autorisés :
+- `GET /health/kix` — VEX consulte le health de KIX
+- `GET /health` — KIX consulte le health agrégé L3 de VEX
+- WAZAA bus — événements daemons VEX et runners KIX
 
 ---
 
