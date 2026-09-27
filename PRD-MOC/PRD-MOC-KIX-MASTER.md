@@ -28,7 +28,7 @@ Ce MOC **MASTER** synthétise l'ensemble de la gouvernance **KIX (L2-PLATFORM)**
 | PRD-MOC | Rôle | Statut |
 |---|---|---|
 | PRD-MOC-KIX-ORCHESTRATOR-2026-08-18.md | Generic runner wrapper | completed |
-| PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md | Multi-lang runners | proposed |
+| PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md | Multi-lang runners | implemented |
 | PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-2026-09-24.md | Écosystème integration master | proposed |
 | PRD-MOC-KIX-EXE-ORCHESTRATION-2026-09-24.md | Exe orchestration / preflight / zombie monitor | proposed |
 | PRD-MOC-VEX-KIX-BOUNDARIES-20260927.md | Frontières KIX/VEX | draft |
@@ -74,7 +74,11 @@ Ce MOC **MASTER** synthétise l'ensemble de la gouvernance **KIX (L2-PLATFORM)**
 | **PythonRunner** | `runners/python_runner.py` | ✅ **IMPLÉMENTÉ** | Wrapper services Python (RLM-*, WAZAA, etc.) |
 | **ZigRunner** | `runners/zig_runner.py` | ✅ **IMPLÉMENTÉ** | Wrapper binaires Zig (TRIX, LLUX, TIMX, ROOTX, TLM-LANG) |
 | **GatewayRunner** | `runners/gateway_runner.py` | ✅ **IMPLÉMENTÉ** | Wrapper GATEWAY-MANAGER `.exe`/CLI |
-| **Registry déclaratif** | `config/runners.yaml` | ✅ **IMPLÉMENTÉ** | 5 runners : kix, gateway-manager, trixd, wazaa, flex-api (FLEX-L4) |
+| **RustRunner** | `runners/rust_runner.py` | ✅ **IMPLÉMENTÉ** | Wrapper services Rust (FLEX, TRIX, etc.) |
+| **GoRunner** | `runners/go_runner.py` | ✅ **IMPLÉMENTÉ** | Wrapper services Go |
+| **NodeRunner** | `runners/node_runner.py` | ✅ **IMPLÉMENTÉ** | Wrapper services Node.js |
+| **CustomRunner** | `runners/custom_runner.py` | ✅ **IMPLÉMENTÉ** | Wrapper commande libre |
+| **Registry déclaratif** | `config/runners.yaml` | ✅ **IMPLÉMENTÉ** | 60 runners : python, zig-binary, gateway-exe, rust, go, node, custom |
 | **API REST** | `src/app.py` | ✅ **IMPLÉMENTÉ** | `/runners`, `/doctor`, `/swarm/status`, `/runners/{name}/*` |
 | **Doctor/Self-Healing** | `src/app.py` | ✅ **IMPLÉMENTÉ** | `/doctor` (vérification), `/doctor/run` (auto-redémarrage) |
 | **Swarm Status** | `src/app.py` | ✅ **IMPLÉMENTÉ** | `/swarm/status` — état agrégé pour Agent Manager / N+2/N+3 |
