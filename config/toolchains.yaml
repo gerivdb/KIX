@@ -1,50 +1,67 @@
+# KIX Toolchains Registry
+# Contrat déclaratif des outils système / runtimes CLI utilisés par KIX.
+# Schéma : name / path / version_flag / timeout / sha256 (optionnel)
+
 toolchains:
   - name: zig
-    binary: C:/DevTools/bin/zig/zig.exe
-    version_flag: version
-    expected_major: 0
-    expected_minor: 15
-    health_timeout: 5.0
-    sha256: ""
-    required: true
+    path: C:/DevTools/bin/zig/zig.exe
+    version_flag: --version
+    timeout: 5.0
+    role: compiler
+    meta:
+      repo: gerivdb/TRIX
+      usage: "Compilation TRIX/LLUX/ROOTX"
 
   - name: python
-    binary: C:/Users/GG/AppData/Local/Programs/Python/Python312/python.exe
+    path: C:/Users/GG/AppData/Local/Programs/Python/Python312/python.exe
     version_flag: --version
-    expected_major: 3
-    expected_minor: 12
-    health_timeout: 5.0
-    sha256: ""
-    required: true
-
-  - name: node
-    binary: node
-    version_flag: --version
-    expected_prefix: v24
-    health_timeout: 5.0
-    sha256: ""
-    required: false
+    timeout: 5.0
+    role: runtime
+    meta:
+      repo: gerivdb/KIX
+      usage: "Services Python KIX/WAZAA/GATEWAY-MANAGER"
 
   - name: cargo
-    binary: C:/DevTools/.cargo/bin/cargo.exe
+    path: C:/DevTools/.cargo/bin/cargo.exe
     version_flag: --version
-    expected_prefix: cargo 1
-    health_timeout: 5.0
-    sha256: ""
-    required: false
+    timeout: 5.0
+    role: package-manager
+    meta:
+      repo: gerivdb/FLEX
+      usage: "Compilation services Rust"
+
+  - name: rustc
+    path: C:/DevTools/.cargo/bin/rustc.exe
+    version_flag: --version
+    timeout: 5.0
+    role: compiler
+    meta:
+      repo: gerivdb/FLEX
+      usage: "Compilation services Rust"
+
+  - name: node
+    path: C:/DevTools/bin/node/node.exe
+    version_flag: --version
+    timeout: 5.0
+    role: runtime
+    meta:
+      repo: gerivdb/JEVX
+      usage: "Services Node.js"
 
   - name: git
-    binary: C:/DevTools/git/cmd/git.exe
+    path: C:/DevTools/git/cmd/git.exe
     version_flag: --version
-    expected_prefix: git version
-    health_timeout: 5.0
-    sha256: ""
-    required: true
+    timeout: 5.0
+    role: vcs
+    meta:
+      repo: gerivdb/GOVERNANCE-HUB
+      usage: "Gestionnaire de versions"
 
   - name: pwsh
-    binary: pwsh
-    version_flag: -Command '$PSVersionTable.PSVersion.ToString()'
-    expected_prefix: 7
-    health_timeout: 5.0
-    sha256: ""
-    required: true
+    path: C:/Program Files/PowerShell/7/pwsh.exe
+    version_flag: --version
+    timeout: 5.0
+    role: shell
+    meta:
+      repo: gerivdb/KIX
+      usage: "Scripts PowerShell KIX"

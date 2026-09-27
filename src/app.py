@@ -302,6 +302,41 @@ def readyz() -> Any:
     return jsonify({"status": status, "checks": checks}), code
 
 
+@app.get("/preflight/status")
+def preflight_status() -> Any:
+    """Rapport d'état complet de l'infrastructure d'exécution."""
+    from src.diagnostics import run_all_checks
+
+    report = run_all_checks()
+    status = "ok" if report.get("error", 0) == 0 else "degraded"
+    code = 200 if status == "ok" else 503
+    return jsonify({"status": status, "preflight": report}), code
+
+
+@app.post("/preflight/assert")
+def preflight_assert() -> Any:
+    """Assertion contractuelle bloquante pour BOOT / Agent Manager."""
+    payload = request.get_json(silent=True) or {}
+    require = payload.get("require", [])
+    if not require:
+        return jsonify({"error": "require list is empty"}), 400
+
+    from src.diagnostics import run_all_checks
+
+    report = run_all_checks()
+    check_map = {c["check"]: c["status"] for c in report.get("checks", [])}
+
+    missing = [name for name in require if check_map.get(name) == "ERROR"]
+    if missing:
+        return jsonify({
+            "ok": False,
+            "missing": missing,
+            "checks": check_map,
+        }), 409
+
+    return jsonify({"ok": True, "checks": check_map}), 200
+
+
 @app.post("/login")
 def login() -> Any:
     data = request.get_json() or {}

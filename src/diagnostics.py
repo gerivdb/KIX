@@ -140,6 +140,55 @@ def check_runners() -> DiagnosticsResult:
     return result
 
 
+def check_toolchains() -> DiagnosticsResult:
+    """Vérifier la disponibilité des toolchains déclarées dans config/toolchains.yaml."""
+    result = DiagnosticsResult("toolchains")
+    try:
+        import yaml
+
+        toolchains_path = (
+            Path(__file__).resolve().parent.parent / "config" / "toolchains.yaml"
+        )
+        if not toolchains_path.exists():
+            result.set_warn("toolchains.yaml not found")
+            return result
+        with open(toolchains_path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f) or {}
+        toolchains = data.get("toolchains", [])
+        missing = []
+        for tc in toolchains:
+            path = Path(tc.get("path", ""))
+            if not path.exists():
+                missing.append(tc.get("name", "unknown"))
+        if missing:
+            result.set_warn(f"Missing toolchains: {', '.join(missing)}")
+        else:
+            result.detail = f"All {len(toolchains)} toolchains available"
+    except Exception as e:
+        result.set_warn(f"Toolchain check failed: {e}")
+    return result
+
+
+def check_daemon_health() -> DiagnosticsResult:
+    """Vérifier le health des daemons KIX via l'API locale."""
+    result = DiagnosticsResult("daemon_health")
+    try:
+        import urllib.request
+
+        req = urllib.request.Request(
+            "http://localhost:8800/healthz",
+            timeout=5,
+        )
+        with urllib.request.urlopen(req) as resp:
+            data = json.loads(resp.read().decode())
+            result.detail = f"KIX status: {data.get('status')}"
+    except urllib.error.URLError:
+        result.set_warn("KIX not reachable on port 8800")
+    except Exception as e:
+        result.set_warn(f"Daemon health check failed: {e}")
+    return result
+
+
 def run_all_checks() -> dict[str, Any]:
     """Exécuter tous les checks et retourner le rapport."""
     checks = [
@@ -147,6 +196,8 @@ def run_all_checks() -> dict[str, Any]:
         check_auth,
         check_providers,
         check_runners,
+        check_toolchains,
+        check_daemon_health,
     ]
     results = []
     for check_fn in checks:
