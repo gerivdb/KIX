@@ -1,6 +1,6 @@
 {
-  "generated_at_utc": "2026-09-24T19:45:08.672240+00:00",
-  "count": 29,
+  "generated_at_utc": "2026-09-27T02:14:20.164904+00:00",
+  "count": 31,
   "nodes": [
     {
       "id": "VOLTX",
@@ -222,7 +222,7 @@
       "sources": [
         "known_repositories"
       ],
-      "layer": "L0-CANON",
+      "layer": "L0_CANON",
       "status": "active",
       "local_path": "D:\\DO\\WEB\\TOOLS\\L0-CANON\\BLO",
       "remote": "https://github.com/gerivdb/BLO",
@@ -239,7 +239,7 @@
       "sources": [
         "known_repositories"
       ],
-      "layer": "L0-CANON",
+      "layer": "L0_CANON",
       "status": "active",
       "local_path": "D:\\DO\\WEB\\TOOLS\\L0-CANON\\FERMI-EVER",
       "remote": "https://github.com/gerivdb/FERMI-EVER",
@@ -256,7 +256,7 @@
       "sources": [
         "known_repositories"
       ],
-      "layer": "L0-CANON",
+      "layer": "L0_CANON",
       "status": "active",
       "local_path": "D:\\DO\\WEB\\TOOLS\\L0-CANON\\GOST",
       "remote": "https://github.com/gerivdb/GOST",
@@ -273,7 +273,7 @@
       "sources": [
         "known_repositories"
       ],
-      "layer": "L0-CANON",
+      "layer": "L0_CANON",
       "status": "active",
       "local_path": "D:\\DO\\WEB\\TOOLS\\L0-CANON\\unified-design",
       "remote": "https://github.com/gerivdb/unified-design",
@@ -308,7 +308,7 @@
       "sources": [
         "known_repositories"
       ],
-      "layer": "L0-CANON",
+      "layer": "L0_CANON",
       "status": "active",
       "local_path": "D:\\DO\\WEB\\TOOLS\\L0-CANON\\connard-design",
       "remote": "https://github.com/gerivdb/connard-design",
@@ -325,7 +325,7 @@
       "sources": [
         "known_repositories"
       ],
-      "layer": "L0-CANON",
+      "layer": "L0_CANON",
       "status": "active",
       "local_path": "D:\\DO\\WEB\\TOOLS\\L0-CANON\\morphohdl-anamorphic-growth",
       "remote": "https://github.com/gerivdb/morphohdl-anamorphic-growth",
@@ -342,7 +342,7 @@
       "sources": [
         "known_repositories"
       ],
-      "layer": "L0-CANON",
+      "layer": "L0_CANON",
       "status": "active",
       "local_path": "D:\\DO\\WEB\\TOOLS\\L0-CANON\\triadic-compound-eye",
       "remote": "https://github.com/gerivdb/triadic-compound-eye",
@@ -359,7 +359,7 @@
       "sources": [
         "known_repositories"
       ],
-      "layer": "L0-CANON",
+      "layer": "L0_CANON",
       "status": "active",
       "local_path": "D:\\DO\\WEB\\TOOLS\\L0-CANON\\sonar-driven-design",
       "remote": "https://github.com/gerivdb/sonar-driven-design",
@@ -490,6 +490,23 @@
       "entity_type": "REPO"
     },
     {
+      "id": "VEX",
+      "name": "VEX",
+      "sources": [
+        "known_repositories"
+      ],
+      "layer": "L3_CITIZENS",
+      "status": "ACTIVE",
+      "local_path": "D:\\DO\\WEB\\TOOLS\\L3-CITIZENS\\VEX",
+      "remote": "https://github.com/gerivdb/VEX",
+      "role": "L3-ORCHESTRATOR — Orchestrateur L3 des daemons/agents autonomes",
+      "intent_hash": "",
+      "logical_layers": [
+        "N3"
+      ],
+      "entity_type": "REPO"
+    },
+    {
       "id": "MIMIR",
       "name": "MIMIR",
       "sources": [
@@ -504,6 +521,24 @@
       "logical_layers": [
         "N1",
         "N2"
+      ],
+      "entity_type": "REPO"
+    },
+    {
+      "id": "BATVERSE",
+      "name": "BATVERSE",
+      "sources": [
+        "known_repositories"
+      ],
+      "layer": "L4_TOOLS",
+      "status": "ACTIVE",
+      "local_path": "D:\\DO\\WEB\\TOOLS\\L4-TOOLS\\BATVERSE",
+      "remote": "https://github.com/gerivdb/BATVERSE",
+      "role": "Simulateur narratif / SocioVerse / Bateau métaphore VERSES",
+      "intent_hash": "",
+      "logical_layers": [
+        "N2",
+        "N4"
       ],
       "entity_type": "REPO"
     }

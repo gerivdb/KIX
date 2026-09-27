@@ -15,3 +15,4 @@ llm_catalog.db
 *.exe
 *.pdb
 logs/
+data/pid_registry.json
