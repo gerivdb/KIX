@@ -122,8 +122,9 @@ Un processus n'est candidat à la purge que si :
 
 ### Phase 4 : SOT GOVERNANCE-HUB
 - [x] Auditer `known_repositories.yaml` pour les repos critiques KIX/TRIX/FLEX/GATEWAY-MANAGER (`tests/test_sot_audit_pytest.py`).
-- [ ] Enrichir `known_repositories.yaml` avec les champs `binary_target`, `runner_type`, `port` pour TRIX, KIX, FLEX, GATEWAY-MANAGER.
-  - **Blocant** : KIX, TRIX et FLEX sont absents du SOT (`P0_REPOS`). Seul GATEWAY-MANAGER est présent et complet.
+- [x] Vérifier les champs `binary_target`, `runner_type`, `port` pour TRIX, KIX, FLEX, GATEWAY-MANAGER.
+  - **Résultat** : les 4 repos sont présents dans le SOT avec tous les champs requis (`runner_type`, `binary_target`, `port`).
+  - **Gap restant** : 31 custom runners référencent des repos absents du SOT (`reports/custom-runners-sot-audit-2026-09-28.md`).
   - Action requise : ajout des entrées manquantes via PR vers `GOVERNANCE-HUB`.
 
 ### Phase 5 : Rollback & Self-Healing
@@ -228,6 +229,11 @@ thought_chain:
 - [x] 2026-09-27T04:00:00+02:00 — Phase 4 audit SOT complété (KIX/TRIX/FLEX manquent du SOT, GATEWAY-MANAGER présent)
 - [x] 2026-09-27T06:01:00+02:00 — Phase 5 implémentée : JobObject helpers (5 tests), WAL doctor + .bak restore (6 tests), `/doctor/restore` endpoint
 - [x] 2026-09-27T06:01:00+02:00 — 102 tests passants, gates P-101/P-103 validés, P-102 hors scope KIX seul
+- [x] 2026-09-27T23:00:00+02:00 — Modèle de rôle/fonction documenté dans PRD-MOC-KIX-MASTER.md section 2.3.7
+- [x] 2026-09-27T23:00:00+02:00 — Capability model implémenté : `src/capability.py` + `requires_capability` decorator
+- [x] 2026-09-28T01:16:14+02:00 — 24 endpoints KIX protégés par `@requires_capability` (start/stop/restart/doctor/audit/schedules/release-handles/health/logs/metrics/swarm/alerts/events/notifications/dashboard)
+- [x] 2026-09-28T01:16:14+02:00 — Tests d'intégration corrigés : 13 passants (auth capability appliqué)
+- [x] 2026-09-28T00:14:00+02:00 — Phase 4 SOT validée : 4 repos critiques présents avec champs complets ; 31 custom runners absents du SOT documentés dans `reports/custom-runners-sot-audit-2026-09-28.md`
 
 ---
 
@@ -242,5 +248,28 @@ thought_chain:
 - `GOVERNANCE-HUB/known_repositories.yaml` : SOT des repos
 - `src/zombie_monitor.py` : Module de détection zombies
 - `src/diagnostics.py` : Module de diagnostics KIX
+- `src/capability.py` : Capability model (7 capabilities)
+- `src/auth.py` : `requires_capability` decorator
+- `unified-design/designs/kix/design.yaml` : Unified design KIX
+
+## 11. Modèle de Rôle/Fonction KIX
+
+Ce PRD MOC s'aligne sur le modèle de rôle/fonction défini dans `PRD-MOC-KIX-MASTER.md` section 2.3 :
+
+- **RBAC** : `admin`, `operator`, `viewer` (JWT dans `src/auth.py`)
+- **Functional Roles** : 21 catégories (`orchestrator`, `cognitive`, `governance`, `infrastructure`, etc.)
+- **Capability Model** : 7 capacités (`runner-lifecycle`, `process-manager`, `pid-tracker`, `exe-launcher`, etc.)
+- **Dual-Role Pattern** : TRIX/TRIXD/PLIX = RLM + TLM
+- **ActorSpec** : intégration via `KIXProcessManagerAdapter`
+
+Les composants exe/orchestration (`zombie_monitor.py`, `diagnostics.py`, JobObject helpers) sont classés dans les `functional_roles` :
+- `zombie_monitor.py` → `operational` / `infrastructure`
+- `diagnostics.py` → `operational`
+- JobObject helpers → `process-manager` capability
+
+Les runners externes (Go, Rust, Node) sont documentés avec leurs `meta.role` dans `config/runners.yaml` :
+- `flex-rust` → `rust-service`
+- `go-service` → `go-service`
+- `node-service` → `node-service`
 
 

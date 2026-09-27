@@ -157,7 +157,16 @@ thought_chain:
 | **P-102** | Forward references valides | ✅ VALIDÉ |
 | **P-103** | Tests unitaires ≥ 80% | ✅ VALIDÉ (79 tests passants) |
 
-## 8. REFERENCES
+## 8. PROOF-OF-LIFE
+
+- [x] 2026-09-24T00:00:00+02:00 — PRD-MOC MULTI-LANG créé, phases 1-3 implémentées
+- [x] 2026-09-27T06:01:00+02:00 — 79 tests passants (rust, go, node, custom, registry, intégration)
+- [x] 2026-09-27T23:00:00+02:00 — Modèle de rôle/fonction documenté dans PRD-MOC-KIX-MASTER.md section 2.3.7
+- [x] 2026-09-27T23:00:00+02:00 — Capability model implémenté : `src/capability.py` + `requires_capability` decorator
+- [x] 2026-09-28T01:16:14+02:00 — 24 endpoints KIX protégés par `@requires_capability` (start/stop/restart/doctor/audit/schedules/release-handles/health/logs/metrics/swarm/alerts/events/notifications/dashboard)
+- [x] 2026-09-28T01:16:14+02:00 — Tests d'intégration corrigés : 13 passants (auth capability appliqué)
+
+## 10. REFERENCES
 
 - `PRD-MOC-KIX-ORCHESTRATOR-2026-08-18.md` : PRD MOC existant
 - `PRD-MOC-KIX-MASTER.md` : Master MOC KIX
@@ -165,3 +174,21 @@ thought_chain:
 - `ADR-2026-07-27-002-KIX.md` : ADR initiale KIX
 - `config/runners.yaml` : Configuration déclarative
 - `runners/base.py` : Interface `RunnerBase`
+- `src/capability.py` : Capability model
+- `src/auth.py` : `requires_capability` decorator
+
+## 11. Modèle de Rôle/Fonction KIX
+
+Ce PRD MOC s'aligne sur le modèle de rôle/fonction défini dans `PRD-MOC-KIX-MASTER.md` section 2.3 :
+
+- **RBAC** : `admin`, `operator`, `viewer` (JWT dans `src/auth.py`)
+- **Functional Roles** : 21 catégories (`orchestrator`, `cognitive`, `governance`, etc.)
+- **Dual-Role Pattern** : TRIX/TRIXD/PLIX = RLM + TLM
+- **ActorSpec** : intégration via `KIXProcessManagerAdapter`
+
+Les runners Rust/Go/Node ajoutés dans ce PRD MOC utilisent les `meta.role` suivants :
+- `flex-rust` → `rust-service`
+- `go-service` → `go-service`
+- `node-service` → `node-service`
+
+Ces rôles sont documentés dans `unified-design/designs/kix/design.yaml` section `functional_roles`.

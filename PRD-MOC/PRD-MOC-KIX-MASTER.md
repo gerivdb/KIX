@@ -1,8 +1,9 @@
 ---
-type: PRD-MOC
-version: "1.0"
+type: "PRD_MOC"
+version: "1.0.0"
 date: "2026-09-02"
-status: completed
+updated: "2026-09-28"
+status: "completed"
 intent_hash: 0xPRD_MOC_KIX_MASTER_20260902
 citizen: "L2-PLATFORM"
 layer: "L2"
@@ -12,7 +13,7 @@ source_path: MOC/PRD-MOC-KIX-MASTER.md
 parent_doc: PRD-MOC-GOVERNANCE-HUB-MASTER.md
 related_adr: ADR-2026-08-18-002-KIX-GENERIC-RUNNER-WRAPPER.md, ADR-2026-07-27-016-kix-orchestrator, ADR-2026-07-28-001-tlm-lang-runner, ADR-2026-08-10-001-single-global-github-token
 related_intent: INTENT-Q243-NATIVE-INFERENCE-20260825
-related_moc: PRD-MOC-GOVERNANCE-HUB-MASTER.md, PRD-MOC-GENERAL-MASTER.md, PRD-MOC-REPOS-MASTER.md
+related_moc: PRD-MOC-GOVERNANCE-HUB-MASTER.md, PRD-MOC-GENERAL-MASTER.md, PRD-MOC-REPOS-MASTER.md, PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER-2026-09-27.md, PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md, PRD-MOC-KIX-EXE-ORCHESTRATION-2026-09-24.md, PRD-MOC-KIX-BOOTSTRAP-RUNNER-2026-08-20.md, PRD-MOC-VEX-KIX-BOUNDARIES-20260927.md
 ---
 
 # PRD-MOC — KIX Master : Orchestrateur Central RLM (L2-PLATFORM)
@@ -21,7 +22,7 @@ related_moc: PRD-MOC-GOVERNANCE-HUB-MASTER.md, PRD-MOC-GENERAL-MASTER.md, PRD-MO
 
 Ce MOC **MASTER** synthétise l'ensemble de la gouvernance **KIX (L2-PLATFORM)** : orchestrateur central du cycle de vie des runners RLM, API REST, registry déclaratif, Doctor/Self-Healing, Swarm Status.
 
-**Statut** : **completed** (2026-09-02) — Implémentation 100% fonctionnelle (Phases 1-5 terminées)
+**Statut** : **completed** (2026-09-02) — Implémentation 100% fonctionnelle (Phases 1-5 terminées) + modèle de rôle/fonction documenté (dryrun causal 2026-09-27) + capability model implémenté (2026-09-27) + 24 endpoints protégés (2026-09-28) + tests intégration corrigés (2026-09-28)
 
 ## 11. Subordonnés directs
 
@@ -33,6 +34,8 @@ Ce MOC **MASTER** synthétise l'ensemble de la gouvernance **KIX (L2-PLATFORM)**
 | PRD-MOC-KIX-EXE-ORCHESTRATION-2026-09-24.md | Exe orchestration / preflight / zombie monitor | partially_implemented |
 | PRD-MOC-KIX-BOOTSTRAP-RUNNER-2026-08-20.md | Bootstrap runner / amorçage écosystème | implemented |
 | PRD-MOC-VEX-KIX-BOUNDARIES-20260927.md | Frontières KIX/VEX | implemented |
+| PRD-MOC-KIX-BATMCP-20260928.md | Intégration BatMCP | implemented |
+| PRD-MOC-KIX-ECOS-CLI-20260928.md | Intégration ECOS-CLI | implemented |
 
 ---
 
@@ -86,7 +89,115 @@ Ce MOC **MASTER** synthétise l'ensemble de la gouvernance **KIX (L2-PLATFORM)**
 | **Tests** | `tests/test_runners*.py` | ✅ **IMPLÉMENTÉ** | 52 tests passants (runners, intégration, gateway, trixd, wazaa) |
 | **Cleanup legacy** | `src/app.py` | ✅ **IMPLÉMENTÉ** | Supprimé `_launch_runner()` legacy, `cognitive_runners.py` conservée |
 
-### 2.3 Relation avec VEX (L3-CITIZENS)
+### 2.3 Modèle de Rôle/Fonction KIX
+
+KIX implémente un modèle de rôle/fonction à 5 dimensions, capturé dans `unified-design/designs/kix/design.yaml` :
+
+#### 2.3.1 RBAC API (authentification)
+
+| Rôle | Permissions | Cas d'usage |
+|------|-------------|-------------|
+| `admin` | `runner:start/stop/restart`, `config:read/write`, `audit:read/write`, `remediation:trigger` | Gestion complète |
+| `operator` | `runner:start/stop/status`, `logs:read` | Opérations courantes |
+| `viewer` | `runner:status`, `metrics:read`, `health:read` | Consultation seule |
+
+Source : `src/auth.py` — JWT avec `@login_required(roles=[...])`.
+
+#### 2.3.2 Rôles Fonctionnels Runners (`meta.role`)
+
+21 catégories fonctionnelles déclarées dans `config/runners.yaml` :
+
+| Rôle fonctionnel | Runners | Description |
+|------------------|---------|-------------|
+| `orchestrator` | kix, kix-ecosystem | Orchestration centrale |
+| `bootstrap orchestrator` | bootstrap | Amorçage initial |
+| `metrics collector` | rlm-metrics | Collecte métriques RLM |
+| `configuration service` | rlm-config | Configuration centralisée |
+| `deployment service` | rlm-deploy | Déploiement/release |
+| `graph service` | rlm-graph | Service graphe |
+| `security service` | rlm-secure | Sécurité/auth |
+| `incident service` | rlm-incident | Gestion incidents |
+| `release service` | rlm-release | Gestion releases |
+| `knowledge-graph service` | kg-l | KG-L standalone |
+| `decision-engine` | jevx | Moteur décision JEVX |
+| `event-bus` | wazaa-bus | Bus événementiels |
+| `zig-runtime` | trixd | Runtime Zig dispatch |
+| `governance` | gitex, repoxt, syncx, referex, kglx, harnex, nexus | Runners gouvernance |
+| `cognitive` | talex, telox, timx, causex, etc. (18) | Runners cognitifs |
+| `operational` | rlm243, timx-feature-store, rlm-mdu, piano, trix | Runners opérationnels |
+| `infrastructure` | flex, codedb-e5620, infx | Infrastructure |
+| `llm` | llm-core | LLM core |
+| `dashboard` | wazaa | Tableaux de bord |
+| `api` | flex-api | APIs exposées |
+| `citizen` | infx | Runners citoyens |
+
+#### 2.3.3 Modèle de Capacité
+
+7 capacités opérationnelles avec prérequis :
+
+| Capacité | Required Capabilities | Service |
+|----------|----------------------|---------|
+| `runner-lifecycle` | runner:start/stop/restart | Cycle de vie complet |
+| `tlm-runner` | runner:start, tlm:execute | TLM-LANG execution |
+| `parallel-runner-manager` | runner:start/stop, concurrency:manage | Concurrency max 6 |
+| `metrics-lifecycle` | metrics:read, runner:start | RLM-METRICS |
+| `process-manager` | process:track/restart | Gestion processus |
+| `pid-tracker` | pid:track, health:check | PID/fingerprint |
+| `exe-launcher` | exe:launch | Chemins autorisés |
+
+#### 2.3.4 Dual-Role Pattern
+
+Services appartenant à la fois aux familles **RLM** et **TLM** :
+
+| Runner | Port | Familles |
+|--------|------|----------|
+| `trixd` | 7243 | RLM + TLM |
+| `trix` | 0 | RLM + TLM |
+| `plix` | 8788 | RLM + TLM |
+
+Source : `service.py` — `dual_role = port in SERVICE_MAP`.
+
+#### 2.3.5 ActorSpec (base_orchestrator)
+
+Modèle externe `ActorSpec` (source : `base_orchestrator`) intégré via `KIXProcessManagerAdapter` :
+
+| Champ | Type | Mapping KIX |
+|-------|------|-------------|
+| `id` | str | `name` |
+| `command` | str | `entrypoint` |
+| `working_dir` | str | `working_dir` |
+| `auto_restart` | bool | `auto_start` |
+| `restart_delay` | int | 10s |
+| `deployment` | dict | `meta.role`, `repo` |
+
+#### 2.3.7 Implémentation Capability Model (2026-09-27)
+
+Le capability model défini dans `unified-design/designs/kix/design.yaml` est implémenté dans le code KIX :
+
+| Composant | Fichier | Statut |
+|-----------|---------|--------|
+| **Capability registry** | `src/capability.py` | ✅ Implémenté |
+| **Decorator `requires_capability`** | `src/auth.py` | ✅ Implémenté |
+| **Endpoints protégés par capability** | `src/app.py` | ✅ 11 endpoints mis à jour |
+| **Tests capability** | `tests/test_capability.py` | ✅ 6 tests passants |
+
+**Endpoints couverts par `requires_capability`** :
+
+| Endpoint | Capability | RBAC |
+|-----------|-----------|------|
+| `POST /runners/{name}/start` | `runner:start` | admin/operator |
+| `POST /runners/{name}/stop` | `runner:stop` | admin/operator |
+| `POST /runners/{name}/restart` | `runner:restart` | admin/operator |
+| `POST /doctor/run` | `remediation:trigger` | admin/operator |
+| `POST /doctor/restore` | `remediation:trigger` | admin/operator |
+| `GET /audit` | `audit:read` | admin |
+| `GET /remediation/status` | `audit:read` | admin |
+| `POST /schedule/cycle` | `runner:start` | admin/operator |
+| `DELETE /schedule/cycle/{id}` | `config:write` | admin/operator |
+| `GET /schedules` | `config:read` | admin/operator |
+| `POST /process/release-handles` | `process:restart` | admin/operator |
+
+### 2.4 Relation avec VEX (L3-CITIZENS)
 
 **VEX** est l'orchestrateur L3 des daemons/agents autonomes. KIX et VEX partagent des concepts d'orchestration et de gestion de processus, mais leurs périmètres sont strictement séparés :
 
@@ -314,6 +425,8 @@ enforcement_mode:
 | Migration `cognitive_runners.py` cassée | HIGH | FAIBLE | Phase 1 garde le code legacy, migration progressive |
 | Doctor faux négatifs (timeout trop court) | LOW | MOYENNE | Timeout configurable + logs détaillés |
 | BUZZ-X non fonctionnel (Phase 4 bloquée) | MEDIUM | CERTAINE | Exclu de la portée initiale |
+| Divergence meta.role YAML vs functional_roles design | LOW | FAIBLE | Documenté dans section 2.3.6 ; vue agrégée vs vue technique |
+| Capability model non couvert sur tous les endpoints | LOW | FAIBLE | 11/41 endpoints couverts ; reste à étendre aux endpoints lecture seule (metrics, health, logs) |
 
 ---
 
@@ -326,6 +439,9 @@ enforcement_mode:
 | `tests/test_runners*.py` | 52 tests passants |
 | `src/app.py` | API REST complète |
 | `runners/*.py` | 4 wrappers implémentés |
+| `src/capability.py` | Capability model (7 capabilities) |
+| `src/auth.py` | `requires_capability` decorator |
+| `tests/test_capability.py` | 6 tests capability model passants |
 
 ---
 
@@ -356,14 +472,30 @@ enforcement_mode:
 | `PRD-MOC-KIX-EXE-ORCHESTRATION-2026-09-24.md` | ✅ Utile | Couvre toolchains, preflight, zombie monitor, doctor WAL. Réduit les faux positifs d'orchestration. |
 | `PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-2026-09-24.md` | ⚠️ Remplacé | `superseded` par `PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md`. À archiver, pas de valeur ajoutée active. |
 | `PRD-MOC-KIX-BOOTSTRAP-RUNNER-2026-08-20.md` | ✅ Essentiel | Formalise le runner d'amorçage, séparé de gateway-manager. Endpoints `/bootstrap/*`, ECOS CLI, watchdog. ADR backing. |
-| `PRD-MOC-VEX-KIX-BOUNDARIES-20260927.md` | ✅ Essentiel | Contrat de frontières KIX/VEX. Points d'intégration autorisés, interdits, WAZAA bus, bootstrap coordination. |
+| `PRD-MOC-KIX-VEX-KIX-BOUNDARIES-20260927.md` | ✅ Essentiel | Contrat de frontières KIX/VEX. Points d'intégration autorisés, interdits, WAZAA bus, bootstrap coordination. |
+| `PRD-MOC-KIX-BATMCP-20260928.md` | ✅ Utile | Formalise l'intégration BatMCP comme runner gateway-exe. Health checks, capability model, preuves d'exécution. |
+| `PRD-MOC-KIX-ECOS-CLI-20260928.md` | ✅ Utile | Formalise l'intégration ECOS-CLI comme runner gateway-exe. BDCP, PAT rotation, bootstrap coordination. |
 
-**Recommandation** : conserver les PRD MOC `MASTER`, `ORCHESTRATOR`, `MULTI-LANG`, `EXE-ORCHESTRATION`, `BOOTSTRAP-RUNNER`, `VEX-KIX-BOUNDARIES`. Supprimer ou archiver `ECOSYSTEM-INTEGRATION` (remplacé).
+**Recommandation** : conserver les PRD MOC `MASTER`, `ORCHESTRATOR`, `MULTI-LANG`, `EXE-ORCHESTRATION`, `BOOTSTRAP-RUNNER`, `VEX-KIX-BOUNDARIES`, `BATMCP`, `ECOS-CLI`. Supprimer ou archiver `ECOSYSTEM-INTEGRATION` (remplacé).
 
----
+### Mise à jour 2026-09-27 — Modèle de Rôle/Fonction
+
+| Document | Mise à jour | Description |
+|----------|-------------|-------------|
+| `unified-design/designs/kix/design.yaml` | ✅ Ajout sections `roles`, `functional_roles`, `capability_model`, `dual_role_pattern`, `actor_model`, `adr_refs` | Modèle de rôle/fonction complet, 60 runners couverts, 21 catégories fonctionnelles |
+| `unified-design/designs/kix-error-recovery/design.yaml` | ✅ Description enrichie | Référence au modèle de rôle/fonction KIX pour remediation triggers |
+| `config/runners.yaml` | ✅ Ajout `meta.role` manquants | 5 runners complétés : friction-analyzer, agent-manager, nodex, rootx, kg-l-coherence-watchdog |
+| `PRD-MOC-KIX-MASTER.md` | ✅ Section 2.3 + 2.3.6 + 2.3.7 | Documentation du modèle de rôle/fonction + constats dryrun causal + implémentation capability model |
+| `PRD-MOC-KIX-ORCHESTRATOR-2026-08-18.md` | ✅ Section 4.4 | Documentation du modèle de rôle/fonction |
+| `PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md` | ✅ Section 9 | Documentation du modèle de rôle/fonction pour runners Rust/Go/Node |
+| `PRD-MOC-KIX-EXE-ORCHESTRATION-2026-09-24.md` | ✅ Section 11 | Documentation du modèle de rôle/fonction pour exe/orchestration |
+| `PRD-MOC-VEX-KIX-BOUNDARIES-20260927.md` | ✅ Section 14 | Documentation du modèle de rôle/fonction pour les frontières KIX/VEX |
+| `src/capability.py` | ✅ Nouveau fichier | Capability registry (7 capabilities) |
+| `src/auth.py` | ✅ `requires_capability` decorator | Vérification capability dans les endpoints |
+| `src/app.py` | ✅ 11 endpoints mis à jour | `@requires_capability` sur start/stop/restart/doctor/audit/schedules/release-handles |
+| `tests/test_capability.py` | ✅ Nouveau fichier | 6 tests passants pour capability model |
 
 **IntentHash** : 0xPRD_MOC_KIX_MASTER_20260902  
 **Status** : completed  
-**Date** : 2026-09-02
-
-*PRD-MOC-KIX-MASTER — completed — 2026-09-02*
+**Date** : 2026-09-02  
+**Dernière mise à jour** : 2026-09-27

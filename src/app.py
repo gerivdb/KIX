@@ -22,7 +22,7 @@ from flask import Flask, jsonify, request
 from src.runner_state import RunnerStateStore
 from src.notification_store import NotificationStore
 from src.notification_metrics import NotificationMetricsStore
-from src.auth import login_required, create_token, decode_token, _load_users
+from src.auth import login_required, requires_capability, create_token, decode_token, _load_users
 from src.audit_log import AuditLogStore
 from src.zombie_monitor import zombie_bp
 from src.doctor_wal import log_wal as doctor_log_wal, create_backup, restore_backup
@@ -396,6 +396,7 @@ def login() -> Any:
 
 
 @app.get("/metrics")
+@requires_capability("metrics:read")
 def metrics() -> Any:
     states = STORE.list_all()
     notif_metrics = METRICS.list_all()
@@ -424,6 +425,7 @@ def metrics() -> Any:
 
 
 @app.get("/metrics/prometheus")
+@requires_capability("metrics:read")
 def metrics_prometheus() -> Any:
     notif_metrics = METRICS.list_all()
     lines = [
@@ -460,12 +462,14 @@ def vote() -> Any:
 
 
 @app.get("/runners")
+@requires_capability("runner:status")
 def list_runners() -> Any:
     runners = _sync_runners()
     return jsonify({"runners": [r.to_dict() for r in runners.values()], "count": len(runners)})
 
 
 @app.get("/runners/<string:name>/status")
+@requires_capability("runner:status")
 def runner_status(name: str) -> Any:
     runners = _sync_runners()
     runner = runners.get(name)
@@ -503,6 +507,8 @@ def cross_service_status() -> Any:
 
 
 @app.post("/runners/<string:name>/start")
+@login_required(roles=["admin", "operator"])
+@requires_capability("runner:start")
 def start_runner(name: str) -> Any:
     # Canal interne bootstrap (PRD-MOC-GEN-002 G3) : uniquement depuis
     # localhost avec l'en-tête dédié X-KIX-Bootstrap. Toute autre requête
@@ -546,6 +552,7 @@ def start_runner(name: str) -> Any:
 
 
 @app.post("/runners/register")
+@requires_capability("runner:register")
 def register_runner() -> Any:
     """Enregistre un runner dans KIX sans authentification (interne bootstrap)."""
     if not request.is_json:
@@ -564,6 +571,7 @@ def register_runner() -> Any:
 # ==================== NEW ENDPOINTS FOR P2 ====================
 @app.post("/schedule/cycle")
 @login_required(roles=["admin", "operator"])
+@requires_capability("runner:start")
 def schedule_cycle() -> Any:
     """
     Schedule a new operational cycle for a service.
@@ -631,6 +639,7 @@ def save_schedules(schedules: list[dict[str, Any]]) -> None:
 
 @app.delete("/schedule/cycle/<int:schedule_id>")
 @login_required(roles=["admin", "operator"])
+@requires_capability("schedule:write")
 def delete_schedule(schedule_id: int) -> Any:
     """Delete a schedule by ID."""
     schedules = load_schedules()
@@ -649,6 +658,7 @@ def delete_schedule(schedule_id: int) -> Any:
 
 @app.get("/schedules")
 @login_required(roles=["admin", "operator"])
+@requires_capability("schedule:read")
 def list_schedules() -> Any:
     """List all scheduled cycles."""
     schedules = load_schedules()
@@ -657,6 +667,7 @@ def list_schedules() -> Any:
 
 @app.post("/runners/<string:name>/stop")
 @login_required(roles=["admin", "operator"])
+@requires_capability("runner:stop")
 def stop_runner(name: str) -> Any:
     runners = _sync_runners()
     runner = runners.get(name)
@@ -685,6 +696,7 @@ def stop_runner(name: str) -> Any:
 
 
 @app.get("/runners/<string:name>/health")
+@requires_capability("health:read")
 def runner_health(name: str) -> Any:
     runner = _get_runner_instance(name)
     if runner is None:
@@ -695,6 +707,7 @@ def runner_health(name: str) -> Any:
 
 
 @app.get("/runners/<string:name>/logs")
+@requires_capability("logs:read")
 def runner_logs(name: str) -> Any:
     runner = _get_runner_instance(name)
     if runner is None:
@@ -706,6 +719,7 @@ def runner_logs(name: str) -> Any:
 
 @app.post("/runners/<string:name>/restart")
 @login_required(roles=["admin", "operator"])
+@requires_capability("runner:restart")
 def restart_runner(name: str) -> Any:
     runners = _sync_runners()
     runner = runners.get(name)
@@ -734,6 +748,7 @@ def restart_runner(name: str) -> Any:
 
 
 @app.get("/doctor")
+@requires_capability("health:check")
 def doctor() -> Any:
     runners = _load_runners_config()
     results: list[dict[str, Any]] = []
@@ -766,6 +781,7 @@ def doctor() -> Any:
 
 @app.post("/doctor/run")
 @login_required(roles=["admin", "operator"])
+@requires_capability("remediation:trigger")
 def doctor_run() -> Any:
     runners = _load_runners_config()
     restarted: list[dict[str, Any]] = []
@@ -801,6 +817,7 @@ def doctor_run() -> Any:
 
 @app.post("/doctor/restore")
 @login_required(roles=["admin", "operator"])
+@requires_capability("remediation:trigger")
 def doctor_restore() -> Any:
     """Restaurer un fichier de config depuis son `.bak`.
 
@@ -821,6 +838,7 @@ def doctor_restore() -> Any:
 
 
 @app.get("/swarm/status")
+@requires_capability("swarm:read")
 def swarm_status() -> Any:
     runners = _load_runners_config()
     swarm: dict[str, Any] = {
@@ -931,6 +949,7 @@ def probe_audit() -> Any:
 
 @app.get("/audit")
 @login_required(roles=["admin"])
+@requires_capability("audit:read")
 def action_audit() -> Any:
     limit = int(request.args.get("limit", "100"))
     items = AUDIT_LOG.list_recent(limit=limit)
@@ -945,6 +964,7 @@ def action_audit() -> Any:
 
 
 @app.get("/alerts")
+@requires_capability("alert:read")
 def alerts() -> Any:
     threshold = 0.9
     try:
@@ -994,6 +1014,7 @@ def alerts() -> Any:
 
 
 @app.get("/events")
+@requires_capability("event:read")
 def events() -> Any:
     threshold = 0.9
     try:
@@ -1034,6 +1055,7 @@ def events() -> Any:
 
 
 @app.get("/notifications/history")
+@requires_capability("notification:read")
 def notifications_history() -> Any:
     limit = int(request.args.get("limit", "100"))
     service = request.args.get("service")
@@ -1063,6 +1085,7 @@ def notifications_history() -> Any:
 
 @app.get("/remediation/status")
 @login_required(roles=["admin"])
+@requires_capability("audit:read")
 def remediation_status() -> Any:
     remediation_db = os.environ.get("KIX_REMEDIATION_DB", str(Path(__file__).resolve().parent.parent / "data" / "remediation.db"))
     try:
@@ -1090,6 +1113,7 @@ def remediation_status() -> Any:
 
 
 @app.get("/dashboard")
+@requires_capability("dashboard:read")
 def dashboard() -> Any:
     runners = _sync_runners()
     rows: list[str] = []
@@ -1364,6 +1388,7 @@ connect();
 
 @app.post('/process/release-handles')
 @login_required(roles=['admin', 'operator'])
+@requires_capability("process:restart")
 def release_handles() -> Any:
     if not request.is_json:
         return jsonify({'error': 'body_must_be_json'}), 400

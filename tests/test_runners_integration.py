@@ -21,6 +21,12 @@ from runners.rust_runner import RustRunner
 from runners.go_runner import GoRunner
 from runners.node_runner import NodeRunner
 from runners.custom_runner import CustomRunner
+from src.auth import create_token
+
+
+def _auth_header(role: str = "viewer") -> dict[str, str]:
+    token = create_token("integration-test", role)
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture()
@@ -145,7 +151,7 @@ class TestEndpointsIntegration:
             mock_resp = MagicMock()
             mock_resp.status_code = 200
             mock_get.return_value = mock_resp
-            resp = client.get("/swarm/status")
+            resp = client.get("/swarm/status", headers=_auth_header("viewer"))
         assert resp.status_code == 200
         data = resp.get_json()
         assert data["service"] == "kix"
@@ -158,18 +164,18 @@ class TestEndpointsIntegration:
             mock_resp = MagicMock()
             mock_resp.status_code = 200
             mock_get.return_value = mock_resp
-            resp = client.get("/doctor")
+            resp = client.get("/doctor", headers=_auth_header("viewer"))
         assert resp.status_code == 200
         data = resp.get_json()
         assert "runners" in data
         assert "unhealthy_runners" in data
 
     def test_runner_health_not_found(self, client: pytest.FlaskClient) -> None:
-        resp = client.get("/runners/nonexistent/health")
+        resp = client.get("/runners/nonexistent/health", headers=_auth_header("viewer"))
         assert resp.status_code == 404
 
     def test_runner_logs_not_found(self, client: pytest.FlaskClient) -> None:
-        resp = client.get("/runners/nonexistent/logs")
+        resp = client.get("/runners/nonexistent/logs", headers=_auth_header("viewer"))
         assert resp.status_code == 404
 
     def test_runner_restart_not_found(self, client: pytest.FlaskClient) -> None:

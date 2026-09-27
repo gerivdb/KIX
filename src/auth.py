@@ -11,6 +11,8 @@ from typing import Optional
 import jwt
 from flask import request, jsonify
 
+from src.capability import check_capability
+
 
 # Default users for development. Override via KIX_USERS env var (JSON).
 _USERS = {
@@ -65,6 +67,39 @@ def login_required(roles: Optional[list[str]] = None):
             user_role = payload.get("role")
             if roles and user_role not in roles:
                 return jsonify({"error": "forbidden", "required_roles": roles}), 403
+            request.user = payload
+            return f(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def requires_capability(capability: str):
+    """Decorator to enforce capability-based access control.
+
+    Usage:
+        @requires_capability("runner:start")
+        def start_runner(name):
+            ...
+    """
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            auth_header = request.headers.get("Authorization", "")
+            if not auth_header.startswith("Bearer "):
+                return jsonify({"error": "missing_token"}), 401
+            token = auth_header.split(" ", 1)[1]
+            payload = decode_token(token)
+            if not payload:
+                return jsonify({"error": "invalid_token"}), 401
+            user_role = payload.get("role")
+            if not check_capability(user_role, capability):
+                return jsonify({
+                    "error": "forbidden",
+                    "required_capability": capability,
+                    "user_role": user_role,
+                }), 403
             request.user = payload
             return f(*args, **kwargs)
 
