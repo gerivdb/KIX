@@ -121,7 +121,10 @@ Un processus n'est candidat à la purge que si :
 - [x] Tests unitaires zombie monitor (`tests/test_zombie_monitor.py`).
 
 ### Phase 4 : SOT GOVERNANCE-HUB
+- [x] Auditer `known_repositories.yaml` pour les repos critiques KIX/TRIX/FLEX/GATEWAY-MANAGER (`tests/test_sot_audit_pytest.py`).
 - [ ] Enrichir `known_repositories.yaml` avec les champs `binary_target`, `runner_type`, `port` pour TRIX, KIX, FLEX, GATEWAY-MANAGER.
+  - **Blocant** : KIX, TRIX et FLEX sont absents du SOT (`P0_REPOS`). Seul GATEWAY-MANAGER est présent et complet.
+  - Action requise : ajout des entrées manquantes via PR vers `GOVERNANCE-HUB`.
 
 ### Phase 5 : Rollback & Self-Healing
 - [ ] Garantir l'arrêt de l'arborescence de processus enfants via JobObject Windows (`libs/shared-clients/win32_process.py`).

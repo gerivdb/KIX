@@ -164,3 +164,26 @@ class NtJobObject:
     @property
     def handle(self) -> int:
         return int(self._handle)
+
+
+def create_job_object(name: str | None = None) -> NtJobObject:
+    """Crée un NT Job Object isolant les processus enfants."""
+    return NtJobObject(name)
+
+
+def assign_process_to_job(job: NtJobObject, pid: int) -> dict:
+    """Attache un processus existant à un job object."""
+    try:
+        job.assign_process(pid)
+        return {"ok": True, "pid": pid, "job_handle": job.handle}
+    except Exception as exc:
+        return {"ok": False, "pid": pid, "error": str(exc)}
+
+
+def terminate_job(job: NtJobObject, exit_code: int = 1) -> dict:
+    """Termine tous les processus du job et libère le handle."""
+    try:
+        job.terminate(exit_code)
+        return {"ok": True, "exit_code": exit_code}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
