@@ -13,6 +13,10 @@ from runners.registry import RUNNER_CLASSES, get_runner, load_runners_config
 from runners.python_runner import PythonRunner
 from runners.zig_runner import ZigBinaryRunner
 from runners.gateway_runner import GatewayRunner
+from runners.rust_runner import RustRunner
+from runners.go_runner import GoRunner
+from runners.node_runner import NodeRunner
+from runners.custom_runner import CustomRunner
 
 
 @pytest.fixture()
@@ -72,6 +76,10 @@ class TestRegistry:
         assert "python" in RUNNER_CLASSES
         assert "zig-binary" in RUNNER_CLASSES
         assert "gateway-exe" in RUNNER_CLASSES
+        assert "rust" in RUNNER_CLASSES
+        assert "go" in RUNNER_CLASSES
+        assert "node" in RUNNER_CLASSES
+        assert "custom" in RUNNER_CLASSES
 
     def test_get_runner_unknown_raises(self, tmp_path: Path) -> None:
         spec = RunnerSpec(name="x", runner_type="unknown", port=1, working_dir=tmp_path)
@@ -82,6 +90,26 @@ class TestRegistry:
         spec = RunnerSpec(name="x", runner_type="python", port=1, working_dir=tmp_path)
         runner = get_runner(spec)
         assert isinstance(runner, PythonRunner)
+
+    def test_get_runner_rust(self, tmp_path: Path) -> None:
+        spec = RunnerSpec(name="x", runner_type="rust", port=1, working_dir=tmp_path)
+        runner = get_runner(spec)
+        assert isinstance(runner, RustRunner)
+
+    def test_get_runner_go(self, tmp_path: Path) -> None:
+        spec = RunnerSpec(name="x", runner_type="go", port=1, working_dir=tmp_path)
+        runner = get_runner(spec)
+        assert isinstance(runner, GoRunner)
+
+    def test_get_runner_node(self, tmp_path: Path) -> None:
+        spec = RunnerSpec(name="x", runner_type="node", port=1, working_dir=tmp_path)
+        runner = get_runner(spec)
+        assert isinstance(runner, NodeRunner)
+
+    def test_get_runner_custom(self, tmp_path: Path) -> None:
+        spec = RunnerSpec(name="x", runner_type="custom", port=1, working_dir=tmp_path)
+        runner = get_runner(spec)
+        assert isinstance(runner, CustomRunner)
 
     def test_load_runners_config_missing(self, tmp_path: Path) -> None:
         result = load_runners_config(tmp_path / "nonexistent.yaml")

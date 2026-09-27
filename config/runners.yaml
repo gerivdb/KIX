@@ -108,7 +108,7 @@ runners:
   bootstrap: true
   auto_start: false
 - name: rlm-metrics
-  runner_type: service
+  runner_type: python
   port: 8802
   working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
   entrypoint: service.py
@@ -118,7 +118,7 @@ runners:
     repo: gerivdb/KIX
     role: metrics collector
 - name: rlm-config
-  runner_type: service
+  runner_type: python
   port: 8794
   working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
   entrypoint: service.py
@@ -128,7 +128,7 @@ runners:
     repo: gerivdb/KIX
     role: configuration service
 - name: rlm-deploy
-  runner_type: service
+  runner_type: python
   port: 8795
   working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
   entrypoint: service.py
@@ -138,7 +138,7 @@ runners:
     repo: gerivdb/KIX
     role: deployment service
 - name: rlm-graph
-  runner_type: service
+  runner_type: python
   port: 8797
   working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
   entrypoint: service.py
@@ -148,7 +148,7 @@ runners:
     repo: gerivdb/KIX
     role: graph service
 - name: rlm-secure
-  runner_type: service
+  runner_type: python
   port: 8796
   working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
   entrypoint: service.py
@@ -158,7 +158,7 @@ runners:
     repo: gerivdb/KIX
     role: security service
 - name: rlm-incident
-  runner_type: service
+  runner_type: python
   port: 8798
   working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
   entrypoint: service.py
@@ -168,7 +168,7 @@ runners:
     repo: gerivdb/KIX
     role: incident service
 - name: rlm-release
-  runner_type: service
+  runner_type: python
   port: 8799
   working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/KIX
   entrypoint: service.py
@@ -192,10 +192,14 @@ runners:
     repo: gerivdb/KG-L
     role: knowledge-graph service
 - name: jevx
-  runner_type: service
+  runner_type: node
   port: 8889
   working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/JEVX
   entrypoint: src/server.ts
+  command:
+    - npx
+    - ts-node
+    - src/server.ts
   depends_on:
   - kix
   meta:
@@ -484,23 +488,11 @@ runners:
   meta:
     repo: gerivdb/llux-index
     role: cognitive
-- name: gateway-manager
-  runner_type: custom
-  port: 9000
-  working_dir: D:/DO/WEB/TOOLS/L1-INFRA/GATEWAY-MANAGER
-  depends_on:
-  - kix
-  health_path: /health
-  restart_policy: on-failure
-  auto_start: false
-  meta:
-    repo: gerivdb/gateway-manager
-    role: gateway
-  entrypoint: src/
 - name: wazaa
-  runner_type: custom
+  runner_type: python
   port: 5002
   working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/WAZAA
+  entrypoint: -m wazaa.wazaa_server
   depends_on:
   - kix
   health_path: /health
@@ -509,11 +501,11 @@ runners:
   meta:
     repo: gerivdb/wazaa
     role: dashboard
-  entrypoint: src/
 - name: flex-api
-  runner_type: custom
+  runner_type: python
   port: 8080
   working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/FLEX
+  entrypoint: flex_api.py
   depends_on:
   - kix
   health_path: /health
@@ -522,7 +514,6 @@ runners:
   meta:
     repo: gerivdb/flex-api
     role: api
-  entrypoint: src/
 - name: prognex
   runner_type: custom
   port: 0
