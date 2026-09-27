@@ -59,6 +59,10 @@ DEPENDENCIES = {
     "wazaa-threads": {"port": 8200, "path": None, "protocol": "tcp", "required": False},
     "wazaa-mc": {"port": 5002, "path": "/healthz", "required": False},
     "flex-api": {"port": 8080, "path": "/health", "required": False},
+    # LP (strate L6-WORK, ADR-0001) : surveillance dev-mode uniquement.
+    # required=False -> jamais de re-sequence infra si le serveur LP de dev
+    # est arrete volontairement ; statut passe simplement en "degraded".
+    "lp": {"port": 8766, "path": "/health", "required": False},
 }
 
 # Phases du cycle de vie
@@ -126,6 +130,19 @@ def check_service(name: str, info: dict[str, Any]) -> dict[str, Any]:
 
     state.services[name] = status
     return status
+
+
+def any_required_down() -> bool:
+    """True si au moins une dependance REQUIRED est hors service.
+
+    Les dependances optionnelles down ne declenchent pas de re-sequence
+    (elles degradeNT le statut global sans justifier un restart de la pile).
+    """
+    for name, info in DEPENDENCIES.items():
+        if info.get("required", True) and \
+                state.services.get(name, {}).get("status") != "running":
+            return True
+    return False
 
 
 def check_all_dependencies() -> bool:
@@ -481,6 +498,14 @@ class BootstrapWatchdog:
         # autre séquence est déjà en cours (POST /start ou tick précédent).
         if getattr(state, "rebooting", False):
             self.last_tick = {"action": "in_progress", "ready": False, "restarts": self.restarts}
+            return self.last_tick
+
+        # Dépendances OPTIONNELLES down seules -> statut dégradé, SANS
+        # re-séquence infra (sinon chaque arrêt volontaire d'un service
+        # non requis relancerait toute la pile toutes les 3 s).
+        if not any_required_down():
+            self.last_tick = {"action": "degraded_optional", "ready": False,
+                              "restarts": self.restarts}
             return self.last_tick
 
         if self._lock.acquire(blocking=False):
