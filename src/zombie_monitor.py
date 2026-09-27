@@ -91,16 +91,36 @@ def _is_process_zombie(proc: Any, now: datetime) -> bool:
 
 
 def get_process_zombies() -> list[dict[str, Any]]:
-    """Inventaire des processus zombies."""
+    """Inventaire des processus zombies, exclusivement les processus orphelins.
+
+    Les PIDs référencés par le PID Registry KIX sont exclus pour éviter les
+    faux positifs sur les runners légitimes.
+    """
     now = datetime.now()
     zombies: list[dict[str, Any]] = []
     if sys.platform != "win32":
         return zombies
 
+    known_pids: set[int] = set()
+    try:
+        from src.runner_state import RunnerStateStore
+        from pathlib import Path
+        store = RunnerStateStore(
+            os.environ.get(
+                "KIX_DB",
+                str(Path(__file__).resolve().parent.parent / "data" / "kix.sqlite"),
+            )
+        )
+        for state in store.list_all().values():
+            pid = state.get("pid")
+            if isinstance(pid, int):
+                known_pids.add(pid)
+    except Exception:
+        pass
+
     try:
         import psutil  # type: ignore
     except ImportError:
-        # Fallback sans psutil : Win32_Process via wmi
         try:
             import wmi  # type: ignore
             c = wmi.WMI()
@@ -110,8 +130,8 @@ def get_process_zombies() -> list[dict[str, Any]]:
                     if not any(name.lower().startswith(p) for p in _ZOMBIE_PROCESS_NAMES):
                         continue
                     pid = int(proc.ProcessId)
-                    # Approximation : on ne peut pas évaluer CPU/MainWindow sans psutil
-                    # On marque comme suspect si CreationDate > 1h
+                    if pid in known_pids:
+                        continue
                     creation = proc.CreationDate
                     if creation:
                         cdate = datetime.strptime(creation.split(".")[0], "%Y%m%d%H%M%S")
@@ -136,6 +156,9 @@ def get_process_zombies() -> list[dict[str, Any]]:
 
     for proc in psutil.process_iter(["pid", "name", "create_time", "cpu_percent", "memory_info"]):
         try:
+            pid = proc.info["pid"]
+            if pid in known_pids:
+                continue
             name = proc.info["name"] or ""
             if not any(name.lower().startswith(p) for p in _ZOMBIE_PROCESS_NAMES):
                 continue

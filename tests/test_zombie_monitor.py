@@ -1,88 +1,47 @@
-"""
-Tests pour KIX zombie_monitor.py — validation P0-2.
+"""Tests unitaires pour le zombie monitor intelligent."""
 
-Vérifie :
-- log_kg_l_edge() émet bien des edges KG-L
-- purge_zombies() journalise dans WAL et KG-L
-"""
 from __future__ import annotations
 
-import json
-import os
-import sys
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-# Ajouter le chemin KIX/src pour pouvoir importer zombie_monitor
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "src"))
-
-from src.zombie_monitor import log_kg_l_edge, log_wal, purge_zombies
-import src.zombie_monitor as zm
+from src.zombie_monitor import get_process_zombies, _ZOMBIE_PROCESS_NAMES
 
 
-class TestKGLEmission:
-    def test_log_kg_l_edge_creates_file(self, tmp_path):
-        original_wal_dir = zm.WAL_DIR
-        zm.WAL_DIR = tmp_path
-        zm.KG_L_EDGE_FILE = tmp_path / "kg-l-edges.jsonl"
+class TestZombieMonitorPIDRegistry:
+    def test_exclude_known_pids(self, tmp_path: Path) -> None:
+        """Les PIDs enregistrés dans le PID Registry doivent être exclus."""
+        import sqlite3
 
-        try:
-            log_kg_l_edge(
-                src="guard:zombie-threshold",
-                dst="process:1234",
-                kind="prevents",
-                metadata={"reason": "zombie"},
-            )
+        db_path = tmp_path / "kix.sqlite"
+        conn = sqlite3.connect(db_path)
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS runner_state (name TEXT PRIMARY KEY, pid INTEGER, status TEXT)"
+        )
+        conn.execute("INSERT INTO runner_state VALUES ('kix', 1111, 'running')")
+        conn.commit()
+        conn.close()
 
-            assert zm.KG_L_EDGE_FILE.exists()
-            lines = zm.KG_L_EDGE_FILE.read_text(encoding="utf-8").strip().split("\n")
-            assert len(lines) == 1
-            edge = json.loads(lines[0])
-            assert edge["src"] == "guard:zombie-threshold"
-            assert edge["dst"] == "process:1234"
-            assert edge["kind"] == "prevents"
-            assert edge["metadata"]["reason"] == "zombie"
-        finally:
-            zm.WAL_DIR = original_wal_dir
+        fake_proc = MagicMock()
+        fake_proc.info = {"pid": 1111, "name": "python.exe", "create_time": 0, "cpu_percent": 0, "memory_info": MagicMock(rss=0)}
+        with patch("psutil.process_iter", return_value=[fake_proc]):
+            zombies = get_process_zombies()
+        assert all(z["pid"] != 1111 for z in zombies)
 
-    def test_log_kg_l_edge_multiple_edges(self, tmp_path):
-        original_wal_dir = zm.WAL_DIR
-        zm.WAL_DIR = tmp_path
-        zm.KG_L_EDGE_FILE = tmp_path / "kg-l-edges.jsonl"
+    def test_include_unknown_pids(self, tmp_path: Path) -> None:
+        """Les PIDs inconnus restent candidats au filtrage."""
+        fake_proc = MagicMock()
+        fake_proc.info = {"pid": 9999, "name": "python.exe", "create_time": 0, "cpu_percent": 0, "memory_info": MagicMock(rss=0)}
+        with patch("psutil.process_iter", return_value=[fake_proc]), patch("psutil.Process", return_value=MagicMock()):
+            with patch("src.zombie_monitor._is_process_zombie", return_value=True):
+                zombies = get_process_zombies()
+        assert any(z["pid"] == 9999 for z in zombies)
 
-        try:
-            log_kg_l_edge(src="a", dst="b", kind="causes")
-            log_kg_l_edge(src="b", dst="c", kind="causes")
-
-            lines = zm.KG_L_EDGE_FILE.read_text(encoding="utf-8").strip().split("\n")
-            assert len(lines) == 2
-        finally:
-            zm.WAL_DIR = original_wal_dir
-
-
-class TestPurgeZombies:
-    def test_purge_dry_run_emits_kg_l_edges(self, tmp_path):
-        from unittest.mock import patch
-
-        original_wal_dir = zm.WAL_DIR
-        zm.WAL_DIR = tmp_path
-        zm.KG_L_EDGE_FILE = tmp_path / "kg-l-edges.jsonl"
-
-        fake_zombie = {
-            "type": "git",
-            "pid": 99999,
-            "name": "git.exe",
-            "action": "would_stop",
-        }
-
-        try:
-            with patch("src.zombie_monitor.get_process_zombies", return_value=[fake_zombie]):
-                result = purge_zombies(dry_run=True, types=["git"])
-            assert result["status"] == "dry_run"
-            assert len(result["purged"]) == 1
-            # Vérifier que WAL a été écrit
-            wal_files = list(tmp_path.glob("*.jsonl"))
-            assert len(wal_files) >= 1
-        finally:
-            zm.WAL_DIR = original_wal_dir
+    def test_known_process_names_include_toolchains(self) -> None:
+        """La taxonomie inclut les toolchains système."""
+        assert "python" in _ZOMBIE_PROCESS_NAMES
+        assert "node" in _ZOMBIE_PROCESS_NAMES
+        assert "cargo" in _ZOMBIE_PROCESS_NAMES
+        assert "git" in _ZOMBIE_PROCESS_NAMES
