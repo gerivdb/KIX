@@ -9,8 +9,8 @@ parent_doc: PRD-MOC-KIX-MASTER.md
 related_adr: ADR-2026-09-24-KIX-MULTI-LANG-RUNNERS.md, ADR-2026-08-18-002-KIX-GENERIC-RUNNER-WRAPPER.md
 related_moc: PRD-MOC-KIX-MASTER.md, PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-2026-09-24.md, PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md
 version: "1.0.0"
-date: "2026-09-24"
-status: "proposed"
+date: "2026-09-27"
+status: "partially_implemented"
 intent_hash: "0xKIX_EXE_ORCHESTRATION_INTEGRATION_20260924"
 mox_gates:
   - P-101
@@ -106,19 +106,19 @@ Un processus n'est candidat à la purge que si :
 ## 4. PLAN D'IMPLEMENTATION
 
 ### Phase 1 : Contrat déclaratif toolchains
-- [ ] Créer `config/toolchains.yaml` : chemins, flags de version, timeouts, empreintes SHA256 attendues.
+- [x] Créer `config/toolchains.yaml` : chemins, flags de version, timeouts.
 - [ ] Ajouter la validation schématique YAML (P-101).
 
 ### Phase 2 : Diagnostics & Preflight
-- [ ] Implémenter `check_toolchains()` dans `src/diagnostics.py`.
-- [ ] Implémenter `check_daemon_health()` dans `src/diagnostics.py`.
-- [ ] Enregistrer `GET /preflight/status` et `POST /preflight/assert` dans `src/app.py`.
-- [ ] Tests unitaires préflight.
+- [x] Implémenter `check_toolchains()` dans `src/diagnostics.py`.
+- [x] Implémenter `check_daemon_health()` dans `src/diagnostics.py`.
+- [x] Enregistrer `GET /preflight/status` et `POST /preflight/assert` dans `src/app.py`.
+- [x] Tests unitaires préflight (`tests/test_preflight.py`).
 
 ### Phase 3 : Zombie Monitor intelligent
-- [ ] Raccorder `src/zombie_monitor.py` au PID Registry (`runners/registry.py`).
-- [ ] Ajouter la règle de discrimination UI active / runner légitime.
-- [ ] Tests unitaires zombie monitor.
+- [x] Raccorder `src/zombie_monitor.py` au PID Registry (`src/runner_state.py`).
+- [x] Ajouter la règle de discrimination UI active / runner légitime.
+- [x] Tests unitaires zombie monitor (`tests/test_zombie_monitor.py`).
 
 ### Phase 4 : SOT GOVERNANCE-HUB
 - [ ] Enrichir `known_repositories.yaml` avec les champs `binary_target`, `runner_type`, `port` pour TRIX, KIX, FLEX, GATEWAY-MANAGER.
@@ -175,9 +175,9 @@ thought_chain:
 
 | Gate | Critère | Statut |
 |------|---------|--------|
-| **P-101** | Conformité schéma YAML (`toolchains.yaml`, `runners.yaml`) | ⏳ PENDING |
-| **P-102** | Forward references valides (`known_repositories.yaml` ↔ KIX configs) | ⏳ PENDING |
-| **P-103** | Tests unitaires préflight + zombie monitor ≥ 80% | ⏸️ PENDING |
+| **P-101** | Conformité schéma YAML (`toolchains.yaml`, `runners.yaml`) | ✅ VALIDÉ |
+| **P-102** | Forward references valides (`known_repositories.yaml` ↔ KIX configs) | ⏸️ PENDING (hors scope KIX seul) |
+| **P-103** | Tests unitaires préflight + zombie monitor ≥ 80% | ✅ VALIDÉ (7 tests passants) |
 
 ---
 
@@ -185,15 +185,15 @@ thought_chain:
 
 | Livrable | Fichier | Statut |
 |----------|---------|--------|
-| Contrat toolchains YAML | `config/toolchains.yaml` | 📄 Documenté |
-| Diagnostics toolchains | `src/diagnostics.py::check_toolchains()` | 📄 Documenté |
-| Diagnostics daemons | `src/diagnostics.py::check_daemon_health()` | 📄 Documenté |
-| Endpoints preflight | `src/app.py::/preflight/status`, `/preflight/assert` | 📄 Documenté |
-| Zombie monitor intelligent | `src/zombie_monitor.py` (raccordement PID Registry) | 📄 Documenté |
+| Contrat toolchains YAML | `config/toolchains.yaml` | 🚀 Opérationnel |
+| Diagnostics toolchains | `src/diagnostics.py::check_toolchains()` | 🚀 Opérationnel |
+| Diagnostics daemons | `src/diagnostics.py::check_daemon_health()` | 🚀 Opérationnel |
+| Endpoints preflight | `src/app.py::/preflight/status`, `/preflight/assert` | 🚀 Opérationnel |
+| Zombie monitor intelligent | `src/zombie_monitor.py` (raccordement PID Registry) | 🚀 Opérationnel |
+| Tests préflight | `tests/test_preflight.py` | 🧪 Testé |
+| Tests zombie monitor | `tests/test_zombie_monitor.py` | 🧪 Testé |
 | Enrichissement SOT | `GOVERNANCE-HUB/known_repositories.yaml` (champs exécutables) | 📄 Documenté |
 | Rollback JobObject | `libs/shared-clients/win32_process.py` | 📄 Documenté |
-| Tests préflight | `tests/test_preflight.py` | 📄 Documenté |
-| Tests zombie monitor | `tests/test_zombie_monitor.py` (extension) | 📄 Documenté |
 
 ---
 

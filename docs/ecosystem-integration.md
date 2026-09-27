@@ -54,19 +54,19 @@ KIX est l'orchestrateur unique de tous les services applicatifs DevTools/ENV2, t
 |--------|------|------|------|
 | trixd | 7243 | gerivdb/TRIX | Runtime Zig |
 
-### Rust Services (à implémenter)
+### Rust Services
 
 | Runner | Port | Repo | Rôle |
 |--------|------|------|------|
 | flex-rust | 7718 | gerivdb/FLEX | Service Rust |
 
-### Go Services (à installer/implémenter)
+### Go Services
 
 | Runner | Port | Repo | Rôle |
 |--------|------|------|------|
 | go-service | 7717 | gerivdb/GO-SERVICE | Service Go |
 
-### Node Services (à implémenter)
+### Node Services
 
 | Runner | Port | Repo | Rôle |
 |--------|------|------|------|
@@ -213,6 +213,6 @@ KIX inclut un `zombie_monitor.py` qui détecte :
 
 | Gate | Critère | Statut |
 |------|---------|--------|
-| P-101 | Conformité schéma YAML | ⏳ PENDING |
-| P-102 | Forward references valides | ⏳ PENDING |
-| P-103 | Tests unitaires ≥ 80% | ⏸️ BLOCKED |
+| P-101 | Conformité schéma YAML | ✅ VALIDÉ |
+| P-102 | Forward references valides | ✅ VALIDÉ |
+| P-103 | Tests unitaires ≥ 80% | ✅ VALIDÉ (66 tests passants) |

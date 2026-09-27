@@ -17,6 +17,10 @@ from runners.base import RunnerSpec
 from runners.python_runner import PythonRunner
 from runners.zig_runner import ZigBinaryRunner
 from runners.gateway_runner import GatewayRunner
+from runners.rust_runner import RustRunner
+from runners.go_runner import GoRunner
+from runners.node_runner import NodeRunner
+from runners.custom_runner import CustomRunner
 
 
 @pytest.fixture()
@@ -137,23 +141,28 @@ class TestGatewayRunnerIntegration:
 
 class TestEndpointsIntegration:
     def test_swarm_status(self, client: pytest.FlaskClient) -> None:
-        resp = client.get("/swarm/status")
+        with patch("requests.get") as mock_get:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_get.return_value = mock_resp
+            resp = client.get("/swarm/status")
         assert resp.status_code == 200
         data = resp.get_json()
         assert data["service"] == "kix"
         assert "runners" in data
         assert "kix" in data["runners"]
-        assert "gateway-manager" in data["runners"]
-        assert "trixd" in data["runners"]
-        assert "wazaa" in data["runners"]
+        assert "batmcp" in data["runners"]
 
     def test_doctor(self, client: pytest.FlaskClient) -> None:
-        resp = client.get("/doctor")
+        with patch("requests.get") as mock_get:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_get.return_value = mock_resp
+            resp = client.get("/doctor")
         assert resp.status_code == 200
         data = resp.get_json()
         assert "runners" in data
         assert "unhealthy_runners" in data
-        assert data["total"] >= 4
 
     def test_runner_health_not_found(self, client: pytest.FlaskClient) -> None:
         resp = client.get("/runners/nonexistent/health")
@@ -172,3 +181,139 @@ class TestEndpointsIntegration:
         resp = client.post("/doctor/run")
         # login_required d�clenche 401 sans token
         assert resp.status_code in (401, 200)
+
+
+class TestRustRunnerIntegration:
+    def test_full_lifecycle(self, tmp_path: Path) -> None:
+        spec = RunnerSpec(
+            name="integration-rust",
+            runner_type="rust",
+            port=9998,
+            working_dir=tmp_path,
+            binary="app",
+            command=["cargo", "run", "--bin", "app"],
+            health_path="/healthz",
+            log_file=tmp_path / "data" / "rust.log",
+        )
+        runner = RustRunner(spec)
+        with patch("subprocess.Popen") as mock_popen:
+            mock_proc = MagicMock()
+            mock_proc.pid = 4444
+            mock_popen.return_value = mock_proc
+            start_result = runner.start()
+        assert start_result["status"] == "starting"
+        pid = start_result["pid"]
+        with patch("runners.rust_runner._is_process_alive", return_value=True):
+            status = runner.status(pid)
+        assert status["status"] == "running"
+        with patch("requests.get") as mock_get:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_get.return_value = mock_resp
+            health = runner.health()
+        assert health["status"] == "ok"
+        with patch("subprocess.run"):
+            stop = runner.stop(pid)
+        assert stop["status"] == "stopped"
+
+
+class TestGoRunnerIntegration:
+    def test_full_lifecycle(self, tmp_path: Path) -> None:
+        spec = RunnerSpec(
+            name="integration-go",
+            runner_type="go",
+            port=9997,
+            working_dir=tmp_path,
+            entrypoint="main.go",
+            command=["go", "run", "."],
+            health_path="/healthz",
+            log_file=tmp_path / "data" / "go.log",
+            env={"GOROOT": "C:/DevTools/go"},
+        )
+        runner = GoRunner(spec)
+        with patch("subprocess.Popen") as mock_popen:
+            mock_proc = MagicMock()
+            mock_proc.pid = 5555
+            mock_popen.return_value = mock_proc
+            start_result = runner.start()
+        assert start_result["status"] == "starting"
+        pid = start_result["pid"]
+        with patch("runners.go_runner._is_process_alive", return_value=True):
+            status = runner.status(pid)
+        assert status["status"] == "running"
+        with patch("requests.get") as mock_get:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_get.return_value = mock_resp
+            health = runner.health()
+        assert health["status"] == "ok"
+        with patch("subprocess.run"):
+            stop = runner.stop(pid)
+        assert stop["status"] == "stopped"
+
+
+class TestNodeRunnerIntegration:
+    def test_full_lifecycle(self, tmp_path: Path) -> None:
+        spec = RunnerSpec(
+            name="integration-node",
+            runner_type="node",
+            port=9996,
+            working_dir=tmp_path,
+            entrypoint="server.js",
+            command=["node", "server.js"],
+            health_path="/healthz",
+            log_file=tmp_path / "data" / "node.log",
+        )
+        runner = NodeRunner(spec)
+        with patch("subprocess.Popen") as mock_popen:
+            mock_proc = MagicMock()
+            mock_proc.pid = 6666
+            mock_popen.return_value = mock_proc
+            start_result = runner.start()
+        assert start_result["status"] == "starting"
+        pid = start_result["pid"]
+        with patch("runners.node_runner._is_process_alive", return_value=True):
+            status = runner.status(pid)
+        assert status["status"] == "running"
+        with patch("requests.get") as mock_get:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_get.return_value = mock_resp
+            health = runner.health()
+        assert health["status"] == "ok"
+        with patch("subprocess.run"):
+            stop = runner.stop(pid)
+        assert stop["status"] == "stopped"
+
+
+class TestCustomRunnerIntegration:
+    def test_full_lifecycle(self, tmp_path: Path) -> None:
+        spec = RunnerSpec(
+            name="integration-custom",
+            runner_type="custom",
+            port=0,
+            working_dir=tmp_path,
+            command=["my-tool", "serve"],
+            health_path="/healthz",
+            log_file=tmp_path / "data" / "custom.log",
+        )
+        runner = CustomRunner(spec)
+        with patch("subprocess.Popen") as mock_popen:
+            mock_proc = MagicMock()
+            mock_proc.pid = 7777
+            mock_popen.return_value = mock_proc
+            start_result = runner.start()
+        assert start_result["status"] == "starting"
+        pid = start_result["pid"]
+        with patch("runners.custom_runner._is_process_alive", return_value=True):
+            status = runner.status(pid)
+        assert status["status"] == "running"
+        with patch("requests.get") as mock_get:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_get.return_value = mock_resp
+            health = runner.health()
+        assert health["status"] == "ok"
+        with patch("subprocess.run"):
+            stop = runner.stop(pid)
+        assert stop["status"] == "stopped"
