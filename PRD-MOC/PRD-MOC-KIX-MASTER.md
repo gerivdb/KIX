@@ -30,7 +30,7 @@ Ce MOC **MASTER** synthétise l'ensemble de la gouvernance **KIX (L2-PLATFORM)**
 | PRD-MOC-KIX-ORCHESTRATOR-2026-08-18.md | Generic runner wrapper | completed |
 | PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md | Multi-lang runners | implemented |
 | PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-2026-09-24.md | Écosystème integration master | proposed |
-| PRD-MOC-KIX-EXE-ORCHESTRATION-2026-09-24.md | Exe orchestration / preflight / zombie monitor | proposed |
+| PRD-MOC-KIX-EXE-ORCHESTRATION-2026-09-24.md | Exe orchestration / preflight / zombie monitor | partially_implemented |
 | PRD-MOC-VEX-KIX-BOUNDARIES-20260927.md | Frontières KIX/VEX | draft |
 
 ---
