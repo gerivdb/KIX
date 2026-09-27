@@ -1,1 +1,1 @@
-flask
+flaskbase-orchestrator>=0.1.0
