@@ -343,3 +343,49 @@ def test_release_handles_worktree_path_only(client) -> None:
             assert data['status'] == 'released'
             assert 'handle_exe_not_found' in data['details']
 
+
+def test_health_kix_alias_returns_kix_health(client) -> None:
+    resp = client.get("/health/kix")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["status"] == "ok"
+    assert data["service"] == "kix"
+    assert data["port"] == 8800
+
+
+def test_health_l3_returns_unknown_when_empty(client) -> None:
+    resp = client.get("/health/l3")
+    assert resp.status_code == 503
+    data = resp.get_json()
+    assert data["status"] == "unknown"
+    assert data["source"] == "vex"
+
+
+def test_health_l3_register_and_read(client) -> None:
+    payload = {
+        "status": "ok",
+        "source": "vex",
+        "timestamp": "2026-09-27T06:00:00+02:00",
+        "components": [{"name": "fluence", "status": "ok"}],
+    }
+    resp = client.post("/health/l3", json=payload)
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["ok"] is True
+    assert "registered_at" in data
+
+    resp = client.get("/health/l3")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["status"] == "ok"
+    assert data["source"] == "vex"
+    assert data["components"] == payload["components"]
+
+
+def test_health_l3_register_rejects_empty_payload(client) -> None:
+    resp = client.post("/health/l3", json={})
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert data["error"] == "missing payload"
+
+

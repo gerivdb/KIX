@@ -270,6 +270,48 @@ def healthz() -> Any:
     return jsonify({"status": "ok"})
 
 
+@app.get("/health/kix")
+def health_kix() -> Any:
+    """Alias KIX-specific health endpoint for VEX integration."""
+    return health()
+
+
+_L3_HEALTH: dict[str, Any] = {}
+_L3_HEALTH_LOCK = threading.Lock()
+
+
+@app.get("/health/l3")
+def health_l3() -> Any:
+    """Return the latest L3 health snapshot registered by VEX."""
+    with _L3_HEALTH_LOCK:
+        if not _L3_HEALTH:
+            return jsonify({
+                "status": "unknown",
+                "source": "vex",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "message": "No L3 health registered yet",
+            }), 503
+        payload = dict(_L3_HEALTH)
+        payload.setdefault("status", "ok")
+        payload.setdefault("source", "vex")
+        if "timestamp" not in payload:
+            payload["timestamp"] = datetime.now(timezone.utc).isoformat()
+        return jsonify(payload), 200
+
+
+@app.post("/health/l3")
+def register_l3_health() -> Any:
+    """Register L3 aggregated health data from VEX."""
+    payload = request.get_json(silent=True) or {}
+    if not payload:
+        return jsonify({"error": "missing payload"}), 400
+    with _L3_HEALTH_LOCK:
+        _L3_HEALTH.clear()
+        _L3_HEALTH.update(payload)
+        _L3_HEALTH["registered_at"] = datetime.now(timezone.utc).isoformat()
+    return jsonify({"ok": True, "registered_at": _L3_HEALTH["registered_at"]}), 200
+
+
 @app.get("/readyz")
 def readyz() -> Any:
     checks: dict[str, Any] = {"kix": "ok"}
@@ -785,6 +827,7 @@ def swarm_status() -> Any:
         "service": "kix",
         "timestamp": _utcnow(),
         "runners": {},
+        "l3_health": {},
     }
     for spec in runners:
         instance = get_runner(spec)
@@ -799,6 +842,21 @@ def swarm_status() -> Any:
             "pid": stored.pid if stored else None,
             "health": health,
         }
+    with _L3_HEALTH_LOCK:
+        if _L3_HEALTH:
+            swarm["l3_health"] = {
+                "source": "vex",
+                "status": _L3_HEALTH.get("status", "unknown"),
+                "timestamp": _L3_HEALTH.get("timestamp"),
+                "components": _L3_HEALTH.get("components", []),
+            }
+        else:
+            swarm["l3_health"] = {
+                "source": "vex",
+                "status": "unknown",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "message": "No L3 health registered yet",
+            }
     return jsonify(swarm)
 
 
