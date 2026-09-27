@@ -16,3 +16,4 @@ llm_catalog.db
 *.pdb
 logs/
 data/pid_registry.json
+interception-log.txt
