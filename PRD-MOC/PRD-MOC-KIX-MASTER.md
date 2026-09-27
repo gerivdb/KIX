@@ -29,8 +29,9 @@ Ce MOC **MASTER** synthétise l'ensemble de la gouvernance **KIX (L2-PLATFORM)**
 |---|---|
 | PRD-MOC-KIX-ORCHESTRATOR-2026-08-18.md | Generic runner wrapper | completed |
 | PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md | Multi-lang runners | implemented |
-| PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-2026-09-24.md | Écosystème integration master | superseded |
+| PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER-2026-09-27.md | Écosystème integration master | implemented |
 | PRD-MOC-KIX-EXE-ORCHESTRATION-2026-09-24.md | Exe orchestration / preflight / zombie monitor | partially_implemented |
+| PRD-MOC-KIX-BOOTSTRAP-RUNNER-2026-08-20.md | Bootstrap runner / amorçage écosystème | implemented |
 | PRD-MOC-VEX-KIX-BOUNDARIES-20260927.md | Frontières KIX/VEX | implemented |
 
 ---
@@ -201,12 +202,14 @@ runners:
 | Runner | Type | Port | Dépendances | Bootstrap | Restart Policy |
 |---|---|---|---|---|---|
 | **kix** | python | 8800 | — | true | always |
+| **bootstrap** | python | 8810 | [kix, gateway-manager, trixd, wazaa, flex-api] | true | on-failure |
 | **gateway-manager** | gateway-exe | 8802 | [kix] | false | always |
 | **trixd** | zig-binary | 8823 | [kix] | false | always |
 | **wazaa** | python | 1873 | [kix] | false | always |
 | **flex-api** | python | 7719 | [kix] | false | always |
 
 > **Note** : TLM-LANG (port 8801) est archivé — runner KIX pour langage TLM non utilisé actuellement.
+> **Note** : `gateway-manager` n'a plus `bootstrap: true` depuis ADR-2026-08-20-001. Le rôle bootstrap est assumé par le runner dédié `bootstrap` (port 8810).
 
 ---
 
@@ -274,6 +277,9 @@ KIX gère 17 runners cognitifs Python (legacy `cognitive_runners.py`) en cours d
 | **Auto-Heal** | `curl -X POST http://localhost:8800/doctor/run` | Auto-restart runners KO |
 | **Swarm Status** | `curl http://localhost:8800/swarm/status` | État pour Agent Manager |
 | **Runner Logs** | `curl http://localhost:8800/runners/{name}/logs` | Logs d'un runner |
+| **Bootstrap Status** | `curl http://localhost:8810/bootstrap/status` | Status détaillé bootstrap |
+| **Bootstrap Ready** | `curl http://localhost:8810/bootstrap/ready` | Ready global écosystème |
+| **Bootstrap Monitor** | `curl http://localhost:8810/bootstrap/monitor` | Monitoring alertes bootstrap |
 
 ---
 
@@ -335,6 +341,24 @@ enforcement_mode:
 | **MOC Général** | PRD-MOC-GENERAL-MASTER.md (GEN-030e, GEN-031-L6) |
 | **MOC Repos** | PRD-MOC-REPOS-MASTER.md (repos/kix.md) |
 | **Intent** | INTENT-Q243-NATIVE-INFERENCE-20260825 |
+| **PRD MOC Bootstrap** | PRD-MOC-KIX-BOOTSTRAP-RUNNER-2026-08-20.md |
+| **PRD MOC Boundaries** | PRD-MOC-VEX-KIX-BOUNDARIES-20260927.md |
+
+---
+
+## Évaluation d'utilité des PRD MOC KIX
+
+| PRD MOC | Utilité | Justification |
+|---------|---------|---------------|
+| `PRD-MOC-KIX-MASTER.md` | ✅ Essentiel | Vue d'ensemble consolidée de la gouvernance KIX. Référence unique pour les subalternes et les cross-repos. |
+| `PRD-MOC-KIX-ORCHESTRATOR-2026-08-18.md` | ✅ Essentiel | Spécifie le generic runner wrapper, base de tous les runners. ADR backing. |
+| `PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md` | ✅ Utile | Formalise l'extension Rust/Go/Node et la gestion des processus système. Couverture multi-langage. |
+| `PRD-MOC-KIX-EXE-ORCHESTRATION-2026-09-24.md` | ✅ Utile | Couvre toolchains, preflight, zombie monitor, doctor WAL. Réduit les faux positifs d'orchestration. |
+| `PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-2026-09-24.md` | ⚠️ Remplacé | `superseded` par `PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md`. À archiver, pas de valeur ajoutée active. |
+| `PRD-MOC-KIX-BOOTSTRAP-RUNNER-2026-08-20.md` | ✅ Essentiel | Formalise le runner d'amorçage, séparé de gateway-manager. Endpoints `/bootstrap/*`, ECOS CLI, watchdog. ADR backing. |
+| `PRD-MOC-VEX-KIX-BOUNDARIES-20260927.md` | ✅ Essentiel | Contrat de frontières KIX/VEX. Points d'intégration autorisés, interdits, WAZAA bus, bootstrap coordination. |
+
+**Recommandation** : conserver les PRD MOC `MASTER`, `ORCHESTRATOR`, `MULTI-LANG`, `EXE-ORCHESTRATION`, `BOOTSTRAP-RUNNER`, `VEX-KIX-BOUNDARIES`. Supprimer ou archiver `ECOSYSTEM-INTEGRATION` (remplacé).
 
 ---
 

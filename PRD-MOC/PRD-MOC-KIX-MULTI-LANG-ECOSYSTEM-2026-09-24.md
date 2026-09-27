@@ -161,6 +161,7 @@ thought_chain:
 
 - `PRD-MOC-KIX-ORCHESTRATOR-2026-08-18.md` : PRD MOC existant
 - `PRD-MOC-KIX-MASTER.md` : Master MOC KIX
+- `PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER-2026-09-27.md` : Intégration écosystème master
 - `ADR-2026-07-27-002-KIX.md` : ADR initiale KIX
 - `config/runners.yaml` : Configuration déclarative
 - `runners/base.py` : Interface `RunnerBase`

@@ -186,20 +186,36 @@ runners:
 - PRD-MOC-KIX-ORCHESTRATOR-2026-08-18.md : PRD MOC orchestrateur
 - PRD-MOC-KIX-MASTER.md : Master MOC KIX
 - PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md : Intégration multi-langages
-- PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-2026-09-24.md : Intégration écosystème
+- PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER-2026-09-27.md : Intégration écosystème master
+- PRD-MOC-KIX-BOOTSTRAP-RUNNER-2026-08-20.md : Bootstrap runner
+- PRD-MOC-KIX-EXE-ORCHESTRATION-2026-09-24.md : Exe orchestration / preflight / zombie monitor
+- PRD-MOC-VEX-KIX-BOUNDARIES-20260927.md : Frontières KIX/VEX
 
 ### Gates MOX
 
 | Gate | Critère | Statut |
 |------|---------|--------|
-| P-101 | Conformité schéma YAML | ⏳ PENDING |
-| P-102 | Forward references valides | ⏳ PENDING |
-| P-103 | Tests unitaires ≥ 80% | ⏸️ BLOCKED |
+| **P-301** | Schéma YAML `runners.yaml` valide | ✅ VALIDÉ |
+| **P-302** | Forward references valides | ✅ VALIDÉ |
+| **P-303** | Tous runners référencés existent | ✅ VALIDÉ |
+| **P-304** | Endpoints `/bootstrap/*` fonctionnels | ✅ VALIDÉ |
+| **P-305** | ECOS CLI integration testée | ✅ VALIDÉ |
+| **P-306** | WAZAA bus connectivity | ✅ VALIDÉ |
+
+## État Actuel (2026-09-27)
+
+- 60 runners déclaratifs dans `config/runners.yaml`
+- 23 runners actifs (`auto_start`)
+- 7 types de runners implémentés (`python`, `gateway-exe`, `zig-binary`, `rust`, `go`, `node`, `custom`)
+- Bootstrap runner opérationnel sur port 8810
+- KIX opérationnel sur port 8800
+- ECOS CLI integration validée
+- WAZAA bus opérationnel sur port 1873
 
 ## Prochaines Étapes
 
-1. **Valider les gates MOX** : P-101, P-102, P-103
-2. **Implémenter les runners manquants** : Rust, Go, Node, Custom
-3. **Enrôler tous les repos SOT** dans runners.yaml
-4. **Tester chaque runner** en environnement local
-5. **Atteindre opérationnel 100%**
+1. **Pérenniser l'intégration** : maintenir `runners.yaml` à jour avec la SOT
+2. **Étendre les runners actifs** : activer les runners custom selon besoin opérationnel
+3. **Améliorer la couverture de tests** : ajouter des tests d'intégration par runner
+4. **Surveillance** : exploiter `/doctor`, `/swarm/status`, `/bootstrap/monitor`
+5. **Documentation** : maintenir ce guide et les PRD MOC à jour

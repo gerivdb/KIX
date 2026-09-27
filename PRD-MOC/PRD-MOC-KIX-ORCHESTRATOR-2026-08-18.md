@@ -257,6 +257,7 @@ thought_chain:
 - **Repo BUZZ-X** : `D:\DO\WEB\TOOLS\L4-TOOLS\BUZZ-X`
 - **Repo WAZAA** : `D:\DO\WEB\TOOLS\L4-TOOLS\WAZAA`
 - **PRD MOC Principal** : `PRD-MOC-KIX-GENERIC-RUNNER-WRAPPER-2026-08-18.md` (TRIX)
+- **PRD MOC Écosystème** : `PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER-2026-09-27.md` (intégration master)
 - **MOX gates** : P-108, P-109, P-110
 - **Pattern Router** : ADR-2026-06-28-001 (N+1/N+2/N+3/N+4)
 
