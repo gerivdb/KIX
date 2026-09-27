@@ -2,12 +2,13 @@
 type: "PRD_MOC"
 version: "1.0.0"
 date: "2026-09-24"
-status: "proposed"
+status: "superseded"
 intent_hash: "0xECOSYSTEM_INTEGRATION_MASTER_20260924"
 mox_gates:
   - P-101
   - P-102
   - P-103
+superseded_by: PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md
 ---
 
 # PRD MOC - Écosystème gerivdb — Intégration Maître

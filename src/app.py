@@ -25,6 +25,7 @@ from src.notification_metrics import NotificationMetricsStore
 from src.auth import login_required, create_token, decode_token, _load_users
 from src.audit_log import AuditLogStore
 from src.zombie_monitor import zombie_bp
+from src.doctor_wal import log_wal as doctor_log_wal, create_backup, restore_backup
 from runners.registry import load_runners_config, get_runner
 from runners.base import RunnerBase, RunnerSpec
 from src.process_manager import ProcessManager, PIDRegistry, SingletonBindManager
@@ -736,23 +737,45 @@ def doctor_run() -> Any:
             pid = stored.pid if stored else None
             if pid:
                 result = instance.restart(pid)
-                restarted.append(
-                    {
-                        "name": spec.name,
-                        "action": "restarted",
-                        "result": result,
-                    }
-                )
+                action = "restarted"
             else:
                 result = instance.start()
-                restarted.append(
-                    {
-                        "name": spec.name,
-                        "action": "started",
-                        "result": result,
-                    }
-                )
+                action = "started"
+            restarted.append(
+                {
+                    "name": spec.name,
+                    "action": action,
+                    "result": result,
+                }
+            )
+            doctor_log_wal("self_healing", {
+                "runner": spec.name,
+                "action": action,
+                "health": health,
+                "result": result,
+            })
     return jsonify({"restarted": restarted, "count": len(restarted)})
+
+
+@app.post("/doctor/restore")
+@login_required(roles=["admin", "operator"])
+def doctor_restore() -> Any:
+    """Restaurer un fichier de config depuis son `.bak`.
+
+    Body attendu : `{"path": "config/runners.yaml"}`
+    """
+    payload = request.get_json(silent=True) or {}
+    target = payload.get("path")
+    if not target:
+        return jsonify({"error": "missing path"}), 400
+    resolved = Path(target)
+    if not resolved.exists():
+        return jsonify({"error": f"file not found: {target}"}), 404
+    ok = restore_backup(resolved)
+    if not ok:
+        return jsonify({"error": "no backup found", "path": str(resolved)}), 404
+    doctor_log_wal("backup_restored", {"path": str(resolved)})
+    return jsonify({"ok": True, "path": str(resolved)})
 
 
 @app.get("/swarm/status")

@@ -127,8 +127,14 @@ Un processus n'est candidat à la purge que si :
   - Action requise : ajout des entrées manquantes via PR vers `GOVERNANCE-HUB`.
 
 ### Phase 5 : Rollback & Self-Healing
-- [ ] Garantir l'arrêt de l'arborescence de processus enfants via JobObject Windows (`libs/shared-clients/win32_process.py`).
-- [ ] Ajouter la restauration automatique `.bak` + journalisation WAL (`data/kix-doctor.jsonl`).
+- [x] Garantir l'arrêt de l'arborescence de processus enfants via JobObject Windows (`libs/shared-clients/win32_process.py`).
+  - Helpers ajoutés : `create_job_object()`, `assign_process_to_job()`, `terminate_job()`.
+  - Tests : `tests/test_win32_jobobject.py` (5 tests passants).
+- [x] Ajouter la restauration automatique `.bak` + journalisation WAL (`data/kix-doctor.jsonl`).
+  - Module `src/doctor_wal.py` : `create_backup()`, `restore_backup()`, `log_wal()`, `get_wal_entries()`.
+  - Endpoint `/doctor/restore` intégré dans `src/app.py`.
+  - WAL doctor activé dans `/doctor/run` pour chaque action de self-healing.
+  - Tests : `tests/test_doctor_wal.py` (6 tests passants).
 
 ---
 
@@ -180,7 +186,7 @@ thought_chain:
 |------|---------|--------|
 | **P-101** | Conformité schéma YAML (`toolchains.yaml`, `runners.yaml`) | ✅ VALIDÉ |
 | **P-102** | Forward references valides (`known_repositories.yaml` ↔ KIX configs) | ⏸️ PENDING (hors scope KIX seul) |
-| **P-103** | Tests unitaires préflight + zombie monitor ≥ 80% | ✅ VALIDÉ (7 tests passants) |
+| **P-103** | Tests unitaires préflight + zombie monitor + doctor WAL ≥ 80% | ✅ VALIDÉ (102 tests passants) |
 
 ---
 
@@ -195,8 +201,11 @@ thought_chain:
 | Zombie monitor intelligent | `src/zombie_monitor.py` (raccordement PID Registry) | 🚀 Opérationnel |
 | Tests préflight | `tests/test_preflight.py` | 🧪 Testé |
 | Tests zombie monitor | `tests/test_zombie_monitor.py` | 🧪 Testé |
+| JobObject helpers | `libs/shared-clients/win32_process.py` | 🚀 Opérationnel |
+| WAL doctor + .bak | `src/doctor_wal.py`, endpoint `/doctor/restore` | 🚀 Opérationnel |
+| Tests JobObject | `tests/test_win32_jobobject.py` | 🧪 Testé |
+| Tests doctor WAL | `tests/test_doctor_wal.py` | 🧪 Testé |
 | Enrichissement SOT | `GOVERNANCE-HUB/known_repositories.yaml` (champs exécutables) | 📄 Documenté |
-| Rollback JobObject | `libs/shared-clients/win32_process.py` | 📄 Documenté |
 
 ---
 
@@ -213,7 +222,16 @@ thought_chain:
 
 ---
 
-## 9. REFERENCES
+## 9. PROOF-OF-LIFE
+
+- [x] 2026-09-24T00:00:00+02:00 — PRD-MOC EXE-ORCHESTRATION créé, phases 1-3 implémentées
+- [x] 2026-09-27T04:00:00+02:00 — Phase 4 audit SOT complété (KIX/TRIX/FLEX manquent du SOT, GATEWAY-MANAGER présent)
+- [x] 2026-09-27T06:01:00+02:00 — Phase 5 implémentée : JobObject helpers (5 tests), WAL doctor + .bak restore (6 tests), `/doctor/restore` endpoint
+- [x] 2026-09-27T06:01:00+02:00 — 102 tests passants, gates P-101/P-103 validés, P-102 hors scope KIX seul
+
+---
+
+## 10. REFERENCES
 
 - `reports/kix-exe-orchestration-report-2026-09-24.md` : Rapport initial (v1)
 - `PRD-MOC-KIX-ORCHESTRATOR-2026-08-18.md` : PRD MOC orchestrateur generic runner wrapper
