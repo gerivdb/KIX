@@ -1,7 +1,7 @@
 ---
 type: "PRD_MOC"
 version: "1.0.0"
-date: "2026-09-24"
+date: "2026-09-27"
 status: "implemented"
 intent_hash: "0xKIX_MULTI_LANG_ECOSYSTEM_20260924"
 mox_gates:
@@ -99,19 +99,6 @@ Ce PRD MOC complète `PRD-MOC-KIX-ORCHESTRATOR-2026-08-18.md` et `PRD-MOC-KIX-MA
 - [x] Créer `docs/ecosystem-integration.md`
 - [x] Mettre à jour `runners.yaml` avec tous les runners
 
-## 5. DEPENDANCES
-
-### 5.1 Internes
-- `KIX/libs/shared-clients/win32_process.py` : primitives Win32
-- `KIX/runners/base.py` : interface `RunnerBase`
-- `KIX/config/runners.yaml` : registry déclaratif
-
-### 5.2 Externes
-- `C:\DevTools\.cargo\bin\rustc.exe` : compilateur Rust
-- `C:\DevTools\.cargo\bin\cargo.exe` : gestionnaire de paquets Rust
-- Go : à installer dans `C:\DevTools\go\`
-- Node.js : à vérifier dans `C:\DevTools\node\`
-
 ## 5. TESTS
 
 ### 5.1 Couverture
@@ -123,17 +110,31 @@ Ce PRD MOC complète `PRD-MOC-KIX-ORCHESTRATOR-2026-08-18.md` et `PRD-MOC-KIX-MA
 | Node | `tests/test_node_runner.py` | 10 |
 | Custom | `tests/test_custom_runner.py` | 11 |
 | Registry | `tests/test_runners.py` | +4 nouveaux |
+| Intégration | `tests/test_runners_integration.py` | +4 nouveaux |
 
 ### 5.2 Validation
 
 ```bash
-pytest tests/test_rust_runner.py tests/test_go_runner.py tests/test_node_runner.py tests/test_custom_runner.py -v
-# 66 tests passants
+pytest tests/test_runners.py tests/test_rust_runner.py tests/test_go_runner.py tests/test_node_runner.py tests/test_custom_runner.py tests/test_runners_integration.py -q
+# 79 tests passants
 ```
 
-## 6. TRACABILITE
+## 6. DEPENDANCES
 
-### 6.1 Thought Chain
+### 6.1 Internes
+- `KIX/libs/shared-clients/win32_process.py` : primitives Win32
+- `KIX/runners/base.py` : interface `RunnerBase`
+- `KIX/config/runners.yaml` : registry déclaratif
+
+### 6.2 Externes
+- `C:\DevTools\.cargo\bin\rustc.exe` : compilateur Rust
+- `C:\DevTools\.cargo\bin\cargo.exe` : gestionnaire de paquets Rust
+- Go : à installer dans `C:\DevTools\go\`
+- Node.js : à vérifier dans `C:\DevTools\node\`
+
+## 7. TRACABILITE
+
+### 7.1 Thought Chain
 
 ```yaml
 thought_chain:
@@ -143,20 +144,20 @@ thought_chain:
   - source: "Implémentation : runners rust_runner.py, go_runner.py, node_runner.py, custom_runner.py créés"
     artifact: "4 runners opérationnels"
     intent_hash: "0xKIX_MULTI_LANG_ECOSYSTEM_20260924"
-  - source: "Validation : 66 tests passants (rust, go, node, custom, registry)"
-    artifact: "Tests unitaires complets"
+  - source: "Validation : 79 tests passants (rust, go, node, custom, registry, intégration)"
+    artifact: "Tests unitaires + intégration complets"
     intent_hash: "0xKIX_MULTI_LANG_ECOSYSTEM_20260924"
 ```
 
-### 6.2 Gates
+### 7.2 Gates
 
 | Gate | Critère | Statut |
 |------|---------|--------|
 | **P-101** | Conformité schéma YAML | ✅ VALIDÉ |
 | **P-102** | Forward references valides | ✅ VALIDÉ |
-| **P-103** | Tests unitaires ≥ 80% | ✅ VALIDÉ (66 tests passants) |
+| **P-103** | Tests unitaires ≥ 80% | ✅ VALIDÉ (79 tests passants) |
 
-## 7. REFERENCES
+## 8. REFERENCES
 
 - `PRD-MOC-KIX-ORCHESTRATOR-2026-08-18.md` : PRD MOC existant
 - `PRD-MOC-KIX-MASTER.md` : Master MOC KIX
