@@ -8,8 +8,8 @@ source_path: PRD-MOC/PRD-MOC-KIX-EXE-ORCHESTRATION-2026-09-24.md
 parent_doc: PRD-MOC-KIX-MASTER.md
 related_adr: ADR-2026-09-24-KIX-MULTI-LANG-RUNNERS.md, ADR-2026-08-18-002-KIX-GENERIC-RUNNER-WRAPPER.md
 related_moc: PRD-MOC-KIX-MASTER.md, PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER-2026-09-27.md, PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md
-version: "1.0.0"
-date: "2026-09-27"
+version: "1.1.0"
+date: "2026-09-28"
 status: "implemented"
 intent_hash: "0xKIX_EXE_ORCHESTRATION_INTEGRATION_20260924"
 mox_gates:
@@ -62,6 +62,7 @@ Ce PRD MOC couvre la refonte de l'orchestration des exécutables dans KIX autour
 | Pas de PID Registry public | Impossible de discriminer processus légitimes vs orphelins |
 | Pas de contrat `config/toolchains.yaml` | Les prérequis système ne sont pas déclaratifs |
 | Pas d'endpoints `/preflight/*` | Le BOOT et l'Agent Manager ne peuvent pas valider l'infrastructure de façon standardisée |
+| Lancements Windows sans masquage fenêtre | Popups console/stroboscopiques pendant les starts/health/boot, impact direct sur l'usage clavier/écran |
 
 ---
 
@@ -136,6 +137,12 @@ Un processus n'est candidat à la purge que si :
   - Endpoint `/doctor/restore` intégré dans `src/app.py`.
   - WAL doctor activé dans `/doctor/run` pour chaque action de self-healing.
   - Tests : `tests/test_doctor_wal.py` (6 tests passants).
+
+### Phase 6 : Masquage fenêtres Windows / anti-popup
+- [x] Ajouter `CREATE_NO_WINDOW` aux `creationflags` Windows dans `runners/python_runner.py`, `runners/zig_runner.py`, `runners/gateway_runner.py`, `runners/custom_runner.py`.
+- [x] Ajouter `CREATE_NO_WINDOW` dans `services/bootstrap_runner.py::_spawn_detached()`.
+- [x] Masquer les fenêtres PowerShell : ajouter `-WindowStyle Hidden` aux appels `powershell -Command` dans `src/app.py` et les routines `_is_process_alive`.
+- [x] Passer la valeur par défaut `auto_start` de `True` à `False` dans `runners/registry.py`, puis expliciter les cas autorisés dans `config/runners.yaml`.
 
 ---
 
@@ -235,6 +242,10 @@ thought_chain:
 - [x] 2026-09-28T01:16:14+02:00 — Tests d'intégration corrigés : 13 passants (auth capability appliqué)
 - [x] 2026-09-28T00:14:00+02:00 — Phase 4 SOT validée : 4 repos critiques présents avec champs complets ; 31 custom runners absents du SOT documentés dans `reports/custom-runners-sot-audit-2026-09-28.md`
 - [x] 2026-09-28T06:10:00+02:00 — Finalisation PRD-MOC : statut passé de `partially_implemented` à `implemented`, évaluation d'utilité ajoutée
+
+- [x] 2026-09-28T06:55:00+02:00 — Gap antipattern fenêtres/popups ajouté ; Phase 6 planifiée dans PRD-MOC-KIX-EXE-ORCHESTRATION-2026-09-24.md
+- [x] 2026-09-28T06:58:00+02:00 — Phase 6 implémentée : CREATE_NO_WINDOW dans 4 runners + bootstrap_runner, -WindowStyle Hidden dans 7 appels PowerShell, auto_start=False par défaut + runners.yaml explicite
+- [x] 2026-09-28T07:26:00+02:00 — Tâches planifiées Windows masquées : 8 tâches mises à jour avec -WindowStyle Hidden, KIX PULSE Scan désactivée (script orphelin)
 
 ---
 

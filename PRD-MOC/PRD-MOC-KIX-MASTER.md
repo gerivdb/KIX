@@ -22,7 +22,7 @@ related_moc: PRD-MOC-GOVERNANCE-HUB-MASTER.md, PRD-MOC-GENERAL-MASTER.md, PRD-MO
 
 Ce MOC **MASTER** synthétise l'ensemble de la gouvernance **KIX (L2-PLATFORM)** : orchestrateur central du cycle de vie des runners RLM, API REST, registry déclaratif, Doctor/Self-Healing, Swarm Status.
 
-**Statut** : **completed** (2026-09-02) — Implémentation 100% fonctionnelle (Phases 1-5 terminées) + modèle de rôle/fonction documenté (dryrun causal 2026-09-27) + capability model implémenté (2026-09-27) + 24 endpoints protégés (2026-09-28) + tests intégration corrigés (2026-09-28)
+**Statut** : **completed** (2026-09-02) — Implémentation 100% fonctionnelle (Phases 1-5 terminées) + modèle de rôle/fonction documenté (dryrun causal 2026-09-27) + capability model implémenté (2026-09-27) + 24 endpoints protégés (2026-09-28) + tests intégration corrigés (2026-09-28) + anti-pattern popups Windows corrigé (Phase 6, 2026-09-28)
 
 ## 11. Subordonnés directs
 
