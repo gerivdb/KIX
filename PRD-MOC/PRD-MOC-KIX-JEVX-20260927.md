@@ -10,17 +10,17 @@ related_adr: ADR-2026-08-18-002-KIX-GENERIC-RUNNER-WRAPPER.md, ADR-2026-09-24-KI
 related_moc: PRD-MOC-KIX-MASTER.md, PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md
 ---
 
-# PRD MOC - KIX - Intégration JEVX
+# PRD MOC - KIX - Integration JEVX
 
 ## 1. RÉSUMÉ EXÉCUTIF
 
-Ce PRD MOC couvre l'intégration de **JEVX** (gerivdb/JEVX) dans KIX comme runner de type `node`.
+Ce PRD MOC couvre l'integration de **JEVX** (gerivdb/JEVX) dans KIX comme runner de type `node`.
 
-**Rôle** : Decision-engine -- Surcouche souveraine sur upstream LocalJev
+**Role** : Decision-engine -- Surcouche souveraine sur upstream LocalJev
 **Port** : 8889
 **Type** : node
 **Strate** : L4-TOOLS
-**Statut** : ✅ **Intégré**
+**Statut** : ✅ **Integre**
 
 ## 2. CONFIGURATION RUNNER
 
@@ -38,22 +38,22 @@ Ce PRD MOC couvre l'intégration de **JEVX** (gerivdb/JEVX) dans KIX comme runne
 
 | Domaine | Responsable | Description |
 |---------|-------------|-------------|
-| Decision Engine | ✅ JEVX | Moteur de décision souverain |
+| Decision Engine | ✅ JEVX | Moteur de decision souverain |
 | LocalJev wrapper | ✅ JEVX | Surcouche sur upstream LocalJev |
 
 ## 4. POINTS D'INTÉGRATION KIX
 
 | Point | Protocole | Description |
 |-------|-----------|-------------|
-| KIX → JEVX | REST | Health checks, décisions |
-| bootstrap → JEVX | HTTP | Vérification dépendance |
+| KIX -> JEVX | REST | Health checks, decisions |
+| bootstrap -> JEVX | HTTP | Verification dependance |
 
 ## 5. ENDPOINTS UTILISÉS PAR KIX
 
-| Endpoint | Méthode | Usage KIX |
+| Endpoint | Methode | Usage KIX |
 |----------|---------|-----------|
 | `/health` | GET | Health check |
-| `/decide` | POST | Requêtes de décision |
+| `/decide` | POST | Requetes de decision |
 
 ## 6. CAPABILITY MODEL
 
@@ -72,17 +72,17 @@ Ce PRD MOC couvre l'intégration de **JEVX** (gerivdb/JEVX) dans KIX comme runne
 
 ## 8. PREUVE-OF-LIFE
 
-- [x] 2026-09-27T23:00:00+02:00 — Runner `jevx` configuré dans `runners.yaml`
-- [x] 2026-09-27T23:00:00+02:00 — NodeRunner implémenté dans `runners/node_runner.py`
-- [x] 2026-09-27T23:00:00+02:00 — Intégré dans PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM
-- [x] 2026-09-27T23:00:00+02:00 — Capability model appliqué
+- [x] 2026-09-27T23:00:00+02:00 -- Runner `jevx` configure dans `runners.yaml`
+- [x] 2026-09-27T23:00:00+02:00 -- NodeRunner implemente dans `runners/node_runner.py`
+- [x] 2026-09-27T23:00:00+02:00 -- Integre dans PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM
+- [x] 2026-09-27T23:00:00+02:00 -- Capability model applique
 
 ## 9. RÉFÉRENCES
 
 - `PRD-MOC-KIX-MASTER.md` : Master MOC KIX
 - `PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md` : Multi-lang ecosystem
 - `config/runners.yaml` : Configuration runner
-- `runners/node_runner.py` : Implémentation NodeRunner
+- `runners/node_runner.py` : Implementation NodeRunner
 
 ---
 
@@ -90,4 +90,4 @@ Ce PRD MOC couvre l'intégration de **JEVX** (gerivdb/JEVX) dans KIX comme runne
 **Statut** : **implemented**
 **Date** : 2026-09-27
 
-*PRD-MOC-KIX-JEVX — implemented — 2026-09-27*
+*PRD-MOC-KIX-JEVX -- implemented -- 2026-09-27*

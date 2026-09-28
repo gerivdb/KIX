@@ -16,53 +16,53 @@ pole_id: POLE-KG-TDC-001
 
 # PRD MOC - KIX Design Ops Loop Consumer
 
-> **Verdict** : PRD_MOC — Rendre obligatoire l'application du design `design-ops-loop` dans KIX.
+> **Verdict** : PRD_MOC -- Rendre obligatoire l'application du design `design-ops-loop` dans KIX.
 > **Source** : Design `design-ops-loop` (`designs/design-ops-loop/design.yaml`), design `ecosystem-meta-coherence`, design `safe-action-pattern`.
-> **Constat** : KIX est consumer de `design-ops-loop` mais n'a pas de PRD-MOC local déclarant cette obligation.
+> **Constat** : KIX est consumer de `design-ops-loop` mais n'a pas de PRD-MOC local declarant cette obligation.
 
 ---
 
 ## 1. Contexte
 
-KIX est un consumer du design `design-ops-loop`. Toute opération KIX qui effectue une correction structurelle DOIT passer par la boucle THINK/DO/CHECK.
+KIX est un consumer du design `design-ops-loop`. Toute operation KIX qui effectue une correction structurelle DOIT passer par la boucle THINK/DO/CHECK.
 
 ---
 
-## 2. Problème
+## 2. Probleme
 
-| Symptôme | Cause racine | Impact |
+| Symptome | Cause racine | Impact |
 |----------|--------------|--------|
-| Corrections sans besoin écosystémique | Boucle THINK/DO/CHECK non appliquée | Dérive architecturale |
-| Mutations sans vérification | Boucle THINK/DO/CHECK non appliquée | MDU incohérent |
+| Corrections sans besoin ecosystemique | Boucle THINK/DO/CHECK non appliquee | Derive architecturale |
+| Mutations sans verification | Boucle THINK/DO/CHECK non appliquee | MDU incoherent |
 
 ---
 
 ## 3. Objectif
 
-Intégrer la boucle THINK/DO/CHECK dans toutes les opérations KIX qui effectuent des corrections structurelles.
+Integrer la boucle THINK/DO/CHECK dans toutes les operations KIX qui effectuent des corrections structurelles.
 
 ---
 
-## 4. Périmètre
+## 4. Perimetre
 
 ### 4.1 In Scope
 
-| Opération | Application |
+| Operation | Application |
 |-----------|-------------|
-| Déploiement | Boucle THINK/DO/CHECK avant déploiement |
+| Deploiement | Boucle THINK/DO/CHECK avant deploiement |
 | Configuration | Boucle THINK/DO/CHECK avant modification |
 | Orchestration | Boucle THINK/DO/CHECK avant orchestration |
 
 ### 4.2 Out of Scope
 
-- Modification du design `design-ops-loop` lui-même
-- Opérations en lecture seule
+- Modification du design `design-ops-loop` lui-meme
+- Operations en lecture seule
 
 ---
 
 ## 5. Architecture
 
-### 5.1 Intégration KIX
+### 5.1 Integration KIX
 
 ```python
 # kix/pipelines/design_ops_loop.py
@@ -80,24 +80,24 @@ class DesignOpsLoopKix:
 
 | ID | Livrable | Chemin cible | Type |
 |---|---|---|---|
-| L1 | PRD-MOC `design-ops-loop` | `PRD-MOC/PRD-MOC-KIX-DESIGN-OPS-LOOP-CONSUMER-20260928.md` | Créer |
-| L2 | Script KIX | `kix/pipelines/design_ops_loop.py` | Créer |
-| L3 | Tests unitaires | `tests/test_design_ops_loop_kix.py` | Créer |
+| L1 | PRD-MOC `design-ops-loop` | `PRD-MOC/PRD-MOC-KIX-DESIGN-OPS-LOOP-CONSUMER-20260928.md` | Creer |
+| L2 | Script KIX | `kix/pipelines/design_ops_loop.py` | Creer |
+| L3 | Tests unitaires | `tests/test_design_ops_loop_kix.py` | Creer |
 
 ---
 
-## 7. Critères d'acceptation
+## 7. Criteres d'acceptation
 
-[x] Chaque design ACTIVE/STANDARD a au moins un consumer déclaré dans `meta-design.yaml`.
+[x] Chaque design ACTIVE/STANDARD a au moins un consumer declare dans `meta-design.yaml`.
 [x] Chaque consumer a un PRD-MOC local dans son propre repo.
-[x] Chaque PRD-MOC contient une Proof-of-Life horodatée.
-[x] Le hook pre-commit `validate_consumer_designs.py` est installé dans tous les repos consumers.
+[x] Chaque PRD-MOC contient une Proof-of-Life horodatee.
+[x] Le hook pre-commit `validate_consumer_designs.py` est installe dans tous les repos consumers.
 [ ] Le pipeline KIVA `unified-design-consumers` passe en CI locale.
 [x] Aucun design ACTIVE/STANDARD n'a `consumers: []`.
-[ ] Les implémentations sont intégrées dans le code métier de chaque consumer.
+[ ] Les implementations sont integrees dans le code metier de chaque consumer.
 [ ] Tests unitaires passent pour chaque design par consumer.
 
-## 8. Références
+## 8. References
 
 - **Design** : `designs/design-ops-loop/design.yaml`
 - **Design** : `designs/ecosystem-meta-coherence/design.yaml`
@@ -107,34 +107,34 @@ class DesignOpsLoopKix:
 
 ## 9. Proof-of-Life
 
-- [x] 2026-09-28T04:03:02+02:00 — PRD-MOC créé pour tous les consumers.
-- [x] 2026-09-28T04:03:02+02:00 — Implémentations déployées dans tous les consumers (126/126).
-- [x] 2026-09-28T04:03:02+02:00 — Hook pre-commit `validate_consumer_designs.py` déployé (14/14).
-- [x] 2026-09-28T04:03:02+02:00 — Dry-run causal passé : 100% prod-ready.
-- [ ] 2026-09-28T04:03:02+02:00 — Intégration fonctionnelle dans le code métier (en cours).
-- [ ] 2026-09-28T04:03:02+02:00 — Tests unitaires par consumer/design (en cours).
-- [ ] 2026-09-28T04:03:02+02:00 — Pipeline KIVA `unified-design-consumers` activé.
+- [x] 2026-09-28T04:03:02+02:00 -- PRD-MOC cree pour tous les consumers.
+- [x] 2026-09-28T04:03:02+02:00 -- Implementations deployees dans tous les consumers (126/126).
+- [x] 2026-09-28T04:03:02+02:00 -- Hook pre-commit `validate_consumer_designs.py` deploye (14/14).
+- [x] 2026-09-28T04:03:02+02:00 -- Dry-run causal passe : 100% prod-ready.
+- [ ] 2026-09-28T04:03:02+02:00 -- Integration fonctionnelle dans le code metier (en cours).
+- [ ] 2026-09-28T04:03:02+02:00 -- Tests unitaires par consumer/design (en cours).
+- [ ] 2026-09-28T04:03:02+02:00 -- Pipeline KIVA `unified-design-consumers` active.
 
-## 10. Implémentation
+## 10. Implementation
 
 | Livrable | Fichier | Statut |
 |----------|---------|--------|
-| Pipeline KIX | `src/kix/pipelines/design_ops_loop.py` | 🚀 Opérationnel |
-| Tests unitaires | `tests/unit/kix/test_design_ops_loop.py` | 🧪 Testé (6/6 passants) |
-| Package pipelines | `src/kix/pipelines/__init__.py` | 🚀 Opérationnel |
+| Pipeline KIX | `src/kix/pipelines/design_ops_loop.py` | 🚀 Operationnel |
+| Tests unitaires | `tests/unit/kix/test_design_ops_loop.py` | 🧪 Teste (6/6 passants) |
+| Package pipelines | `src/kix/pipelines/__init__.py` | 🚀 Operationnel |
 
 ---
 
 ## 11. Glossaire des statuts
 
-- 📄 Documenté : artifact présent, frontmatter valide
-- 🔧 Implémenté : code/config présent, pas encore testé
-- 🧪 Testé : tests unitaires passants
-- 🚀 Opérationnel : health-check OK, endpoint 200
-- 🟢 Actif : dépendants actifs vérifiés
-- 🟡 Passif : artifact présent, aucun dépendant actif
-- ⏸️ Pending : blocage governance/HITL/ADR documenté
-- ❌ Bloqué : dépendance manquante ou ADR refusé documenté
+- 📄 Documente : artifact present, frontmatter valide
+- 🔧 Implemente : code/config present, pas encore teste
+- 🧪 Teste : tests unitaires passants
+- 🚀 Operationnel : health-check OK, endpoint 200
+- 🟢 Actif : dependants actifs verifies
+- 🟡 Passif : artifact present, aucun dependant actif
+- ⏸️ Pending : blocage governance/HITL/ADR documente
+- ❌ Bloque : dependance manquante ou ADR refuse documente
 
 ---
 
@@ -143,38 +143,38 @@ class DesignOpsLoopKix:
 | Aspect | Évaluation |
 |--------|-----------|
 | Couverture PRD-MOC | 100% (100%) |
-| Couverture implémentation | 100% |
-| Implémentations valides | 100% |
-| Stubs détectés | 0% |
+| Couverture implementation | 100% |
+| Implementations valides | 100% |
+| Stubs detectes | 0% |
 | Dry-run causal | PASSED |
-| Hook déployé | 14/14 |
-| Intégration fonctionnelle | En cours (0%) |
+| Hook deploye | 14/14 |
+| Integration fonctionnelle | En cours (0%) |
 | Tests unitaires | En cours (0%) |
 
-**Verdict** : PRD-MOC pertinent et nécessaire. L'infrastructure de gouvernance est déployée. L'intégration fonctionnelle reste à réaliser.
+**Verdict** : PRD-MOC pertinent et necessaire. L'infrastructure de gouvernance est deployee. L'integration fonctionnelle reste à realiser.
 
-## X. Utilisation dans le code métier
+## X. Utilisation dans le code metier
 
-### Points d'intégration
+### Points d'integration
 
-| Fichier métier | Fonction/Classe | Design utilisé | Appel |
+| Fichier metier | Fonction/Classe | Design utilise | Appel |
 |----------------|-----------------|----------------|-------|
-| `Error` | - | design-ops-loop | `Error: [WinError 2] Le fichier spécifié est introuvable` |
+| `Error` | - | design-ops-loop | `Error: [WinError 2] Le fichier specifie est introuvable` |
 
 ### Preuve d'utilisation
 
 ```bash
-# Module d'intégration
+# Module d'integration
 D:\DO\WEB\TOOLS\L2-PLATFORM\KIX\kix\design_ops_loop_integration.py
 
-# Imports détectés
-Error: [WinError 2] Le fichier spécifié est introuvable
+# Imports detectes
+Error: [WinError 2] Le fichier specifie est introuvable
 ```
 
-### Proof-of-Life métier
+### Proof-of-Life metier
 
-- [x] 2026-09-28T21:46:06.886602+00:00 — Module d'intégration existant
-- [x] 2026-09-28T21:46:06.886602+00:00 — Import détecté dans le code métier
-- [ ] 2026-09-28T21:46:06.887038+00:00 — Test d'intégration métier passant
+- [x] 2026-09-28T21:46:06.886602+00:00 -- Module d'integration existant
+- [x] 2026-09-28T21:46:06.886602+00:00 -- Import detecte dans le code metier
+- [ ] 2026-09-28T21:46:06.887038+00:00 -- Test d'integration metier passant
 
 ---

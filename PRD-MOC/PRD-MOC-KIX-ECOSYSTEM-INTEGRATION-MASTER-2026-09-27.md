@@ -17,26 +17,26 @@ related_adr: ADR-2026-08-20-001-bootstrap-runner.md, ADR-2026-08-18-002-KIX-GENE
 related_moc: PRD-MOC-KIX-MASTER.md, PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md, PRD-MOC-KIX-BOOTSTRAP-RUNNER-2026-08-20.md, PRD-MOC-KIX-EXE-ORCHESTRATION-2026-09-24.md, PRD-MOC-VEX-KIX-BOUNDARIES-20260927.md
 ---
 
-# PRD MOC - KIX - Écosystème gerivdb — Intégration Maître
+# PRD MOC - KIX - Écosysteme gerivdb -- Integration Maître
 
 ## 1. RÉSUMÉ EXÉCUTIF
 
-Ce PRD MOC couvre l'**intégration complète de l'écosystème gerivdb via KIX** comme orchestrateur unique : 60 runners déclaratifs dans `config/runners.yaml`, 23 services actifs, 6 types de runners (`python`, `gateway-exe`, `zig-binary`, `rust`, `go`, `node`, `custom`), coordination bootstrap, ECOS CLI, WAZAA bus, monitoring global.
+Ce PRD MOC couvre l'**integration complete de l'ecosysteme gerivdb via KIX** comme orchestrateur unique : 60 runners declaratifs dans `config/runners.yaml`, 23 services actifs, 6 types de runners (`python`, `gateway-exe`, `zig-binary`, `rust`, `go`, `node`, `custom`), coordination bootstrap, ECOS CLI, WAZAA bus, monitoring global.
 
-**Rôle KIX** :
-- **Orchestrateur central** : API REST sur port 8800, registry déclaratif `runners.yaml`
-- **Bootstrap dédié** : runner `bootstrap` sur port 8810, séparation de `gateway-manager` (ADR-2026-08-20-001)
+**Role KIX** :
+- **Orchestrateur central** : API REST sur port 8800, registry declaratif `runners.yaml`
+- **Bootstrap dedie** : runner `bootstrap` sur port 8810, separation de `gateway-manager` (ADR-2026-08-20-001)
 - **Multi-langue** : runners Python, Zig, Gateway, Rust, Go, Node, Custom
-- **Cross-repo** : intégration de 30+ repos gerivdb via runners et dépendances
+- **Cross-repo** : integration de 30+ repos gerivdb via runners et dependances
 
-**Modèle de Rôle/Fonction** : voir `PRD-MOC-KIX-MASTER.md` section 2.3 pour :
+**Modele de Role/Fonction** : voir `PRD-MOC-KIX-MASTER.md` section 2.3 pour :
 - RBAC (admin/operator/viewer)
-- Functional roles (21 catégories, 60 runners)
+- Functional roles (21 categories, 60 runners)
 - Capability model (7 capabilities)
 - Dual-role pattern (TRIX/TRIXD/PLIX)
 - ActorSpec (base_orchestrator)
 
-**Source** : `config/runners.yaml` (60 runners), `docs/ecosystem-integration-guide.md`, ADR référencées
+**Source** : `config/runners.yaml` (60 runners), `docs/ecosystem-integration-guide.md`, ADR referencees
 **IntentHash** : `0xKIX_ECOSYSTEM_INTEGRATION_MASTER_20260927`
 **Statut** : **implemented** (2026-09-27)
 
@@ -46,20 +46,20 @@ Ce PRD MOC couvre l'**intégration complète de l'écosystème gerivdb via KIX**
 
 ### 2.1 Contexte
 
-KIX est l'orchestrateur unique de l'écosystème gerivdb. L'intégration écosystème repose sur :
-- `runners.yaml` comme source de vérité déclarative
-- `RunnerBase` + implémentations par type de runner
+KIX est l'orchestrateur unique de l'ecosysteme gerivdb. L'integration ecosysteme repose sur :
+- `runners.yaml` comme source de verite declarative
+- `RunnerBase` + implementations par type de runner
 - API REST KIX (`/runners`, `/runners/{name}/start|stop|restart|health|logs`)
-- Bootstrap runner dédié (port 8810) pour l'amorçage ordonné
-- ECOS CLI comme point d'entrée opérationnel
-- WAZAA bus pour la communication événementielle
+- Bootstrap runner dedie (port 8810) pour l'amorçage ordonne
+- ECOS CLI comme point d'entree operationnel
+- WAZAA bus pour la communication evenementielle
 
-### 2.2 Périmètre
+### 2.2 Perimetre
 
-| Composant | Rôle | État |
+| Composant | Role | État |
 |-----------|------|------|
 | **KIX orchestrateur** | API REST, registry, doctor, swarm status | ✅ **IMPLÉMENTÉ** |
-| **Bootstrap runner** | Séquence de boot, `/bootstrap/*`, watchdog | ✅ **IMPLÉMENTÉ** |
+| **Bootstrap runner** | Sequence de boot, `/bootstrap/*`, watchdog | ✅ **IMPLÉMENTÉ** |
 | **Python runners** | Services Python (KIX, WAZAA, KG-L, etc.) | ✅ **IMPLÉMENTÉ** |
 | **Zig runners** | TRIX runtime | ✅ **IMPLÉMENTÉ** |
 | **Gateway runners** | GATEWAY-MANAGER, ECOS-CLI, BatMCP | ✅ **IMPLÉMENTÉ** |
@@ -67,19 +67,19 @@ KIX est l'orchestrateur unique de l'écosystème gerivdb. L'intégration écosys
 | **Go runners** | GO-SERVICE | ✅ **IMPLÉMENTÉ** |
 | **Node runners** | JEVX, NODE-SERVICE | ✅ **IMPLÉMENTÉ** |
 | **Custom runners** | 30+ runners custom (cognitive, operational, governance) | ✅ **IMPLÉMENTÉ** |
-| **ECOS CLI integration** | Point d'entrée opérationnel | ✅ **IMPLÉMENTÉ** |
-| **WAZAA bus** | Communication événementielle | ✅ **IMPLÉMENTÉ** |
+| **ECOS CLI integration** | Point d'entree operationnel | ✅ **IMPLÉMENTÉ** |
+| **WAZAA bus** | Communication evenementielle | ✅ **IMPLÉMENTÉ** |
 | **Monitoring global** | `/doctor`, `/swarm/status`, alertes | ✅ **IMPLÉMENTÉ** |
 
 ### 2.3 Statistiques
 
-| Métrique | Valeur |
+| Metrique | Valeur |
 |----------|--------|
-| Total runners déclarés | 60 |
+| Total runners declares | 60 |
 | Runners actifs (`auto_start`) | 23 |
 | Runners bootstrap (`bootstrap: true`) | 2 (`kix`, `bootstrap`) |
 | Types de runners | 7 (`python`, `gateway-exe`, `zig-binary`, `rust`, `go`, `node`, `custom`) |
-| Repos gerivdb intégrés | 30+ |
+| Repos gerivdb integres | 30+ |
 
 ---
 
@@ -87,46 +87,46 @@ KIX est l'orchestrateur unique de l'écosystème gerivdb. L'intégration écosys
 
 ### 3.1 Principe Fondateur
 
-**KIX est l'orchestrateur unique de tous les services applicatifs de l'écosystème gerivdb**, tous langages confondus.
+**KIX est l'orchestrateur unique de tous les services applicatifs de l'ecosysteme gerivdb**, tous langages confondus.
 
 ```
-┌─────────────────────────────────────────────────────────────┐
+┌-------------------------------------------------------------┐
 │                    ECOS CLI / BOOT                           │
-└──────────────────────────────┬──────────────────────────────┘
+`-------------------------------┬------------------------------┘
                                 │
                                 ▼
-┌─────────────────────────────────────────────────────────────┐
+┌-------------------------------------------------------------┐
 │                     KIX (port 8800)                          │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
+│  ┌-------------┐  ┌-------------┐  ┌-------------┐         │
 │  │  RunnerBase │  │  Registry   │  │  Doctor     │         │
-│  └─────────────┘  └─────────────┘  └─────────────┘         │
+│  `--------------┘  `--------------┘  `--------------┘         │
 │         │                │                │                 │
 │         ▼                ▼                ▼                 │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │              runners.yaml (déclaratif)               │   │
-│  │  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐       │   │
+│  ┌-----------------------------------------------------┐   │
+│  │              runners.yaml (declaratif)               │   │
+│  │  ┌--------┐ ┌--------┐ ┌--------┐ ┌--------┐       │   │
 │  │  │ python │ │ gateway│ │  zig   │ │ rust   │ ...    │   │
-│  │  └────────┘ └────────┘ └────────┘ └────────┘       │   │
-│  └─────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
+│  │  `---------┘ `---------┘ `---------┘ `---------┘       │   │
+│  `------------------------------------------------------┘   │
+`--------------------------------------------------------------┘
                                 │
                                 ▼
-┌─────────────────────────────────────────────────────────────┐
+┌-------------------------------------------------------------┐
 │                  bootstrap (port 8810)                        │
-│  • CHECK: gateway-manager, KIX, trixd, wazaa, flex-api      │
-│  • START: arbiter, wazaa bus                                │
-│  • REGISTER: enregistrement dans KIX                         │
-│  • PUBLISH: /bootstrap/ready                                 │
-└─────────────────────────────────────────────────────────────┘
+│  - CHECK: gateway-manager, KIX, trixd, wazaa, flex-api      │
+│  - START: arbiter, wazaa bus                                │
+│  - REGISTER: enregistrement dans KIX                         │
+│  - PUBLISH: /bootstrap/ready                                 │
+`--------------------------------------------------------------┘
                                 │
                                 ▼
-┌─────────────────────────────────────────────────────────────┐
+┌-------------------------------------------------------------┐
 │                    WAZAA Bus (port 1873)                     │
-│  • Événements bootstrap, health, alertes                     │
-└─────────────────────────────────────────────────────────────┘
+│  - Évenements bootstrap, health, alertes                     │
+`--------------------------------------------------------------┘
 ```
 
-### 3.2 Matrice de Responsabilités
+### 3.2 Matrice de Responsabilites
 
 | Domaine | KIX (8800) | bootstrap (8810) | gateway-manager (9000) | WAZAA (1873) |
 |---------|-----------|------------------|----------------------|--------------|
@@ -136,7 +136,7 @@ KIX est l'orchestrateur unique de l'écosystème gerivdb. L'intégration écosys
 | **KIXRegistrar** | ❌ | ✅ Responsable | ❌ | ❌ |
 | **BDCP proxy / Clapet** | ❌ | ❌ | ✅ Responsable | ❌ |
 | **PAT rotation** | ❌ | ❌ | ✅ Responsable | ❌ |
-| **Bus événementiel** | ❌ | ❌ | ❌ | ✅ Responsable |
+| **Bus evenementiel** | ❌ | ❌ | ❌ | ✅ Responsable |
 | **API REST** | ✅ Responsable | ❌ | ❌ | ❌ |
 | **Health checks** | ✅ Responsable | ✅ Responsable | ❌ | ❌ |
 | **Self-healing** | ✅ Doctor | ✅ Watchdog | ❌ | ❌ |
@@ -183,7 +183,7 @@ KIX est l'orchestrateur unique de l'écosystème gerivdb. L'intégration écosys
 
 ### 4.2 Runners Custom (Cognitive / Operational / Governance)
 
-| Runner | Repo | Rôle | Port | Type | Statut |
+| Runner | Repo | Role | Port | Type | Statut |
 |--------|------|------|------|------|--------|
 | gitex | gerivdb/gitex | governance | 0 | custom | ⏸️ Inactif |
 | repoxt | gerivdb/repoxt | governance | 0 | custom | ⏸️ Inactif |
@@ -216,28 +216,28 @@ KIX est l'orchestrateur unique de l'écosystème gerivdb. L'intégration écosys
 | infx | gerivdb/infx | citizen | 0 | custom | ⏸️ Inactif |
 | codedb-e5620 | gerivdb/codedb-e5620 | infrastructure | 0 | custom | ⏸️ Inactif |
 
-### 4.3 Modèle de Rôle/Fonction KIX
+### 4.3 Modele de Role/Fonction KIX
 
-Ce PRD MOC s'aligne sur le modèle de rôle/fonction défini dans `PRD-MOC-KIX-MASTER.md` section 2.3 :
+Ce PRD MOC s'aligne sur le modele de role/fonction defini dans `PRD-MOC-KIX-MASTER.md` section 2.3 :
 
 - **RBAC** : `admin`, `operator`, `viewer` (JWT dans `src/auth.py`)
-- **Functional Roles** : 21 catégories (`orchestrator`, `cognitive`, `governance`, `infrastructure`, etc.)
+- **Functional Roles** : 21 categories (`orchestrator`, `cognitive`, `governance`, `infrastructure`, etc.)
 - **Capability Model** : 7 capabilities (`runner-lifecycle`, `process-manager`, `pid-tracker`, `exe-launcher`, etc.)
 - **Dual-Role Pattern** : TRIX/TRIXD/PLIX = RLM + TLM
-- **ActorSpec** : intégration via `KIXProcessManagerAdapter`
+- **ActorSpec** : integration via `KIXProcessManagerAdapter`
 
-Les runners listés dans les sections 4.1 et 4.2 utilisent les `meta.role` définis dans `config/runners.yaml` et `unified-design/designs/kix/design.yaml`.
+Les runners listes dans les sections 4.1 et 4.2 utilisent les `meta.role` definis dans `config/runners.yaml` et `unified-design/designs/kix/design.yaml`.
 
-### 4.4 Écosystème Complet (SOT)
+### 4.4 Écosysteme Complet (SOT)
 
-D'après `known_repositories.yaml` (SOT), 34 repos gerivdb sont liés à l'écosystème KIX :
+D'apres `known_repositories.yaml` (SOT), 34 repos gerivdb sont lies à l'ecosysteme KIX :
 
-| Repo | Strate | Statut | Intégration KIX |
+| Repo | Strate | Statut | Integration KIX |
 |------|--------|--------|-----------------|
 | KIX | L2-PLATFORM | active | ✅ Orchestrateur central |
 | GATEWAY-MANAGER | L1-INFRA | active | ✅ Proxy/Clapet |
 | TRIX | L4-TOOLS | active | ✅ Runtime Zig |
-| WAZAA | L4-TOOLS | active | ✅ Bus événementiel |
+| WAZAA | L4-TOOLS | active | ✅ Bus evenementiel |
 | FLEX | L4-TOOLS | active | ✅ Cache/Flex |
 | KG-L | L4-TOOLS | active | ✅ Knowledge Graph |
 | JEVX | L4-TOOLS | active | ✅ Decision Engine |
@@ -261,47 +261,47 @@ D'après `known_repositories.yaml` (SOT), 34 repos gerivdb sont liés à l'écos
 
 ## 5. CROSS-REPO DEPENDENCIES
 
-### 5.1 Matrice de Dépendances
+### 5.1 Matrice de Dependances
 
 | Source | Cible | Type | Protocole | Bootstrap Requis |
 |--------|-------|------|-----------|-----------------|
-| KIX → GATEWAY-MANAGER | Orchestration → Proxy | gateway-exe | REST + WAZAA | ❌ |
-| KIX → TRIX | Orchestration → Runtime Zig | zig-binary | REST + WAZAA | ❌ |
-| KIX → WAZAA | Orchestration → Bus événementiel | python | WAZAA Bus | ❌ |
-| KIX → FLEX | Orchestration → Cache/Flex | python | REST + WAZAA | ❌ |
-| KIX → KG-L | Orchestration → Knowledge Graph | python | REST | ❌ |
-| KIX → JEVX | Orchestration → Decision Engine | node | REST | ❌ |
-| KIX → BAT-MCP | Orchestration → MCP Gateway | gateway-exe | REST | ❌ |
-| KIX → ECOS-CLI | Orchestration → LLM Gateway | gateway-exe | REST | ❌ |
-| KIX → AGENT-MANAGER | Orchestration → Agent Manager | gateway-exe | REST | ❌ |
-| KIX → NEXUS | Orchestration → Governance | custom | REST | ❌ |
-| bootstrap → gateway-manager | Bootstrap → Proxy | gateway-exe | TCP/HTTP | ✅ Requis |
-| bootstrap → KIX | Bootstrap → Orchestrateur | python | REST | ✅ Requis |
-| bootstrap → TRIX | Bootstrap → Runtime Zig | zig-binary | TCP/HTTP | ✅ Requis |
-| bootstrap → WAZAA | Bootstrap → Bus événementiel | python | TCP | ✅ Requis |
-| bootstrap → flex-api | Bootstrap → Cache/Flex | python | HTTP | ❌ Optionnel |
+| KIX -> GATEWAY-MANAGER | Orchestration -> Proxy | gateway-exe | REST + WAZAA | ❌ |
+| KIX -> TRIX | Orchestration -> Runtime Zig | zig-binary | REST + WAZAA | ❌ |
+| KIX -> WAZAA | Orchestration -> Bus evenementiel | python | WAZAA Bus | ❌ |
+| KIX -> FLEX | Orchestration -> Cache/Flex | python | REST + WAZAA | ❌ |
+| KIX -> KG-L | Orchestration -> Knowledge Graph | python | REST | ❌ |
+| KIX -> JEVX | Orchestration -> Decision Engine | node | REST | ❌ |
+| KIX -> BAT-MCP | Orchestration -> MCP Gateway | gateway-exe | REST | ❌ |
+| KIX -> ECOS-CLI | Orchestration -> LLM Gateway | gateway-exe | REST | ❌ |
+| KIX -> AGENT-MANAGER | Orchestration -> Agent Manager | gateway-exe | REST | ❌ |
+| KIX -> NEXUS | Orchestration -> Governance | custom | REST | ❌ |
+| bootstrap -> gateway-manager | Bootstrap -> Proxy | gateway-exe | TCP/HTTP | ✅ Requis |
+| bootstrap -> KIX | Bootstrap -> Orchestrateur | python | REST | ✅ Requis |
+| bootstrap -> TRIX | Bootstrap -> Runtime Zig | zig-binary | TCP/HTTP | ✅ Requis |
+| bootstrap -> WAZAA | Bootstrap -> Bus evenementiel | python | TCP | ✅ Requis |
+| bootstrap -> flex-api | Bootstrap -> Cache/Flex | python | HTTP | ❌ Optionnel |
 
-### 5.2 Dépendances par Couche
+### 5.2 Dependances par Couche
 
-| Couche | Dépend de | Dépend vers |
+| Couche | Depend de | Depend vers |
 |--------|-----------|-------------|
-| L0-CANON | — | GOVERNANCE-HUB, ONTOLOGY, BLO, HERMES, VERSES |
+| L0-CANON | -- | GOVERNANCE-HUB, ONTOLOGY, BLO, HERMES, VERSES |
 | L1-INFRA | L0-CANON | KIVA-CLI, LLM-CORE, LOOPX, ECOS-CLI, GATEWAY-MANAGER |
 | L2-PLATFORM | L1-INFRA | KIX, PLIX, KEEL, CURX, BIRDY, EMIT |
 | L3-CITIZENS | L2-PLATFORM | FLUENCE, WAZAA, LLUX, TALEX, STYX, BUZZ-X |
 | L4-TOOLS | L3-CITIZENS | TRIX, FLEX, KG-L, N243, CTULU, BAT-MCP |
-| L5-ARCHIVE | — | archives |
+| L5-ARCHIVE | -- | archives |
 
 ---
 
 ## 6. INTÉGRATION ECOS CLI
 
-### 6.1 Point d'Entrée Opérationnel
+### 6.1 Point d'Entree Operationnel
 
-ECOS CLI (`C:\DevTools\bin\ecos.ps1`) est le point d'entrée principal pour opérer l'écosystème :
+ECOS CLI (`C:\DevTools\bin\ecos.ps1`) est le point d'entree principal pour operer l'ecosysteme :
 
 ```powershell
-# Syntaxe recommandée
+# Syntaxe recommandee
 ecos status
 ecos health
 ecos registry
@@ -314,17 +314,17 @@ powershell -File "C:\DevTools\bin\ecos.ps1" registry
 powershell -File "C:\DevTools\bin\ecos.ps1" sync
 ```
 
-### 6.2 Séquence de Démarrage
+### 6.2 Sequence de Demarrage
 
 ```
 ECOS CLI
-  → bootstrap (port 8810) /bootstrap/ready (polling 30s)
-    → gateway-manager (port 9000) /health
-    → KIX (port 8800) /health
-    → trixd (port 7243) /health
-    → wazaa (port 1873) /health
-  → KIX auto_start runners (bootstrap puis non-bootstrap)
-  → Écosystème opérationnel
+  -> bootstrap (port 8810) /bootstrap/ready (polling 30s)
+    -> gateway-manager (port 9000) /health
+    -> KIX (port 8800) /health
+    -> trixd (port 7243) /health
+    -> wazaa (port 1873) /health
+  -> KIX auto_start runners (bootstrap puis non-bootstrap)
+  -> Écosysteme operationnel
 ```
 
 ### 6.3 Budget et Timeouts
@@ -340,32 +340,32 @@ ECOS CLI
 
 ## 7. BOOTSTRAP COORDINATION
 
-### 7.1 Rôle du Bootstrap Runner
+### 7.1 Role du Bootstrap Runner
 
 Le bootstrap runner (port 8810) est responsable de :
-- Vérifier les dépendances critiques (`gateway-manager`, `KIX`, `trixd`, `wazaa`)
-- Démarrer les services manquants (`arbiter`, `wazaa bus`)
+- Verifier les dependances critiques (`gateway-manager`, `KIX`, `trixd`, `wazaa`)
+- Demarrer les services manquants (`arbiter`, `wazaa bus`)
 - Enregistrer les services dans KIX via `KIXRegistrar`
-- Publier l'état de readiness via `/bootstrap/ready`
+- Publier l'etat de readiness via `/bootstrap/ready`
 - Surveillance continue via `BootstrapWatchdog` (intervalle 3s)
 
 ### 7.2 Endpoints Bootstrap
 
-| Endpoint | Méthode | Description | Response |
+| Endpoint | Methode | Description | Response |
 |----------|---------|-------------|----------|
 | `/health` | GET | Basic health check | `200 OK` |
-| `/bootstrap/status` | GET | Status détaillé de tous les services | `200 OK` + JSON |
-| `/bootstrap/ready` | GET | Check si système prêt | `200 OK` ou `503` |
-| `/bootstrap/start` | POST | Déclencher démarrage manuel | `202 Accepted` |
+| `/bootstrap/status` | GET | Status detaille de tous les services | `200 OK` + JSON |
+| `/bootstrap/ready` | GET | Check si systeme pret | `200 OK` ou `503` |
+| `/bootstrap/start` | POST | Declencher demarrage manuel | `202 Accepted` |
 | `/bootstrap/register` | POST | Enregistrer service dans KIX | `200 OK` / `400` / `502` |
 | `/bootstrap/monitor` | GET | Monitoring alertes | `200 OK` ou `503` |
 
 ### 7.3 Watchdog Auto-Cicatrisation
 
 - Intervalle : 3s (configurable via `BOOTSTRAP_CHECK_INTERVAL`)
-- Re-séquence automatique si dépendance requise down
+- Re-sequence automatique si dependance requise down
 - Budget recovery < 10s (PRD-MOC-GEN-002 §11)
-- Lock pour éviter les séquences concurrentes
+- Lock pour eviter les sequences concurrentes
 
 ---
 
@@ -374,30 +374,30 @@ Le bootstrap runner (port 8810) est responsable de :
 ### 8.1 Architecture
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   KIX       │────▶│   WAZAA     │────▶│  Services   │
+┌-------------┐     ┌-------------┐     ┌-------------┐
+│   KIX       │----▶│   WAZAA     │----▶│  Services   │
 │ (8800)      │     │  Bus (1873) │     │  KIX        │
-└─────────────┘     └─────────────┘     └─────────────┘
+`--------------┘     `--------------┘     `--------------┘
        │                                       │
-       │   Événements:                         │
+       │   Évenements:                         │
        │   - bootstrap.ready                   │
        │   - health.status                     │
        │   - alert.critical                    │
        ▼                                       ▼
-┌─────────────┐                        ┌─────────────┐
+┌-------------┐                        ┌-------------┐
 │   Agent     │                        │   VEX       │
 │  Manager    │                        │  (L3)       │
-└─────────────┘                        └─────────────┘
+`--------------┘                        `--------------┘
 ```
 
-### 8.2 Points d'Intégration
+### 8.2 Points d'Integration
 
 | Point | Description | Protocole |
 |-------|-------------|-----------|
-| KIX → WAZAA | Publication événements | WAZAA Bus TCP (1873) |
-| bootstrap → WAZAA | Événements bootstrap | WAZAA Bus TCP (1873) |
-| Agent Manager → WAZAA | Swarm status | WAZAA Bus TCP (1873) |
-| VEX → WAZAA | Coordination L3 | WAZAA Bus TCP (1873) |
+| KIX -> WAZAA | Publication evenements | WAZAA Bus TCP (1873) |
+| bootstrap -> WAZAA | Évenements bootstrap | WAZAA Bus TCP (1873) |
+| Agent Manager -> WAZAA | Swarm status | WAZAA Bus TCP (1873) |
+| VEX -> WAZAA | Coordination L3 | WAZAA Bus TCP (1873) |
 
 ---
 
@@ -405,14 +405,14 @@ Le bootstrap runner (port 8810) est responsable de :
 
 ### 9.1 Endpoints KIX
 
-| Endpoint | Méthode | Description |
+| Endpoint | Methode | Description |
 |----------|---------|-------------|
 | `/health` | GET | Health-check global KIX |
 | `/healthz` | GET | Liveness probe |
 | `/readyz` | GET | Readiness probe |
-| `/doctor` | GET | Vérification complète de tous les runners |
-| `/doctor/run` | POST | Redémarre les runners en erreur |
-| `/swarm/status` | GET | État agrégé pour Agent Manager |
+| `/doctor` | GET | Verification complete de tous les runners |
+| `/doctor/run` | POST | Redemarre les runners en erreur |
+| `/swarm/status` | GET | État agrege pour Agent Manager |
 | `/runners` | GET | Liste tous les runners |
 | `/runners/{name}/status` | GET | Status d'un runner |
 | `/runners/{name}/health` | GET | Health-check d'un runner |
@@ -420,10 +420,10 @@ Le bootstrap runner (port 8810) est responsable de :
 
 ### 9.2 Endpoints Bootstrap
 
-| Endpoint | Méthode | Description |
+| Endpoint | Methode | Description |
 |----------|---------|-------------|
 | `/health` | GET | Health-check bootstrap |
-| `/bootstrap/status` | GET | Status détaillé |
+| `/bootstrap/status` | GET | Status detaille |
 | `/bootstrap/ready` | GET | Ready global |
 | `/bootstrap/monitor` | GET | Monitoring alertes |
 
@@ -431,24 +431,24 @@ Le bootstrap runner (port 8810) est responsable de :
 
 ## 10. GOUVERNANCE
 
-### 10.1 Règles d'Acceptation
+### 10.1 Regles d'Acceptation
 
 - [x] Review par Lead KIX
 - [x] Review par Lead GATEWAY-MANAGER
 - [x] Review par Lead WAZAA
 - [x] Review par Lead TRIX
 - [x] Validation ADR par Team DevTools Architecture
-- [x] Tests d'intégration Phase 1 passants
+- [x] Tests d'integration Phase 1 passants
 
 ### 10.2 Gates MOX
 
-| Gate | Critère | Statut |
+| Gate | Critere | Statut |
 |------|---------|--------|
-| **P-301** | Schéma YAML `runners.yaml` valide | ✅ VALIDÉ |
+| **P-301** | Schema YAML `runners.yaml` valide | ✅ VALIDÉ |
 | **P-302** | Forward references valides | ✅ VALIDÉ |
-| **P-303** | Tous runners référencés existent | ✅ VALIDÉ |
+| **P-303** | Tous runners references existent | ✅ VALIDÉ |
 | **P-304** | Endpoints `/bootstrap/*` fonctionnels | ✅ VALIDÉ |
-| **P-305** | ECOS CLI integration testée | ✅ VALIDÉ |
+| **P-305** | ECOS CLI integration testee | ✅ VALIDÉ |
 | **P-306** | WAZAA bus connectivity | ✅ VALIDÉ |
 
 ### 10.3 Enforcement Mode
@@ -465,19 +465,19 @@ enforcement_mode:
 
 ### 10.4 Points d'Attention / Risques
 
-| Risque | Impact | Probabilité | Mitigation |
+| Risque | Impact | Probabilite | Mitigation |
 |--------|--------|-------------|------------|
-| Bootstrap circulaire (KIX s'orchestre lui-même) | HIGH | MOYENNE | `bootstrap: true` explicite + `bootstrap.sh` externe |
-| Migration `cognitive_runners.py` cassée | HIGH | FAIBLE | Phase 1 garde le code legacy, migration progressive |
-| Doctor faux négatifs (timeout trop court) | LOW | MOYENNE | Timeout configurable + logs détaillés |
-| BUZZ-X non fonctionnel (Phase 4 bloquée) | MEDIUM | CERTAINE | Exclu de la portée initiale |
+| Bootstrap circulaire (KIX s'orchestre lui-meme) | HIGH | MOYENNE | `bootstrap: true` explicite + `bootstrap.sh` externe |
+| Migration `cognitive_runners.py` cassee | HIGH | FAIBLE | Phase 1 garde le code legacy, migration progressive |
+| Doctor faux negatifs (timeout trop court) | LOW | MOYENNE | Timeout configurable + logs detailles |
+| BUZZ-X non fonctionnel (Phase 4 bloquee) | MEDIUM | CERTAINE | Exclu de la portee initiale |
 | WAZAA bus unavailable | HIGH | MOYENNE | Retry + fallback mode degraded |
 | Custom runners sans port (0) | MEDIUM | FAIBLE | Validation YAML + health_path requis |
-| Endpoints non protégés par capability | MEDIUM | FAIBLE | 29 endpoints ajoutés @requires_capability (2026-09-27) |
+| Endpoints non proteges par capability | MEDIUM | FAIBLE | 29 endpoints ajoutes @requires_capability (2026-09-27) |
 
-### 10.5 État d'Intégration par Repo (2026-09-27)
+### 10.5 État d'Integration par Repo (2026-09-27)
 
-| Repo | Strate | Statut | Intégration KIX | runner_type | working_dir | entrypoint |
+| Repo | Strate | Statut | Integration KIX | runner_type | working_dir | entrypoint |
 |------|--------|--------|-----------------|-------------|-------------|------------|
 | KIX | L2-PLATFORM | active | ✅ Complet | python | ✅ | ✅ |
 | GATEWAY-MANAGER | L1-INFRA | active | ✅ Complet | gateway-exe | ✅ | ✅ |
@@ -486,7 +486,7 @@ enforcement_mode:
 | FLEX | L4-TOOLS | active | ✅ Complet | python/rust | ✅ | ✅ |
 | KG-L | L4-TOOLS | active | ✅ Complet | python | ✅ | ✅ |
 | JEVX | L4-TOOLS | active | ✅ Complet | node | ✅ | ✅ |
-| VEX | L3-CITIZENS | active | ✅ Documenté | - | ✅ | ✅ |
+| VEX | L3-CITIZENS | active | ✅ Documente | - | ✅ | ✅ |
 | KIVA-CLI | L1-INFRA | active | ⚠️ Partiel | - | ✅ | - |
 | TALEX | L4-TOOLS | active | ⚠️ Partiel | python | ✅ | ⚠️ |
 | N243 | L4-TOOLS | active | ⚠️ Partiel | custom | ✅ | ⚠️ |
@@ -498,31 +498,31 @@ enforcement_mode:
 | ROOTX | L4-TOOLS | active | ⚠️ Partiel | custom | ✅ | ⚠️ |
 | NEXUS | L1-INFRA | active | ⚠️ Partiel | custom | ✅ | ⚠️ |
 | ANAmORPHOSER | L0-CANON | active | ⚠️ Partiel | python | ✅ | ⚠️ |
-| RLM-* | L2-PLATFORM | active | ✅ Configuré | custom/python | ✅ | ⚠️ |
-| KIVA | L1-INFRA | active | 📋 Documenté | - | ✅ | - |
-| BRAIN | L0-CANON | active | 📋 Documenté | - | ✅ | - |
-| LLM-CORE | L1-INFRA | dormant | 📋 Documenté | - | ✅ | - |
-| CONTAINER-ORCHESTRATOR | L1-INFRA | dormant | 📋 Documenté | - | - | - |
-| MATRIX | L0-CANON | dormant | 📋 Documenté | - | - | - |
+| RLM-* | L2-PLATFORM | active | ✅ Configure | custom/python | ✅ | ⚠️ |
+| KIVA | L1-INFRA | active | 📋 Documente | - | ✅ | - |
+| BRAIN | L0-CANON | active | 📋 Documente | - | ✅ | - |
+| LLM-CORE | L1-INFRA | dormant | 📋 Documente | - | ✅ | - |
+| CONTAINER-ORCHESTRATOR | L1-INFRA | dormant | 📋 Documente | - | - | - |
+| MATRIX | L0-CANON | dormant | 📋 Documente | - | - | - |
 
-**Légende** :
-- ✅ Complet : runner déclaré, working_dir/entrypoint configurés, tests passants
-- ⚠️ Partiel : runner déclaré, working_dir configuré, entrypoint à vérifier
-- 📋 Documenté : repo référencé dans SOT, pas encore de runner KIX
+**Legende** :
+- ✅ Complet : runner declare, working_dir/entrypoint configures, tests passants
+- ⚠️ Partiel : runner declare, working_dir configure, entrypoint à verifier
+- 📋 Documente : repo reference dans SOT, pas encore de runner KIX
 - ❌ Absent : pas de runner, pas de configuration
 
 ---
 
 ## 11. PREUVES & RÉFÉRENCES
 
-### 11.1 Preuves d'Exécution
+### 11.1 Preuves d'Execution
 
 | Preuve | Description |
 |--------|-------------|
-| `config/runners.yaml` | 60 runners déclaratifs, 23 actifs |
-| `services/bootstrap_runner.py` | Bootstrap runner implémenté (port 8810) |
-| `runners/*.py` | 7 implémentations de runners |
-| `src/app.py` | API REST KIX complète |
+| `config/runners.yaml` | 60 runners declaratifs, 23 actifs |
+| `services/bootstrap_runner.py` | Bootstrap runner implemente (port 8810) |
+| `runners/*.py` | 7 implementations de runners |
+| `src/app.py` | API REST KIX complete |
 | `tests/test_*.py` | 79+ tests passants |
 | `src/capability.py` | Capability model (7 capabilities) |
 | `src/auth.py` | `requires_capability` decorator |
@@ -530,17 +530,17 @@ enforcement_mode:
 | `/health` KIX | 200 OK |
 | `/health` bootstrap | 200 OK |
 | `/bootstrap/status` | 200 OK |
-| `/bootstrap/ready` | 503 attendu (dépendances manquantes) |
+| `/bootstrap/ready` | 503 attendu (dependances manquantes) |
 | `/bootstrap/monitor` | 503 avec alertes (watchdog actif) |
 | `pytest tests/test_capability.py tests/test_auth.py` | 14 passed |
 | `pytest tests/test_runners_integration.py` | 13 passed |
 | `validate_designs.py` | designs/kix/design.yaml valide |
 | Capability model | 28 capabilities dans `src/capability.py` |
-| Endpoints protégés | 24 endpoints avec `@requires_capability` |
+| Endpoints proteges | 24 endpoints avec `@requires_capability` |
 
-### 11.2 Références Croisées
+### 11.2 References Croisees
 
-| Type | Référence |
+| Type | Reference |
 |------|-----------|
 | **PRD MOC Master** | PRD-MOC-KIX-MASTER.md |
 | **PRD MOC Multi-lang** | PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md |
@@ -558,7 +558,7 @@ enforcement_mode:
 | **ADR Generic Runner** | ADR-2026-08-18-002-KIX-GENERIC-RUNNER-WRAPPER.md |
 | **ADR Orchestrator** | ADR-2026-07-27-016-kix-orchestrator |
 | **ADR Token** | ADR-2026-08-10-001-single-global-github-token |
-| **Guide Écosystème** | docs/ecosystem-integration-guide.md |
+| **Guide Écosysteme** | docs/ecosystem-integration-guide.md |
 | **Registry** | config/runners.yaml |
 | **Capability Model** | src/capability.py |
 | **Auth/Capability Decorator** | src/auth.py |
@@ -571,28 +571,28 @@ enforcement_mode:
 ### 12.1 Thought Chain
 
 ```yaml
-- source: "Observation : 60 runners déclaratifs dans runners.yaml, 23 actifs, 7 types de runners"
+- source: "Observation : 60 runners declaratifs dans runners.yaml, 23 actifs, 7 types de runners"
   artifact: "PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER-2026-09-27.md"
   intent_hash: "0xKIX_ECOSYSTEM_INTEGRATION_MASTER_20260927"
 
-- source: "Implémentation : bootstrap runner, multi-lang runners, ECOS CLI integration, WAZAA bus"
-  artifact: "Intégration écosystème complète"
+- source: "Implementation : bootstrap runner, multi-lang runners, ECOS CLI integration, WAZAA bus"
+  artifact: "Integration ecosysteme complete"
   intent_hash: "0xKIX_ECOSYSTEM_INTEGRATION_MASTER_20260927"
 
-- source: "Validation : endpoints /health, /bootstrap/* fonctionnels, watchdog actif, 60 runners configurés"
-  artifact: "Preuves d'exécution"
+- source: "Validation : endpoints /health, /bootstrap/* fonctionnels, watchdog actif, 60 runners configures"
+  artifact: "Preuves d'execution"
   intent_hash: "0xKIX_ECOSYSTEM_INTEGRATION_MASTER_20260927"
 ```
 
 ### 12.2 Gates
 
-| Gate | Critère | Statut |
+| Gate | Critere | Statut |
 |------|---------|--------|
-| **P-301** | Schéma YAML `runners.yaml` valide | ✅ VALIDÉ |
+| **P-301** | Schema YAML `runners.yaml` valide | ✅ VALIDÉ |
 | **P-302** | Forward references valides | ✅ VALIDÉ |
-| **P-303** | Tous runners référencés existent | ✅ VALIDÉ |
+| **P-303** | Tous runners references existent | ✅ VALIDÉ |
 | **P-304** | Endpoints `/bootstrap/*` fonctionnels | ✅ VALIDÉ |
-| **P-305** | ECOS CLI integration testée | ✅ VALIDÉ |
+| **P-305** | ECOS CLI integration testee | ✅ VALIDÉ |
 | **P-306** | WAZAA bus connectivity | ✅ VALIDÉ |
 
 ---
@@ -601,4 +601,4 @@ enforcement_mode:
 **Statut** : **implemented**  
 **Date** : 2026-09-27
 
-*PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER — implemented — 2026-09-27*
+*PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER -- implemented -- 2026-09-27*

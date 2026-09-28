@@ -10,17 +10,17 @@ related_adr: ADR-2026-08-18-002-KIX-GENERIC-RUNNER-WRAPPER.md, ADR-2026-07-28-00
 related_moc: PRD-MOC-KIX-MASTER.md, PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md
 ---
 
-# PRD MOC - KIX - Intégration TRIX
+# PRD MOC - KIX - Integration TRIX
 
 ## 1. RÉSUMÉ EXÉCUTIF
 
-Ce PRD MOC couvre l'intégration de **TRIX** (gerivdb/TRIX) dans KIX comme runner de type `zig-binary`.
+Ce PRD MOC couvre l'integration de **TRIX** (gerivdb/TRIX) dans KIX comme runner de type `zig-binary`.
 
-**Rôle** : Minimal Linux syscall dispatch runtime for Windows/WSL1 (HP Z600) -- Zig runtime
+**Role** : Minimal Linux syscall dispatch runtime for Windows/WSL1 (HP Z600) -- Zig runtime
 **Port** : 7243 (trixd), 0 (trix custom)
 **Type** : zig-binary / custom
 **Strate** : L4-TOOLS
-**Statut** : ✅ **Intégré**
+**Statut** : ✅ **Integre**
 
 ## 2. CONFIGURATION RUNNER
 
@@ -50,19 +50,19 @@ TRIX/TRIXD/PLIX appartiennent à la fois aux familles **RLM** et **TLM** :
 | `trix` | 0 | RLM + TLM | Service TRIX (legacy) |
 | `plix` | 8788 | RLM + TLM | LARQL-243 codec |
 
-Source : `service.py` — `dual_role = port in SERVICE_MAP`
+Source : `service.py` -- `dual_role = port in SERVICE_MAP`
 
 ## 4. POINTS D'INTÉGRATION KIX
 
 | Point | Protocole | Description |
 |-------|-----------|-------------|
-| KIX → TRIX | REST + WAZAA | Orchestration runners Zig |
-| bootstrap → TRIX | TCP/HTTP | Vérification dépendance critique |
-| KIX → PLIX | REST | LARQL codec integration |
+| KIX -> TRIX | REST + WAZAA | Orchestration runners Zig |
+| bootstrap -> TRIX | TCP/HTTP | Verification dependance critique |
+| KIX -> PLIX | REST | LARQL codec integration |
 
 ## 5. ENDPOINTS UTILISÉS PAR KIX
 
-| Endpoint | Méthode | Usage KIX |
+| Endpoint | Methode | Usage KIX |
 |----------|---------|-----------|
 | `/health` | GET | Health check |
 | `/dispatch` | POST | Dispatch TLM requests |
@@ -85,10 +85,10 @@ Source : `service.py` — `dual_role = port in SERVICE_MAP`
 
 ## 8. PREUVE-OF-LIFE
 
-- [x] 2026-09-27T23:00:00+02:00 — Runner `trixd` configuré dans `runners.yaml`
-- [x] 2026-09-27T23:00:00+02:00 — ZigRunner implémenté dans `runners/zig_runner.py`
-- [x] 2026-09-27T23:00:00+02:00 — Dual-role pattern documenté dans PRD-MOC-KIX-MASTER.md
-- [x] 2026-09-27T23:00:00+02:00 — Capability model appliqué
+- [x] 2026-09-27T23:00:00+02:00 -- Runner `trixd` configure dans `runners.yaml`
+- [x] 2026-09-27T23:00:00+02:00 -- ZigRunner implemente dans `runners/zig_runner.py`
+- [x] 2026-09-27T23:00:00+02:00 -- Dual-role pattern documente dans PRD-MOC-KIX-MASTER.md
+- [x] 2026-09-27T23:00:00+02:00 -- Capability model applique
 
 ## 9. RÉFÉRENCES
 
@@ -96,7 +96,7 @@ Source : `service.py` — `dual_role = port in SERVICE_MAP`
 - `PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md` : Multi-lang ecosystem
 - `PRD-MOC-KIX-EXE-ORCHESTRATION-2026-09-24.md` : Exe orchestration
 - `config/runners.yaml` : Configuration runner
-- `runners/zig_runner.py` : Implémentation ZigRunner
+- `runners/zig_runner.py` : Implementation ZigRunner
 - `service.py` : Legacy service map (dual_role)
 
 ---
@@ -105,4 +105,4 @@ Source : `service.py` — `dual_role = port in SERVICE_MAP`
 **Statut** : **implemented**
 **Date** : 2026-09-27
 
-*PRD-MOC-KIX-TRIX — implemented — 2026-09-27*
+*PRD-MOC-KIX-TRIX -- implemented -- 2026-09-27*

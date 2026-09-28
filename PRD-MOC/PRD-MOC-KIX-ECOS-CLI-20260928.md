@@ -10,17 +10,17 @@ related_adr: ADR-2026-08-18-002-KIX-GENERIC-RUNNER-WRAPPER.md, ADR-2026-08-20-00
 related_moc: PRD-MOC-KIX-MASTER.md, PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER-2026-09-27.md, PRD-MOC-KIX-BOOTSTRAP-RUNNER-2026-08-20.md
 ---
 
-# PRD MOC - KIX - Intégration ECOS-CLI
+# PRD MOC - KIX - Integration ECOS-CLI
 
 ## 1. RÉSUMÉ EXÉCUTIF
 
-Ce PRD MOC couvre l'intégration de **ECOS-CLI** (gerivdb/ECOS-CLI) dans KIX comme runner de type `gateway-exe`.
+Ce PRD MOC couvre l'integration de **ECOS-CLI** (gerivdb/ECOS-CLI) dans KIX comme runner de type `gateway-exe`.
 
-**Rôle** : Point d'entrée opérationnel, LLM gateway, BDCP
+**Role** : Point d'entree operationnel, LLM gateway, BDCP
 **Port** : 18000
 **Type** : gateway-exe
 **Strate** : L1-INFRA
-**Statut** : ✅ **Intégré**
+**Statut** : ✅ **Integre**
 
 ## 2. CONFIGURATION RUNNER
 
@@ -44,24 +44,24 @@ Ce PRD MOC couvre l'intégration de **ECOS-CLI** (gerivdb/ECOS-CLI) dans KIX com
 
 | Domaine | Responsable | Description |
 |---------|-------------|-------------|
-| LLM Gateway | ✅ ECOS-CLI | Point d'entrée opérationnel pour LLM |
+| LLM Gateway | ✅ ECOS-CLI | Point d'entree operationnel pour LLM |
 | BDCP | ✅ ECOS-CLI | Gestion du clapet BDCP |
 | PAT rotation | ✅ ECOS-CLI | Rotation des tokens GitHub |
-| Bootstrap | ✅ ECOS-CLI | Intégration avec bootstrap runner |
+| Bootstrap | ✅ ECOS-CLI | Integration avec bootstrap runner |
 
 ## 4. POINTS D'INTÉGRATION KIX
 
 | Point | Protocole | Description |
 |-------|-----------|-------------|
-| KIX → ECOS-CLI | REST + WAZAA | Health checks, orchestration |
-| bootstrap → ECOS-CLI | TCP/HTTP | Vérification dépendance critique |
+| KIX -> ECOS-CLI | REST + WAZAA | Health checks, orchestration |
+| bootstrap -> ECOS-CLI | TCP/HTTP | Verification dependance critique |
 
 ## 5. ENDPOINTS UTILISÉS PAR KIX
 
-| Endpoint | Méthode | Usage KIX |
+| Endpoint | Methode | Usage KIX |
 |----------|---------|-----------|
 | `/health` | GET | Health check |
-| `/clapet/status` | GET | Vérification état BDCP |
+| `/clapet/status` | GET | Verification etat BDCP |
 
 ## 6. CAPABILITY MODEL
 
@@ -80,18 +80,18 @@ Ce PRD MOC couvre l'intégration de **ECOS-CLI** (gerivdb/ECOS-CLI) dans KIX com
 
 ## 8. PREUVE-OF-LIFE
 
-- [x] 2026-09-28T00:48:00+02:00 — Runner `llm-gateway` configuré dans `runners.yaml`
-- [x] 2026-09-28T00:48:00+02:00 — GatewayRunner implémenté dans `runners/gateway_runner.py`
-- [x] 2026-09-28T00:48:00+02:00 — Intégré dans PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER
-- [x] 2026-09-28T00:48:00+02:00 — Capability model appliqué
+- [x] 2026-09-28T00:48:00+02:00 -- Runner `llm-gateway` configure dans `runners.yaml`
+- [x] 2026-09-28T00:48:00+02:00 -- GatewayRunner implemente dans `runners/gateway_runner.py`
+- [x] 2026-09-28T00:48:00+02:00 -- Integre dans PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER
+- [x] 2026-09-28T00:48:00+02:00 -- Capability model applique
 
 ## 9. RÉFÉRENCES
 
 - `PRD-MOC-KIX-MASTER.md` : Master MOC KIX
-- `PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER-2026-09-27.md` : Intégration écosystème master
+- `PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER-2026-09-27.md` : Integration ecosysteme master
 - `PRD-MOC-KIX-BOOTSTRAP-RUNNER-2026-08-20.md` : Bootstrap runner
 - `config/runners.yaml` : Configuration runner
-- `runners/gateway_runner.py` : Implémentation GatewayRunner
+- `runners/gateway_runner.py` : Implementation GatewayRunner
 
 ---
 
@@ -99,4 +99,4 @@ Ce PRD MOC couvre l'intégration de **ECOS-CLI** (gerivdb/ECOS-CLI) dans KIX com
 **Statut** : **implemented**
 **Date** : 2026-09-28
 
-*PRD-MOC-KIX-ECOS-CLI — implemented — 2026-09-28*
+*PRD-MOC-KIX-ECOS-CLI -- implemented -- 2026-09-28*

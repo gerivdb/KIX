@@ -10,17 +10,17 @@ related_adr: ADR-2026-08-18-002-KIX-GENERIC-RUNNER-WRAPPER.md
 related_moc: PRD-MOC-KIX-MASTER.md, PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER-2026-09-27.md
 ---
 
-# PRD MOC - KIX - Intégration BatMCP
+# PRD MOC - KIX - Integration BatMCP
 
 ## 1. RÉSUMÉ EXÉCUTIF
 
-Ce PRD MOC couvre l'intégration de **BatMCP** (gerivdb/BatMCP) dans KIX comme runner de type `gateway-exe`.
+Ce PRD MOC couvre l'integration de **BatMCP** (gerivdb/BatMCP) dans KIX comme runner de type `gateway-exe`.
 
-**Rôle** : Serveur MCP, outils batch
+**Role** : Serveur MCP, outils batch
 **Port** : 8000
 **Type** : gateway-exe
 **Strate** : L4-TOOLS
-**Statut** : ✅ **Intégré**
+**Statut** : ✅ **Integre**
 
 ## 2. CONFIGURATION RUNNER
 
@@ -53,12 +53,12 @@ Ce PRD MOC couvre l'intégration de **BatMCP** (gerivdb/BatMCP) dans KIX comme r
 
 | Point | Protocole | Description |
 |-------|-----------|-------------|
-| KIX → BatMCP | REST + WAZAA | Health checks, orchestration |
-| bootstrap → BatMCP | HTTP | Vérification dépendance |
+| KIX -> BatMCP | REST + WAZAA | Health checks, orchestration |
+| bootstrap -> BatMCP | HTTP | Verification dependance |
 
 ## 5. ENDPOINTS UTILISÉS PAR KIX
 
-| Endpoint | Méthode | Usage KIX |
+| Endpoint | Methode | Usage KIX |
 |----------|---------|-----------|
 | `/health` | GET | Health check |
 
@@ -79,17 +79,17 @@ Ce PRD MOC couvre l'intégration de **BatMCP** (gerivdb/BatMCP) dans KIX comme r
 
 ## 8. PREUVE-OF-LIFE
 
-- [x] 2026-09-28T00:48:00+02:00 — Runner `batmcp` configuré dans `runners.yaml`
-- [x] 2026-09-28T00:48:00+02:00 — GatewayRunner implémenté dans `runners/gateway_runner.py`
-- [x] 2026-09-28T00:48:00+02:00 — Intégré dans PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER
-- [x] 2026-09-28T00:48:00+02:00 — Capability model appliqué
+- [x] 2026-09-28T00:48:00+02:00 -- Runner `batmcp` configure dans `runners.yaml`
+- [x] 2026-09-28T00:48:00+02:00 -- GatewayRunner implemente dans `runners/gateway_runner.py`
+- [x] 2026-09-28T00:48:00+02:00 -- Integre dans PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER
+- [x] 2026-09-28T00:48:00+02:00 -- Capability model applique
 
 ## 9. RÉFÉRENCES
 
 - `PRD-MOC-KIX-MASTER.md` : Master MOC KIX
-- `PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER-2026-09-27.md` : Intégration écosystème master
+- `PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER-2026-09-27.md` : Integration ecosysteme master
 - `config/runners.yaml` : Configuration runner
-- `runners/gateway_runner.py` : Implémentation GatewayRunner
+- `runners/gateway_runner.py` : Implementation GatewayRunner
 
 ---
 
@@ -97,4 +97,4 @@ Ce PRD MOC couvre l'intégration de **BatMCP** (gerivdb/BatMCP) dans KIX comme r
 **Statut** : **implemented**
 **Date** : 2026-09-28
 
-*PRD-MOC-KIX-BATMCP — implemented — 2026-09-28*
+*PRD-MOC-KIX-BATMCP -- implemented -- 2026-09-28*

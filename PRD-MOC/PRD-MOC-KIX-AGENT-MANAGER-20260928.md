@@ -10,17 +10,17 @@ related_adr: ADR-2026-08-18-002-KIX-GENERIC-RUNNER-WRAPPER.md
 related_moc: PRD-MOC-KIX-MASTER.md, PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER-2026-09-27.md
 ---
 
-# PRD MOC - KIX - Intégration Agent Manager
+# PRD MOC - KIX - Integration Agent Manager
 
 ## 1. RÉSUMÉ EXÉCUTIF
 
-Ce PRD MOC couvre l'intégration de **Agent Manager** dans KIX comme runner de type `gateway-exe`.
+Ce PRD MOC couvre l'integration de **Agent Manager** dans KIX comme runner de type `gateway-exe`.
 
-**Rôle** : Agent Manager
+**Role** : Agent Manager
 **Port** : 18001
 **Type** : gateway-exe
 **Strate** : L1-INFRA
-**Statut** : ✅ **Intégré**
+**Statut** : ✅ **Integre**
 
 ## 2. CONFIGURATION RUNNER
 
@@ -40,20 +40,20 @@ Ce PRD MOC couvre l'intégration de **Agent Manager** dans KIX comme runner de t
 
 | Domaine | Responsable | Description |
 |---------|-------------|-------------|
-| Orchestration agents | ✅ Agent Manager | Sessions parallèles et worktrees |
-| Budget RAM/CPU | ✅ Agent Manager | Contrôle des sessions concurrentes |
+| Orchestration agents | ✅ Agent Manager | Sessions paralleles et worktrees |
+| Budget RAM/CPU | ✅ Agent Manager | Controle des sessions concurrentes |
 | Assignments | ✅ Agent Manager | Sections et sessions Manager |
 
 ## 4. POINTS D'INTÉGRATION KIX
 
 | Point | Protocole | Description |
 |-------|-----------|-------------|
-| KIX → Agent Manager | REST | Health checks, orchestration |
-| bootstrap → Agent Manager | HTTP | Vérification dépendance |
+| KIX -> Agent Manager | REST | Health checks, orchestration |
+| bootstrap -> Agent Manager | HTTP | Verification dependance |
 
 ## 5. ENDPOINTS UTILISÉS PAR KIX
 
-| Endpoint | Méthode | Usage KIX |
+| Endpoint | Methode | Usage KIX |
 |----------|---------|-----------|
 | `/health` | GET | Health check |
 
@@ -74,16 +74,16 @@ Ce PRD MOC couvre l'intégration de **Agent Manager** dans KIX comme runner de t
 
 ## 8. PREUVE-OF-LIFE
 
-- [x] 2026-09-28T02:45:00+02:00 — Runner `agent-manager` documenté dans `runners.yaml`
-- [x] 2026-09-28T02:45:00+02:00 — GatewayRunner implémenté dans `runners/gateway_runner.py`
-- [x] 2026-09-28T02:45:00+02:00 — Intégré dans PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER
+- [x] 2026-09-28T02:45:00+02:00 -- Runner `agent-manager` documente dans `runners.yaml`
+- [x] 2026-09-28T02:45:00+02:00 -- GatewayRunner implemente dans `runners/gateway_runner.py`
+- [x] 2026-09-28T02:45:00+02:00 -- Integre dans PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER
 
 ## 9. RÉFÉRENCES
 
 - `PRD-MOC-KIX-MASTER.md` : Master MOC KIX
-- `PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER-2026-09-27.md` : Intégration écosystème master
+- `PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER-2026-09-27.md` : Integration ecosysteme master
 - `config/runners.yaml` : Configuration runner
-- `runners/gateway_runner.py` : Implémentation GatewayRunner
+- `runners/gateway_runner.py` : Implementation GatewayRunner
 
 ---
 
@@ -91,4 +91,4 @@ Ce PRD MOC couvre l'intégration de **Agent Manager** dans KIX comme runner de t
 **Statut** : **implemented**
 **Date** : 2026-09-28
 
-*PRD-MOC-KIX-AGENT-MANAGER — implemented — 2026-09-28*
+*PRD-MOC-KIX-AGENT-MANAGER -- implemented -- 2026-09-28*

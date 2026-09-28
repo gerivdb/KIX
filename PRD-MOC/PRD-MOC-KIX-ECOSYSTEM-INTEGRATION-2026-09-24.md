@@ -11,15 +11,15 @@ mox_gates:
 superseded_by: PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md
 ---
 
-# PRD MOC - Écosystème gerivdb — Intégration Maître
+# PRD MOC - Écosysteme gerivdb -- Integration Maître
 
 ## 1. RESUME EXECUTIF
 
-Ce PRD MOC couvre l'intégration complète de l'écosystème gerivdb via KIX comme orchestrateur unique.
+Ce PRD MOC couvre l'integration complete de l'ecosysteme gerivdb via KIX comme orchestrateur unique.
 
-**Périmètre** : 70+ repos répartis en 5 couches (L0→L5)
-**Objectif** : Bénéficier de l'écosystème entier via KIX : orchestration, health checks, self-healing, swarm status
-**Approche** : Documentation + configuration déclarative + runners code (progressive)
+**Perimetre** : 70+ repos repartis en 5 couches (L0->L5)
+**Objectif** : Beneficier de l'ecosysteme entier via KIX : orchestration, health checks, self-healing, swarm status
+**Approche** : Documentation + configuration declarative + runners code (progressive)
 
 ## 2. ETAT ACTUEL
 
@@ -37,51 +37,51 @@ Ce PRD MOC couvre l'intégration complète de l'écosystème gerivdb via KIX com
 | L4_TOOLS | 26+ | TRIX, FLEX, KG-L, N243, CTULU, BAT-MCP, SKILLS, localjev-upstream |
 | L5_ARCHIVE | 1 | archives |
 
-### 2.2 Intégration Actuelle
+### 2.2 Integration Actuelle
 
 | Composant | État |
 |-----------|------|
 | KIX orchestrateur | ✅ 100% fonctionnel |
-| PythonRunner | ✅ Implémenté |
-| ZigRunner | ✅ Implémenté |
-| GatewayRunner | ✅ Implémenté |
+| PythonRunner | ✅ Implemente |
+| ZigRunner | ✅ Implemente |
+| GatewayRunner | ✅ Implemente |
 | RustRunner | ❌ Manquant |
 | GoRunner | ❌ Manquant |
 | NodeRunner | ❌ Manquant |
 | CustomRunner | ❌ Manquant |
-| Documentation écosystème | ⚠️ Partielle |
+| Documentation ecosysteme | ⚠️ Partielle |
 
 ## 3. ARCHITECTURE CIBLE
 
 ### 3.1 Principe Fondateur
 
-**KIX est l'orchestrateur unique de tous les services applicatifs de l'écosystème gerivdb**.
+**KIX est l'orchestrateur unique de tous les services applicatifs de l'ecosysteme gerivdb**.
 
 ```
-┌─────────────────────────────────────────────────────────────┐
+┌-------------------------------------------------------------┐
 │                    KIX (port 8800)                           │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
+│  ┌-------------┐  ┌-------------┐  ┌-------------┐        │
 │  │  RunnerBase │  │  Registry   │  │  Doctor     │        │
-│  └─────────────┘  └─────────────┘  └─────────────┘        │
+│  `--------------┘  `--------------┘  `--------------┘        │
 │         │                │                │                 │
 │         ▼                ▼                ▼                 │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │              runners.yaml (déclaratif)               │   │
-│  │  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐       │   │
+│  ┌-----------------------------------------------------┐   │
+│  │              runners.yaml (declaratif)               │   │
+│  │  ┌--------┐ ┌--------┐ ┌--------┐ ┌--------┐       │   │
 │  │  │ python │ │ zig    │ │ rust   │ │ go     │ ...   │   │
-│  │  └────────┘ └────────┘ └────────┘ └────────┘       │   │
-│  └─────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
+│  │  `---------┘ `---------┘ `---------┘ `---------┘       │   │
+│  `------------------------------------------------------┘   │
+`--------------------------------------------------------------┘
                                │
-        ┌──────────────────────┼──────────────────────┐
+        ┌----------------------┼----------------------┐
         │                      │                      │
         ▼                      ▼                      ▼
-┌──────────────┐      ┌──────────────┐      ┌──────────────┐
+┌--------------┐      ┌--------------┐      ┌--------------┐
 │ L0-CANON     │      │ L2-PLATFORM  │      │ L4-TOOLS     │
 │ GOVERNANCE   │      │ KIX, PLIX    │      │ TRIX, FLEX   │
 │ ONTOLOGY     │      │ KEEL, CURX   │      │ KG-L, N243   │
 │ BLO, HERMES  │      │ BIRDY, EMIT  │      │ WAZAA, TALEX │
-└──────────────┘      └──────────────┘      └──────────────┘
+`---------------┘      `---------------┘      `---------------┘
 ```
 
 ### 3.2 Types de Runners
@@ -98,42 +98,42 @@ Ce PRD MOC couvre l'intégration complète de l'écosystème gerivdb via KIX com
 
 ## 4. PLAN D'IMPLEMENTATION
 
-### Phase 1 : Documentation (Semaine 1) — EN COURS
-- [x] Créer PRD MOC écosystème
-- [x] Créer ADR intégration multi-langages
-- [x] Créer docs/ecosystem-integration.md
+### Phase 1 : Documentation (Semaine 1) -- EN COURS
+- [x] Creer PRD MOC ecosysteme
+- [x] Creer ADR integration multi-langages
+- [x] Creer docs/ecosystem-integration.md
 - [x] Mettre à jour runners.yaml avec stubs
 - [ ] Valider gates MOX P-101/P-102/P-103
 
 ### Phase 2 : Rust/Go/Node Runners (Semaines 2-3)
-- [ ] Créer `runners/rust_runner.py`
-- [ ] Créer `runners/go_runner.py`
-- [ ] Créer `runners/node_runner.py`
-- [ ] Créer `runners/custom_runner.py`
+- [ ] Creer `runners/rust_runner.py`
+- [ ] Creer `runners/go_runner.py`
+- [ ] Creer `runners/node_runner.py`
+- [ ] Creer `runners/custom_runner.py`
 - [ ] Ajouter dans `registry.py`
 - [ ] Tests unitaires
 
-### Phase 3 : Intégration Complète (Semaines 4-6)
-- [ ] Enrôler tous les repos SOT dans runners.yaml
+### Phase 3 : Integration Complete (Semaines 4-6)
+- [ ] Enroler tous les repos SOT dans runners.yaml
 - [ ] Tester chaque runner en environnement local
 - [ ] Mettre à jour documentation
-- [ ] Valider opérationnel 100%
+- [ ] Valider operationnel 100%
 
 ## 5. DEPENDANCES
 
 ### 5.1 Internes
 - `KIX/runners/base.py` : interface `RunnerBase`
 - `KIX/runners/registry.py` : registry des runners
-- `KIX/config/runners.yaml` : configuration déclarative
+- `KIX/config/runners.yaml` : configuration declarative
 - `KIX/libs/shared-clients/win32_process.py` : primitives Win32
 - `GOVERNANCE-HUB/known_repositories.yaml` : SOT des repos
-- PRD-MOC-KIX-EXE-ORCHESTRATION-2026-09-24.md : Orchestration exécutables / preflight / zombie monitor
+- PRD-MOC-KIX-EXE-ORCHESTRATION-2026-09-24.md : Orchestration executables / preflight / zombie monitor
 
 ### 5.2 Externes
 - `C:\DevTools\.cargo\bin\rustc.exe` : Rust
 - `C:\DevTools\.cargo\bin\cargo.exe` : Rust
 - `C:\DevTools\go\` : Go (à installer)
-- `node.exe` : Node.js (à vérifier)
+- `node.exe` : Node.js (à verifier)
 
 ## 6. TRACABILITE
 
@@ -141,27 +141,27 @@ Ce PRD MOC couvre l'intégration complète de l'écosystème gerivdb via KIX com
 
 ```yaml
 thought_chain:
-  - source: "Observation : 70+ repos gerivdb non orchestrés par KIX"
-    artifact: "Nécessité d'intégration écosystème complète"
+  - source: "Observation : 70+ repos gerivdb non orchestres par KIX"
+    artifact: "Necessite d'integration ecosysteme complete"
     intent_hash: "0xECOSYSTEM_INTEGRATION_MASTER_20260924"
 ```
 
 ### 6.2 Gates
 
-| Gate | Critère | Statut |
+| Gate | Critere | Statut |
 |------|---------|--------|
-| **P-101** | Conformité schéma YAML | ⏳ PENDING |
+| **P-101** | Conformite schema YAML | ⏳ PENDING |
 | **P-102** | Forward references valides | ⏳ PENDING |
-| **P-103** | Tests unitaires ≥ 80% | ⏸️ PENDING |
+| **P-103** | Tests unitaires >= 80% | ⏸️ PENDING |
 
 ## 7. REFERENCES
 
 - `PRD-MOC-KIX-ORCHESTRATOR-2026-08-18.md` : PRD MOC KIX orchestrateur
 - `PRD-MOC-KIX-MASTER.md` : Master MOC KIX
-- `PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md` : Intégration multi-langages
+- `PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md` : Integration multi-langages
 - `ADR-2026-09-24-KIX-MULTI-LANG-RUNNERS.md` : ADR runners
 - `GOVERNANCE-HUB/known_repositories.yaml` : SOT des repos
-- PRD-MOC-KIX-EXE-ORCHESTRATION-2026-09-24.md : Orchestration exécutables / preflight / zombie monitor
+- PRD-MOC-KIX-EXE-ORCHESTRATION-2026-09-24.md : Orchestration executables / preflight / zombie monitor
 
 
 

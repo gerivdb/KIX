@@ -16,53 +16,53 @@ pole_id: POLE-KG-TDC-001
 
 # PRD MOC - KIX Talex Friction Analyzer Consumer
 
-> **Verdict** : PRD_MOC — Rendre obligatoire l'application du design `talex-friction-analyzer` dans KIX.
+> **Verdict** : PRD_MOC -- Rendre obligatoire l'application du design `talex-friction-analyzer` dans KIX.
 > **Source** : Design `talex-friction-analyzer` (`designs/talex-friction-analyzer/design.yaml`), PRD-MOC-TALEX-FRICTION-ANALYZER-20260922.
-> **Constat** : KIX est consumer de `talex-friction-analyzer` mais n'a pas de PRD-MOC local déclarant cette obligation.
+> **Constat** : KIX est consumer de `talex-friction-analyzer` mais n'a pas de PRD-MOC local declarant cette obligation.
 
 ---
 
 ## 1. Contexte
 
-KIX est un consumer du design `talex-friction-analyzer`. Toute opération KIX DOIT détecter et analyser les frictions de manière causale.
+KIX est un consumer du design `talex-friction-analyzer`. Toute operation KIX DOIT detecter et analyser les frictions de maniere causale.
 
 ---
 
-## 2. Problème
+## 2. Probleme
 
-| Symptôme | Cause racine | Impact |
+| Symptome | Cause racine | Impact |
 |----------|--------------|--------|
-| Frictions non détectées | Design non appliqué | Erreurs répétées |
-| Pas d'analyse causale | Design non appliqué | Dette technique |
+| Frictions non detectees | Design non applique | Erreurs repetees |
+| Pas d'analyse causale | Design non applique | Dette technique |
 
 ---
 
 ## 3. Objectif
 
-Intégrer l'analyse des frictions TALEX dans toutes les opérations KIX.
+Integrer l'analyse des frictions TALEX dans toutes les operations KIX.
 
 ---
 
-## 4. Périmètre
+## 4. Perimetre
 
 ### 4.1 In Scope
 
-| Opération | Application |
+| Operation | Application |
 |-----------|-------------|
-| Déploiement | Friction analyzer avant déploiement |
+| Deploiement | Friction analyzer avant deploiement |
 | Configuration | Friction analyzer avant modification |
 | Orchestration | Friction analyzer avant orchestration |
 
 ### 4.2 Out of Scope
 
-- Modification du design `talex-friction-analyzer` lui-même
-- Opérations en lecture seule
+- Modification du design `talex-friction-analyzer` lui-meme
+- Operations en lecture seule
 
 ---
 
 ## 5. Architecture
 
-### 5.1 Intégration KIX
+### 5.1 Integration KIX
 
 ```python
 # kix/pipelines/talex_friction_analyzer.py
@@ -80,24 +80,24 @@ class TalexFrictionAnalyzerKix:
 
 | ID | Livrable | Chemin cible | Type |
 |---|---|---|---|
-| L1 | PRD-MOC `talex-friction-analyzer` | `PRD-MOC/PRD-MOC-KIX-TALEX-FRICTION-ANALYZER-CONSUMER-20260928.md` | Créer |
-| L2 | Script KIX | `kix/pipelines/talex_friction_analyzer.py` | Créer |
-| L3 | Tests unitaires | `tests/test_talex_friction_analyzer_kix.py` | Créer |
+| L1 | PRD-MOC `talex-friction-analyzer` | `PRD-MOC/PRD-MOC-KIX-TALEX-FRICTION-ANALYZER-CONSUMER-20260928.md` | Creer |
+| L2 | Script KIX | `kix/pipelines/talex_friction_analyzer.py` | Creer |
+| L3 | Tests unitaires | `tests/test_talex_friction_analyzer_kix.py` | Creer |
 
 ---
 
-## 7. Critères d'acceptation
+## 7. Criteres d'acceptation
 
-[x] Chaque design ACTIVE/STANDARD a au moins un consumer déclaré dans `meta-design.yaml`.
+[x] Chaque design ACTIVE/STANDARD a au moins un consumer declare dans `meta-design.yaml`.
 [x] Chaque consumer a un PRD-MOC local dans son propre repo.
-[x] Chaque PRD-MOC contient une Proof-of-Life horodatée.
-[x] Le hook pre-commit `validate_consumer_designs.py` est installé dans tous les repos consumers.
+[x] Chaque PRD-MOC contient une Proof-of-Life horodatee.
+[x] Le hook pre-commit `validate_consumer_designs.py` est installe dans tous les repos consumers.
 [ ] Le pipeline KIVA `unified-design-consumers` passe en CI locale.
 [x] Aucun design ACTIVE/STANDARD n'a `consumers: []`.
-[ ] Les implémentations sont intégrées dans le code métier de chaque consumer.
+[ ] Les implementations sont integrees dans le code metier de chaque consumer.
 [ ] Tests unitaires passent pour chaque design par consumer.
 
-## 8. Références
+## 8. References
 
 - **Design** : `designs/talex-friction-analyzer/design.yaml`
 - **PRD-MOC** : PRD-MOC-TALEX-FRICTION-ANALYZER-20260922
@@ -107,98 +107,98 @@ class TalexFrictionAnalyzerKix:
 
 ## 9. Proof-of-Life
 
-- [x] 2026-09-28T04:03:02+02:00 — PRD-MOC créé pour tous les consumers.
-- [x] 2026-09-28T04:03:02+02:00 — Implémentations déployées dans tous les consumers (126/126).
-- [x] 2026-09-28T04:03:02+02:00 — Hook pre-commit `validate_consumer_designs.py` déployé (14/14).
-- [x] 2026-09-28T04:03:02+02:00 — Dry-run causal passé : 100% prod-ready.
-- [ ] 2026-09-28T04:03:02+02:00 — Intégration fonctionnelle dans le code métier (en cours).
-- [ ] 2026-09-28T04:03:02+02:00 — Tests unitaires par consumer/design (en cours).
-- [ ] 2026-09-28T04:03:02+02:00 — Pipeline KIVA `unified-design-consumers` activé.
+- [x] 2026-09-28T04:03:02+02:00 -- PRD-MOC cree pour tous les consumers.
+- [x] 2026-09-28T04:03:02+02:00 -- Implementations deployees dans tous les consumers (126/126).
+- [x] 2026-09-28T04:03:02+02:00 -- Hook pre-commit `validate_consumer_designs.py` deploye (14/14).
+- [x] 2026-09-28T04:03:02+02:00 -- Dry-run causal passe : 100% prod-ready.
+- [ ] 2026-09-28T04:03:02+02:00 -- Integration fonctionnelle dans le code metier (en cours).
+- [ ] 2026-09-28T04:03:02+02:00 -- Tests unitaires par consumer/design (en cours).
+- [ ] 2026-09-28T04:03:02+02:00 -- Pipeline KIVA `unified-design-consumers` active.
 
 ## 10. Analyse TALEX des frictions de la conversation
 
-### 10.1 Frictions détectées
+### 10.1 Frictions detectees
 
-| Code | Message | Catégorie | Sévérité | Structurelle | Causale | Connue |
+| Code | Message | Categorie | Severite | Structurelle | Causale | Connue |
 |------|---------|-----------|----------|--------------|---------|--------|
-| ERR-KIX-HOOK-EMPTY-GRAPH | Hook KG-L-GF16 échoue avec "graph empty" | hook | high | Oui | Oui | Non |
-| ERR-KIX-HOOK-CYCLIC-REGEN | Hook pré-commit régénère KG-L/docs/ecosystem_kg_full.json en boucle | hook | medium | Oui | Oui | Non |
+| ERR-KIX-HOOK-EMPTY-GRAPH | Hook KG-L-GF16 echoue avec "graph empty" | hook | high | Oui | Oui | Non |
+| ERR-KIX-HOOK-CYCLIC-REGEN | Hook pre-commit regenere KG-L/docs/ecosystem_kg_full.json en boucle | hook | medium | Oui | Oui | Non |
 | ERR-KIX-MERGE-CONFLICT-INTERCEPTION-LOG | Conflit git sur interception-log.txt lors du merge | git | medium | Non | Oui | Non |
 | ERR-KIX-POWERSHELL-INVOKE-REST | Invoke-Rest non reconnu dans PowerShell | powershell | low | Non | Oui | Non |
-| ERR-KIX-UNCOMMITTED-BATCH-COMMIT | 17 fichiers non suivis committés en bloc sans revue HITL | git | medium | Oui | Oui | Non |
-| ERR-KIX-GIT-MERGE-LOCAL-CHANGES | git checkout/merge échoue à cause de modifications locales | git | medium | Oui | Oui | Non |
-| ERR-KIX-HOOK-BASH-ON-WINDOWS | Hook pré-commit en bash sur Windows | hook | medium | Oui | Oui | Non |
+| ERR-KIX-UNCOMMITTED-BATCH-COMMIT | 17 fichiers non suivis committes en bloc sans revue HITL | git | medium | Oui | Oui | Non |
+| ERR-KIX-GIT-MERGE-LOCAL-CHANGES | git checkout/merge echoue à cause de modifications locales | git | medium | Oui | Oui | Non |
+| ERR-KIX-HOOK-BASH-ON-WINDOWS | Hook pre-commit en bash sur Windows | hook | medium | Oui | Oui | Non |
 
-### 10.2 Causes racines identifiées
+### 10.2 Causes racines identifiees
 
-1. `validate_designs.py` ne gère pas la clé `repos` dans `known_repositories.yaml`
-2. Hook pré-commit régénère KG-L export même quand rien n'a changé
-3. `interception-log.txt` supprimé dans `main` mais modifié dans la branche feature
+1. `validate_designs.py` ne gere pas la cle `repos` dans `known_repositories.yaml`
+2. Hook pre-commit regenere KG-L export meme quand rien n'a change
+3. `interception-log.txt` supprime dans `main` mais modifie dans la branche feature
 4. Syntaxe PowerShell incorrecte pour `Invoke-Rest` dans un contexte bash
-5. Commit batch sans inventaire préalable des 17 fichiers non suivis
+5. Commit batch sans inventaire prealable des 17 fichiers non suivis
 6. Pas de stash/commit avant `checkout`/`merge` sur une branche avec modifications locales
-7. Hook pré-commit en bash pas compatible Windows natif
+7. Hook pre-commit en bash pas compatible Windows natif
 
-### 10.3 Corrections structurelles proposées
+### 10.3 Corrections structurelles proposees
 
 | Code | Action | Fichier cible | Atomique |
 |------|--------|---------------|----------|
-| ERR-KIX-HOOK-EMPTY-GRAPH | Ajouter la clé `repos` dans le lookup de `known_repositories.yaml` | `src/kix/tools/validate_designs.py` | Oui |
-| ERR-KIX-HOOK-CYCLIC-REGEN | Ajouter une vérification de dirty state avant régénération KG-L | `.git/hooks/pre-commit` | Oui |
-| ERR-KIX-MERGE-CONFLICT-INTERCEPTION-LOG | Résoudre le conflit en faveur de `main` (suppression du fichier) | `interception-log.txt` | Oui |
+| ERR-KIX-HOOK-EMPTY-GRAPH | Ajouter la cle `repos` dans le lookup de `known_repositories.yaml` | `src/kix/tools/validate_designs.py` | Oui |
+| ERR-KIX-HOOK-CYCLIC-REGEN | Ajouter une verification de dirty state avant regeneration KG-L | `.git/hooks/pre-commit` | Oui |
+| ERR-KIX-MERGE-CONFLICT-INTERCEPTION-LOG | Resoudre le conflit en faveur de `main` (suppression du fichier) | `interception-log.txt` | Oui |
 | ERR-KIX-POWERSHELL-INVOKE-REST | Remplacer `Invoke-Rest` par Python `requests` pour les appels API GitHub | Scripts PowerShell | Oui |
-| ERR-KIX-UNCOMMITTED-BATCH-COMMIT | Décomposer le commit batch en commits atomiques avec inventaire préalable | Processus git | Oui |
+| ERR-KIX-UNCOMMITTED-BATCH-COMMIT | Decomposer le commit batch en commits atomiques avec inventaire prealable | Processus git | Oui |
 | ERR-KIX-GIT-MERGE-LOCAL-CHANGES | Stasher/committer les modifications locales avant `checkout`/`merge` | Processus git | Oui |
-| ERR-KIX-HOOK-BASH-ON-WINDOWS | Convertir le hook pré-commit bash en Python pour compatibilité Windows | `.git/hooks/pre-commit` | Oui |
+| ERR-KIX-HOOK-BASH-ON-WINDOWS | Convertir le hook pre-commit bash en Python pour compatibilite Windows | `.git/hooks/pre-commit` | Oui |
 
-### 10.4 Corrections appliquées dans cette session
+### 10.4 Corrections appliquees dans cette session
 
-| Code | Correction appliquée | Statut |
+| Code | Correction appliquee | Statut |
 |------|---------------------|--------|
-| ERR-KIX-HOOK-EMPTY-GRAPH | Ajout de la clé `repos` dans `validate_designs.py` | ✅ Appliqué |
-| ERR-KIX-HOOK-CYCLIC-REGEN | Non bloquant — accepté comme cycle de hook | ⏸️ Accepté |
-| ERR-KIX-MERGE-CONFLICT-INTERCEPTION-LOG | Résolu par suppression de `interception-log.txt` | ✅ Appliqué |
-| ERR-KIX-POWERSHELL-INVOKE-REST | Remplacé par Python `requests` pour les appels API GitHub | ✅ Appliqué |
-| ERR-KIX-UNCOMMITTED-BATCH-COMMIT | Commit atomique appliqué pour les 2 fichiers modifiés légitimes | ✅ Partiellement appliqué |
-| ERR-KIX-GIT-MERGE-LOCAL-CHANGES | Résolu par stash + merge + pop | ✅ Appliqué |
-| ERR-KIX-HOOK-BASH-ON-WINDOWS | Non bloquant — hook fonctionne via Git Bash | ⏸️ Accepté |
+| ERR-KIX-HOOK-EMPTY-GRAPH | Ajout de la cle `repos` dans `validate_designs.py` | ✅ Applique |
+| ERR-KIX-HOOK-CYCLIC-REGEN | Non bloquant -- accepte comme cycle de hook | ⏸️ Accepte |
+| ERR-KIX-MERGE-CONFLICT-INTERCEPTION-LOG | Resolu par suppression de `interception-log.txt` | ✅ Applique |
+| ERR-KIX-POWERSHELL-INVOKE-REST | Remplace par Python `requests` pour les appels API GitHub | ✅ Applique |
+| ERR-KIX-UNCOMMITTED-BATCH-COMMIT | Commit atomique applique pour les 2 fichiers modifies legitimes | ✅ Partiellement applique |
+| ERR-KIX-GIT-MERGE-LOCAL-CHANGES | Resolu par stash + merge + pop | ✅ Applique |
+| ERR-KIX-HOOK-BASH-ON-WINDOWS | Non bloquant -- hook fonctionne via Git Bash | ⏸️ Accepte |
 
 ---
 
-## 11. Évaluation d'utilité
+## 11. Évaluation d'utilite
 
-| Critère | Évaluation | Justification |
+| Critere | Évaluation | Justification |
 |---------|------------|---------------|
-| **Utilité opérationnelle** | ✅ Élevée | Le pipeline TALEX permet de détecter, classifier et corriger structurellement les frictions avant qu'elles ne deviennent des erreurs critiques. |
-| **Réutilisabilité** | ✅ Élevée | Le script `TalexFrictionAnalyzerKix` est générique et peut être étendu à d'autres repos de l'écosystème. |
-| **Impact architectural** | ✅ Moyen | Formalise une méthodologie d'analyse causale qui réduit la dette technique et les erreurs répétitives. |
-| **Complexité d'implémentation** | ✅ Faible | Implémentation atomique : 1 script + 8 tests, pas de dépendance externe. |
-| **Alignement governance** | ✅ Oui | Répond au PRD-MOC TALEX-FRICTION-ANALYZER-20260922 et aux designs TALEX. |
+| **Utilite operationnelle** | ✅ Élevee | Le pipeline TALEX permet de detecter, classifier et corriger structurellement les frictions avant qu'elles ne deviennent des erreurs critiques. |
+| **Reutilisabilite** | ✅ Élevee | Le script `TalexFrictionAnalyzerKix` est generique et peut etre etendu à d'autres repos de l'ecosysteme. |
+| **Impact architectural** | ✅ Moyen | Formalise une methodologie d'analyse causale qui reduit la dette technique et les erreurs repetitives. |
+| **Complexite d'implementation** | ✅ Faible | Implementation atomique : 1 script + 8 tests, pas de dependance externe. |
+| **Alignement governance** | ✅ Oui | Repond au PRD-MOC TALEX-FRICTION-ANALYZER-20260922 et aux designs TALEX. |
 
-**Verdict** : Ce PRD-MOC est **utile** et **déjà fonctionnel**. Il apporte une valeur ajoutée immédiate en formalisant l'analyse causale des frictions dans KIX.
+**Verdict** : Ce PRD-MOC est **utile** et **dejà fonctionnel**. Il apporte une valeur ajoutee immediate en formalisant l'analyse causale des frictions dans KIX.
 
 ---
 
-## 12. Implémentation
+## 12. Implementation
 
 | Livrable | Fichier | Statut |
 |----------|---------|--------|
-| Pipeline KIX | `src/kix/pipelines/talex_friction_analyzer.py` | 🚀 Opérationnel |
-| Tests unitaires | `tests/unit/kix/test_talex_friction_analyzer.py` | 🧪 Testé (8/8 passants) |
-| Package pipelines | `src/kix/pipelines/__init__.py` | 🚀 Opérationnel |
+| Pipeline KIX | `src/kix/pipelines/talex_friction_analyzer.py` | 🚀 Operationnel |
+| Tests unitaires | `tests/unit/kix/test_talex_friction_analyzer.py` | 🧪 Teste (8/8 passants) |
+| Package pipelines | `src/kix/pipelines/__init__.py` | 🚀 Operationnel |
 
 ---
 
 ## 13. Glossaire des statuts
 
-- 📄 Documenté : artifact présent, frontmatter valide
-- 🔧 Implémenté : code/config présent, pas encore testé
-- 🧪 Testé : tests unitaires passants
-- 🚀 Opérationnel : health-check OK, endpoint 200
-- 🟢 Actif : dépendants actifs vérifiés
-- 🟡 Passif : artifact présent, aucun dépendant actif
-- ⏸️ Pending : blocage governance/HITL/ADR documenté
-- ❌ Bloqué : dépendance manquante ou ADR refusé documenté
+- 📄 Documente : artifact present, frontmatter valide
+- 🔧 Implemente : code/config present, pas encore teste
+- 🧪 Teste : tests unitaires passants
+- 🚀 Operationnel : health-check OK, endpoint 200
+- 🟢 Actif : dependants actifs verifies
+- 🟡 Passif : artifact present, aucun dependant actif
+- ⏸️ Pending : blocage governance/HITL/ADR documente
+- ❌ Bloque : dependance manquante ou ADR refuse documente
 
 ---
 
@@ -207,38 +207,38 @@ class TalexFrictionAnalyzerKix:
 | Aspect | Évaluation |
 |--------|-----------|
 | Couverture PRD-MOC | 100% (100%) |
-| Couverture implémentation | 100% |
-| Implémentations valides | 100% |
-| Stubs détectés | 0% |
+| Couverture implementation | 100% |
+| Implementations valides | 100% |
+| Stubs detectes | 0% |
 | Dry-run causal | PASSED |
-| Hook déployé | 14/14 |
-| Intégration fonctionnelle | En cours (0%) |
+| Hook deploye | 14/14 |
+| Integration fonctionnelle | En cours (0%) |
 | Tests unitaires | En cours (0%) |
 
-**Verdict** : PRD-MOC pertinent et nécessaire. L'infrastructure de gouvernance est déployée. L'intégration fonctionnelle reste à réaliser.
+**Verdict** : PRD-MOC pertinent et necessaire. L'infrastructure de gouvernance est deployee. L'integration fonctionnelle reste à realiser.
 
-## X. Utilisation dans le code métier
+## X. Utilisation dans le code metier
 
-### Points d'intégration
+### Points d'integration
 
-| Fichier métier | Fonction/Classe | Design utilisé | Appel |
+| Fichier metier | Fonction/Classe | Design utilise | Appel |
 |----------------|-----------------|----------------|-------|
-| `Error` | - | talex-friction-analyzer | `Error: [WinError 2] Le fichier spécifié est introuvable` |
+| `Error` | - | talex-friction-analyzer | `Error: [WinError 2] Le fichier specifie est introuvable` |
 
 ### Preuve d'utilisation
 
 ```bash
-# Module d'intégration
+# Module d'integration
 D:\DO\WEB\TOOLS\L2-PLATFORM\KIX\kix\talex_friction_analyzer_integration.py
 
-# Imports détectés
-Error: [WinError 2] Le fichier spécifié est introuvable
+# Imports detectes
+Error: [WinError 2] Le fichier specifie est introuvable
 ```
 
-### Proof-of-Life métier
+### Proof-of-Life metier
 
-- [x] 2026-09-28T21:46:06.899297+00:00 — Module d'intégration existant
-- [x] 2026-09-28T21:46:06.899297+00:00 — Import détecté dans le code métier
-- [ ] 2026-09-28T21:46:06.899297+00:00 — Test d'intégration métier passant
+- [x] 2026-09-28T21:46:06.899297+00:00 -- Module d'integration existant
+- [x] 2026-09-28T21:46:06.899297+00:00 -- Import detecte dans le code metier
+- [ ] 2026-09-28T21:46:06.899297+00:00 -- Test d'integration metier passant
 
 ---

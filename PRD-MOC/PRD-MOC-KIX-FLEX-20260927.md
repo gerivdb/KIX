@@ -10,17 +10,17 @@ related_adr: ADR-2026-08-18-002-KIX-GENERIC-RUNNER-WRAPPER.md, ADR-2026-09-24-KI
 related_moc: PRD-MOC-KIX-MASTER.md, PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md
 ---
 
-# PRD MOC - KIX - Intégration FLEX
+# PRD MOC - KIX - Integration FLEX
 
 ## 1. RÉSUMÉ EXÉCUTIF
 
-Ce PRD MOC couvre l'intégration de **FLEX** (gerivdb/FLEX) dans KIX comme runner de type `python` et `rust`.
+Ce PRD MOC couvre l'integration de **FLEX** (gerivdb/FLEX) dans KIX comme runner de type `python` et `rust`.
 
-**Rôle** : Cache/Flex, API REST
+**Role** : Cache/Flex, API REST
 **Port** : 8080 (flex-api), 7718 (flex-rust), 7719 (flex-api KIX)
 **Type** : python / rust
 **Strate** : L4-TOOLS
-**Statut** : ✅ **Intégré**
+**Statut** : ✅ **Integre**
 
 ## 2. CONFIGURATION RUNNER
 
@@ -46,7 +46,7 @@ Ce PRD MOC couvre l'intégration de **FLEX** (gerivdb/FLEX) dans KIX comme runne
 
 | Domaine | Responsable | Description |
 |---------|-------------|-------------|
-| Cache | ✅ FLEX | Cache distribué |
+| Cache | ✅ FLEX | Cache distribue |
 | API REST | ✅ FLEX | Endpoints REST FLEX |
 | Rust service | ✅ FLEX | Service Rust haute performance |
 
@@ -54,12 +54,12 @@ Ce PRD MOC couvre l'intégration de **FLEX** (gerivdb/FLEX) dans KIX comme runne
 
 | Point | Protocole | Description |
 |-------|-----------|-------------|
-| KIX → FLEX | REST + WAZAA | Health checks, orchestration |
-| bootstrap → FLEX | HTTP | Vérification dépendance optionnelle |
+| KIX -> FLEX | REST + WAZAA | Health checks, orchestration |
+| bootstrap -> FLEX | HTTP | Verification dependance optionnelle |
 
 ## 5. ENDPOINTS UTILISÉS PAR KIX
 
-| Endpoint | Méthode | Usage KIX |
+| Endpoint | Methode | Usage KIX |
 |----------|---------|-----------|
 | `/health` | GET | Health check |
 | `/api/status` | GET | Status du service |
@@ -82,18 +82,18 @@ Ce PRD MOC couvre l'intégration de **FLEX** (gerivdb/FLEX) dans KIX comme runne
 
 ## 8. PREUVE-OF-LIFE
 
-- [x] 2026-09-27T23:00:00+02:00 — Runners `flex-api` et `flex-rust` configurés dans `runners.yaml`
-- [x] 2026-09-27T23:00:00+02:00 — PythonRunner et RustRunner implémentés
-- [x] 2026-09-27T23:00:00+02:00 — Intégré dans PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM
-- [x] 2026-09-27T23:00:00+02:00 — Capability model appliqué
+- [x] 2026-09-27T23:00:00+02:00 -- Runners `flex-api` et `flex-rust` configures dans `runners.yaml`
+- [x] 2026-09-27T23:00:00+02:00 -- PythonRunner et RustRunner implementes
+- [x] 2026-09-27T23:00:00+02:00 -- Integre dans PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM
+- [x] 2026-09-27T23:00:00+02:00 -- Capability model applique
 
 ## 9. RÉFÉRENCES
 
 - `PRD-MOC-KIX-MASTER.md` : Master MOC KIX
 - `PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md` : Multi-lang ecosystem
 - `config/runners.yaml` : Configuration runner
-- `runners/python_runner.py` : Implémentation PythonRunner
-- `runners/rust_runner.py` : Implémentation RustRunner
+- `runners/python_runner.py` : Implementation PythonRunner
+- `runners/rust_runner.py` : Implementation RustRunner
 
 ---
 
@@ -101,4 +101,4 @@ Ce PRD MOC couvre l'intégration de **FLEX** (gerivdb/FLEX) dans KIX comme runne
 **Statut** : **implemented**
 **Date** : 2026-09-27
 
-*PRD-MOC-KIX-FLEX — implemented — 2026-09-27*
+*PRD-MOC-KIX-FLEX -- implemented -- 2026-09-27*

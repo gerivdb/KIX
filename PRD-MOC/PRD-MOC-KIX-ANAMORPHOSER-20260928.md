@@ -10,17 +10,17 @@ related_adr: ADR-2026-08-18-002-KIX-GENERIC-RUNNER-WRAPPER.md
 related_moc: PRD-MOC-KIX-MASTER.md, PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER-2026-09-27.md
 ---
 
-# PRD MOC - KIX - Intégration Anamorphoser
+# PRD MOC - KIX - Integration Anamorphoser
 
 ## 1. RÉSUMÉ EXÉCUTIF
 
-Ce PRD MOC couvre l'intégration de **Anamorphoser** dans KIX comme runner de type `python`.
+Ce PRD MOC couvre l'integration de **Anamorphoser** dans KIX comme runner de type `python`.
 
-**Rôle** : Gouvernance, métamorphose
+**Role** : Gouvernance, metamorphose
 **Port** : 8831
 **Type** : python
 **Strate** : L0-CANON
-**Statut** : ✅ **Intégré**
+**Statut** : ✅ **Integre**
 
 ## 2. CONFIGURATION RUNNER
 
@@ -42,19 +42,19 @@ Ce PRD MOC couvre l'intégration de **Anamorphoser** dans KIX comme runner de ty
 
 | Domaine | Responsable | Description |
 |---------|-------------|-------------|
-| Métamorphose | ✅ Anamorphoser | Transformation de modèles |
+| Metamorphose | ✅ Anamorphoser | Transformation de modeles |
 | Gouvernance | ✅ Anamorphoser | Processus de gouvernance |
 
 ## 4. POINTS D'INTÉGRATION KIX
 
 | Point | Protocole | Description |
 |-------|-----------|-------------|
-| KIX → Anamorphoser | REST | Health checks, orchestration |
-| bootstrap → Anamorphoser | HTTP | Vérification dépendance |
+| KIX -> Anamorphoser | REST | Health checks, orchestration |
+| bootstrap -> Anamorphoser | HTTP | Verification dependance |
 
 ## 5. ENDPOINTS UTILISÉS PAR KIX
 
-| Endpoint | Méthode | Usage KIX |
+| Endpoint | Methode | Usage KIX |
 |----------|---------|-----------|
 | `/health` | GET | Health check |
 
@@ -75,16 +75,16 @@ Ce PRD MOC couvre l'intégration de **Anamorphoser** dans KIX comme runner de ty
 
 ## 8. PREUVE-OF-LIFE
 
-- [x] 2026-09-28T02:45:00+02:00 — Runner `anamorphoser` configuré dans `runners.yaml`
-- [x] 2026-09-28T02:45:00+02:00 — PythonRunner implémenté dans `runners/python_runner.py`
-- [x] 2026-09-28T02:45:00+02:00 — Intégré dans PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER
+- [x] 2026-09-28T02:45:00+02:00 -- Runner `anamorphoser` configure dans `runners.yaml`
+- [x] 2026-09-28T02:45:00+02:00 -- PythonRunner implemente dans `runners/python_runner.py`
+- [x] 2026-09-28T02:45:00+02:00 -- Integre dans PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER
 
 ## 9. RÉFÉRENCES
 
 - `PRD-MOC-KIX-MASTER.md` : Master MOC KIX
-- `PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER-2026-09-27.md` : Intégration écosystème master
+- `PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER-2026-09-27.md` : Integration ecosysteme master
 - `config/runners.yaml` : Configuration runner
-- `runners/python_runner.py` : Implémentation PythonRunner
+- `runners/python_runner.py` : Implementation PythonRunner
 
 ---
 
@@ -92,4 +92,4 @@ Ce PRD MOC couvre l'intégration de **Anamorphoser** dans KIX comme runner de ty
 **Statut** : **implemented**
 **Date** : 2026-09-28
 
-*PRD-MOC-KIX-ANAMORPHOSER — implemented — 2026-09-28*
+*PRD-MOC-KIX-ANAMORPHOSER -- implemented -- 2026-09-28*

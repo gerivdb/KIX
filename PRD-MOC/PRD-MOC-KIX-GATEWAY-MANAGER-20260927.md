@@ -10,17 +10,17 @@ related_adr: ADR-2026-08-20-001-bootstrap-runner.md, ADR-2026-08-18-002-KIX-GENE
 related_moc: PRD-MOC-KIX-MASTER.md, PRD-MOC-KIX-BOOTSTRAP-RUNNER-2026-08-20.md, PRD-MOC-VEX-KIX-BOUNDARIES-20260927.md
 ---
 
-# PRD MOC - KIX - Intégration GATEWAY-MANAGER
+# PRD MOC - KIX - Integration GATEWAY-MANAGER
 
 ## 1. RÉSUMÉ EXÉCUTIF
 
-Ce PRD MOC couvre l'intégration de **GATEWAY-MANAGER** (gerivdb/GATEWAY-MANAGER) dans KIX comme runner de type `gateway-exe`.
+Ce PRD MOC couvre l'integration de **GATEWAY-MANAGER** (gerivdb/GATEWAY-MANAGER) dans KIX comme runner de type `gateway-exe`.
 
-**Rôle** : Proxy/reverse proxy, BDCP, Clapet, PAT rotation
+**Role** : Proxy/reverse proxy, BDCP, Clapet, PAT rotation
 **Port** : 9000 (legacy), 18000 (ECOS-CLI)
 **Type** : gateway-exe
 **Strate** : L1-INFRA
-**Statut** : ✅ **Intégré**
+**Statut** : ✅ **Integre**
 
 ## 2. CONFIGURATION RUNNER
 
@@ -38,25 +38,25 @@ Ce PRD MOC couvre l'intégration de **GATEWAY-MANAGER** (gerivdb/GATEWAY-MANAGER
 
 | Domaine | Responsable | Description |
 |---------|-------------|-------------|
-| BDCP proxy | ✅ GATEWAY-MANAGER | Proxy derrière CDP, anonymat réseau |
+| BDCP proxy | ✅ GATEWAY-MANAGER | Proxy derriere CDP, anonymat reseau |
 | Clapet | ✅ GATEWAY-MANAGER | `POST /clapet/open|close` |
 | PAT rotation | ✅ GATEWAY-MANAGER | Rotation automatique des tokens GitHub |
-| SecretResolver | ✅ bootstrap | Résolution de secrets (délégué au bootstrap) |
+| SecretResolver | ✅ bootstrap | Resolution de secrets (delegue au bootstrap) |
 
 ## 4. POINTS D'INTÉGRATION KIX
 
 | Point | Protocole | Description |
 |-------|-----------|-------------|
-| KIX → GATEWAY-MANAGER | REST + WAZAA | Health checks, orchestration |
-| bootstrap → GATEWAY-MANAGER | TCP/HTTP | Vérification dépendance critique |
-| VEX → GATEWAY-MANAGER | REST | Health check cross-layer |
+| KIX -> GATEWAY-MANAGER | REST + WAZAA | Health checks, orchestration |
+| bootstrap -> GATEWAY-MANAGER | TCP/HTTP | Verification dependance critique |
+| VEX -> GATEWAY-MANAGER | REST | Health check cross-layer |
 
 ## 5. ENDPOINTS UTILISÉS PAR KIX
 
-| Endpoint | Méthode | Usage KIX |
+| Endpoint | Methode | Usage KIX |
 |----------|---------|-----------|
 | `/health` | GET | Health check |
-| `/clapet/status` | GET | Vérification état BDCP |
+| `/clapet/status` | GET | Verification etat BDCP |
 | `/clapet/open` | POST | Sortie BDCP (admin only) |
 | `/clapet/close` | POST | Retour BDCP |
 
@@ -71,18 +71,18 @@ Ce PRD MOC couvre l'intégration de **GATEWAY-MANAGER** (gerivdb/GATEWAY-MANAGER
 
 ## 7. PREUVE-OF-LIFE
 
-- [x] 2026-09-27T23:00:00+02:00 — Runner `gateway-manager` configuré dans `runners.yaml`
-- [x] 2026-09-27T23:00:00+02:00 — working_dir et binary définis
-- [x] 2026-09-27T23:00:00+02:00 — Intégré dans PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER
-- [x] 2026-09-27T23:00:00+02:00 — Capability model documenté
+- [x] 2026-09-27T23:00:00+02:00 -- Runner `gateway-manager` configure dans `runners.yaml`
+- [x] 2026-09-27T23:00:00+02:00 -- working_dir et binary definis
+- [x] 2026-09-27T23:00:00+02:00 -- Integre dans PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER
+- [x] 2026-09-27T23:00:00+02:00 -- Capability model documente
 
 ## 8. RÉFÉRENCES
 
 - `PRD-MOC-KIX-MASTER.md` : Master MOC KIX
 - `PRD-MOC-KIX-BOOTSTRAP-RUNNER-2026-08-20.md` : Bootstrap runner
-- `PRD-MOC-VEX-KIX-BOUNDARIES-20260927.md` : Frontières KIX/VEX
+- `PRD-MOC-VEX-KIX-BOUNDARIES-20260927.md` : Frontieres KIX/VEX
 - `config/runners.yaml` : Configuration runner
-- `runners/gateway_runner.py` : Implémentation GatewayRunner
+- `runners/gateway_runner.py` : Implementation GatewayRunner
 
 ---
 
@@ -90,4 +90,4 @@ Ce PRD MOC couvre l'intégration de **GATEWAY-MANAGER** (gerivdb/GATEWAY-MANAGER
 **Statut** : **implemented**
 **Date** : 2026-09-27
 
-*PRD-MOC-KIX-GATEWAY-MANAGER — implemented — 2026-09-27*
+*PRD-MOC-KIX-GATEWAY-MANAGER -- implemented -- 2026-09-27*
