@@ -3,8 +3,6 @@
 IntentHash: 0xPRD_MOC_VOLTX_PHASE2_KG_L_ENGINE_20260905
 """
 
-# Hook test marker — can be removed after validation
-
 from __future__ import annotations
 
 import argparse
