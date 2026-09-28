@@ -96,7 +96,7 @@ def load_runners_config(path: Path) -> list[RunnerSpec]:
                 depends_on=entry.get("depends_on"),
                 build=entry.get("build"),
                 bootstrap=bool(entry.get("bootstrap", False)),
-                auto_start=bool(entry.get("auto_start", True)),
+                auto_start=bool(entry.get("auto_start", False)),
                 restart_policy=entry.get("restart_policy"),
                 log_file=Path(log_file) if log_file else None,
                 pid_file=Path(entry["pid_file"]) if entry.get("pid_file") else None,

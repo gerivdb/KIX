@@ -315,7 +315,7 @@ class ServiceStarter:
         """Lance un processus détaché et retourne son pid."""
         kwargs: dict[str, Any] = {
             "cwd": cwd,
-            "creationflags": getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
+            "creationflags": getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0) | getattr(subprocess, "CREATE_NO_WINDOW", 0),
         }
         if log_path:
             os.makedirs(os.path.dirname(log_path), exist_ok=True)
