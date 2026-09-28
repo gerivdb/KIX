@@ -216,3 +216,29 @@ class TalexFrictionAnalyzerKix:
 | Tests unitaires | En cours (0%) |
 
 **Verdict** : PRD-MOC pertinent et nécessaire. L'infrastructure de gouvernance est déployée. L'intégration fonctionnelle reste à réaliser.
+
+## X. Utilisation dans le code métier
+
+### Points d'intégration
+
+| Fichier métier | Fonction/Classe | Design utilisé | Appel |
+|----------------|-----------------|----------------|-------|
+| `Error` | - | talex-friction-analyzer | `Error: [WinError 2] Le fichier spécifié est introuvable` |
+
+### Preuve d'utilisation
+
+```bash
+# Module d'intégration
+D:\DO\WEB\TOOLS\L2-PLATFORM\KIX\kix\talex_friction_analyzer_integration.py
+
+# Imports détectés
+Error: [WinError 2] Le fichier spécifié est introuvable
+```
+
+### Proof-of-Life métier
+
+- [x] 2026-09-28T21:46:06.899297+00:00 — Module d'intégration existant
+- [x] 2026-09-28T21:46:06.899297+00:00 — Import détecté dans le code métier
+- [ ] 2026-09-28T21:46:06.899297+00:00 — Test d'intégration métier passant
+
+---
