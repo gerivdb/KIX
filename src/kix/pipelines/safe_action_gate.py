@@ -1,10 +1,12 @@
 """Pipeline Safe Action Gate pour KIX.
 
 Safe-action gate PATRON-0 pour toute opération KIX effectuant une mutation.
-Consumer du design `safe-action-pattern`.
+Consumer des designs `safe-action-pattern` et `safe-action-gate`.
 
 IntentHash: 0xPRD_MOC_KIX_SAFE_ACTION_PATTERN_CONSUMER_20260928
+          : 0xPRD_MOC_KIX_SAFE_ACTION_GATE_CONSUMER_20260928
 Source: PRD-MOC-KIX-SAFE-ACTION-PATTERN-CONSUMER-20260928.md
+      : PRD-MOC-KIX-SAFE-ACTION-GATE-CONSUMER-20260928.md
 """
 
 from __future__ import annotations
