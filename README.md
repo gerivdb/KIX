@@ -583,4 +583,21 @@ Paramètres :
 - Démarrage/arrêt des runners (`runner_start`, `runner_stop`)
 - Consultation de l'état de remédiation (`remediation_status_view`)
 
+## PID Governance
+
+KIX agrège les états de window policy L3 et expose un endpoint dédié :
+
+- `GET /l3/window-policy` — État agrégé de la politique PID pour tous les services
+- `GET /l3/window-policy/<service>` — Détail par service
+
+### Intégration VEX
+
+KIX interroge VEX (`/health/window-policy`) pour chaque service enregistré et agrège les verdicts dans `/l3/window-policy`.
+
+### Références
+
+- **Master** : `PRD-MOC-VEX-ECOSYSTEM-PID-GOVERNANCE-20260928.md`
+- **VEX** : `PRD-MOC-VEX-WINDOW-POLICY-20260928.md`
+- **ADR** : `ADR-KIX-WINDOW-POLICY-20260928.md`
+
 
