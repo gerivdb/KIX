@@ -80,7 +80,7 @@ def _load_known_repositories() -> list[Runner]:
         for entry in section:
             if not isinstance(entry, dict):
                 continue
-            name = entry.get("name")
+            name = entry.get("repo") or entry.get("name")
             port = entry.get("port")
             if not name or not port:
                 continue
@@ -91,7 +91,7 @@ def _load_known_repositories() -> list[Runner]:
                     meta={
                         k: v
                         for k, v in entry.items()
-                        if k not in {"name", "port"}
+                        if k not in {"name", "port", "repo"}
                     },
                 )
             )
