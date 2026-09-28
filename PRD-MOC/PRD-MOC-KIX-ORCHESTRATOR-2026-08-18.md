@@ -2,7 +2,8 @@
 type: "PRD_MOC"
 version: "1.0.0"
 date: "2026-08-19"
-status: "IMPLEMENTED"
+updated: "2026-09-28"
+status: "implemented"
 intent_hash: "0xKIX_ORCHESTRATOR_20260818"
 inherits: ["moc-governance"]
 mox_gates:
@@ -151,6 +152,24 @@ class RunnerBase(ABC):
 | `/doctor` | GET | Vérifie tous les runners, retourne erreurs |
 | `/doctor/run` | POST | Redémarre les runners en erreur |
 | `/swarm/status` | GET | État agrégé pour Agent Manager / N+2/N+3 |
+
+### 4.4 Modèle de Rôle/Fonction KIX
+
+KIX implémente un modèle de rôle/fonction structuré, documenté dans `unified-design/designs/kix/design.yaml` :
+
+#### RBAC API
+- `admin` : 8 permissions (runner:start/stop/restart, config:read/write, audit:read/write, remediation:trigger)
+- `operator` : 4 permissions (runner:start/stop/status, logs:read)
+- `viewer` : 3 permissions (runner:status, metrics:read, health:read)
+
+#### Functional Roles (21 catégories)
+Inclut : orchestrator, bootstrap orchestrator, metrics collector, configuration service, deployment service, graph service, security service, incident service, release service, knowledge-graph service, decision-engine, event-bus, zig-runtime, governance, cognitive (21 runners), operational (6 runners), infrastructure (7 runners), llm, dashboard, api, citizen.
+
+#### Dual-Role Pattern
+TRIX, TRIXD, PLIX appartiennent à la fois aux familles RLM et TLM.
+
+#### ActorSpec
+Modèle externe intégré via `KIXProcessManagerAdapter` pour compatibilité `base_orchestrator`.
 
 ---
 

@@ -20,7 +20,8 @@ from kix.orchestrator.l2_runner_orchestrator import (
     L2RunnerOrchestrator,
 )
 from process_manager import ProcessManager
-from kix.runner_base import BaseRunner, RunnerSpec
+from kix.runner_base import RunnerSpec
+from runners.base import RunnerBase
 
 
 class TestKIXProcessManagerAdapter:
@@ -81,7 +82,7 @@ class TestKIXRegistryAdapter:
             meta={"topic": "test"},
         )
 
-        class DummyRunner(BaseRunner):
+        class DummyRunner(RunnerBase):
             def start(self):
                 pass
             def stop(self, pid=None):
@@ -91,6 +92,8 @@ class TestKIXRegistryAdapter:
             def health(self):
                 pass
             def logs(self, lines=100):
+                pass
+            def restart(self):
                 pass
 
         runner = DummyRunner(spec)

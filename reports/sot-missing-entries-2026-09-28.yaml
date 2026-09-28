@@ -1,0 +1,654 @@
+# Entrées SOT manquantes pour les custom runners KIX
+# À ajouter dans known_repositories.yaml section repos:
+# Source: config/runners.yaml + audit 2026-09-28
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/gitex
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\gitex
+  owner: L4-TOOLS
+  pole_id: POLE-TOOLING-001
+  profil: TOOL
+  semantic_clusters:
+    - tooling
+    - git
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: Git tooling extension
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/gitex.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/repoxt
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\repoxt
+  owner: L4-TOOLS
+  pole_id: POLE-TOOLING-001
+  profil: TOOL
+  semantic_clusters:
+    - tooling
+    - repo
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: Repository extension tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/repoxt.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/syncx
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\syncx
+  owner: L4-TOOLS
+  pole_id: POLE-TOOLING-001
+  profil: TOOL
+  semantic_clusters:
+    - tooling
+    - sync
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: Synchronization tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/syncx.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/referex
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\referex
+  owner: L4-TOOLS
+  pole_id: POLE-TOOLING-001
+  profil: TOOL
+  semantic_clusters:
+    - tooling
+    - reference
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: Reference management tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/referex.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/kglx
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\kglx
+  owner: L4-TOOLS
+  pole_id: POLE-KG-ENGINE-001
+  profil: TOOL
+  semantic_clusters:
+    - knowledge-graph
+    - extension
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: KG-L extension
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/kglx.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/harnex
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\harnex
+  owner: L4-TOOLS
+  pole_id: POLE-TOOLING-001
+  profil: TOOL
+  semantic_clusters:
+    - tooling
+    - harness
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: Test harness tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/harnex.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/telox
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\telox
+  owner: L4-TOOLS
+  pole_id: POLE-TOOLING-001
+  profil: TOOL
+  semantic_clusters:
+    - tooling
+    - telemetry
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: Telemetry tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/telox.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/timx
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\timx
+  owner: L4-TOOLS
+  pole_id: POLE-TOOLING-001
+  profil: TOOL
+  semantic_clusters:
+    - tooling
+    - time
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: Time series tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/timx.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/rlm243
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\rlm243
+  owner: L4-TOOLS
+  pole_id: POLE-RLM-001
+  profil: TOOL
+  semantic_clusters:
+    - rlm
+    - runner
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: RLM 243 runner
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/rlm243.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/causex
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\causex
+  owner: L4-TOOLS
+  pole_id: POLE-TOOLING-001
+  profil: TOOL
+  semantic_clusters:
+    - tooling
+    - causality
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: Causality analysis tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/causex.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/morphex
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\morphex
+  owner: L4-TOOLS
+  pole_id: POLE-TOOLING-001
+  profil: TOOL
+  semantic_clusters:
+    - tooling
+    - morph
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: Morphology tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/morphex.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/identx
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\identx
+  owner: L4-TOOLS
+  pole_id: POLE-TOOLING-001
+  profil: TOOL
+  semantic_clusters:
+    - tooling
+    - identity
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: Identity tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/identx.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/topex
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\topex
+  owner: L4-TOOLS
+  pole_id: POLE-TOOLING-001
+  profil: TOOL
+  semantic_clusters:
+    - tooling
+    - topology
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: Topology tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/topex.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/chronox
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\chronox
+  owner: L4-TOOLS
+  pole_id: POLE-TOOLING-001
+  profil: TOOL
+  semantic_clusters:
+    - tooling
+    - chronology
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: Chronology tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/chronox.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/llux-match
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\llux-match
+  owner: L4-TOOLS
+  pole_id: POLE-LLM-001
+  profil: TOOL
+  semantic_clusters:
+    - llm
+    - matching
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: LLUX matching tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/llux-match.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/llux-index
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\llux-index
+  owner: L4-TOOLS
+  pole_id: POLE-LLM-001
+  profil: TOOL
+  semantic_clusters:
+    - llm
+    - indexing
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: LLUX indexing tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/llux-index.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/prognex
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\prognex
+  owner: L4-TOOLS
+  pole_id: POLE-TOOLING-001
+  profil: TOOL
+  semantic_clusters:
+    - tooling
+    - program
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: Program nexus tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/prognex.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/llux-learn
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\llux-learn
+  owner: L4-TOOLS
+  pole_id: POLE-LLM-001
+  profil: TOOL
+  semantic_clusters:
+    - llm
+    - learning
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: LLUX learning tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/llux-learn.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/llux-replay
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\llux-replay
+  owner: L4-TOOLS
+  pole_id: POLE-LLM-001
+  profil: TOOL
+  semantic_clusters:
+    - llm
+    - replay
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: LLUX replay tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/llux-replay.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/timx-feature-store
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\timx-feature-store
+  owner: L4-TOOLS
+  pole_id: POLE-TOOLING-001
+  profil: TOOL
+  semantic_clusters:
+    - tooling
+    - feature-store
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: TIMX feature store
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/timx-feature-store.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/rlm-mdu
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L2-PLATFORM\RLM-MDU
+  owner: L2-PLATFORM
+  pole_id: POLE-RLM-001
+  profil: TOOL
+  semantic_clusters:
+    - rlm
+    - mdu
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: RLM MDU tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L2-PLATFORM
+  remote: https://github.com/gerivdb/rlm-mdu.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/deployex
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\deployex
+  owner: L4-TOOLS
+  pole_id: POLE-TOOLING-001
+  profil: TOOL
+  semantic_clusters:
+    - tooling
+    - deploy
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: Deployment tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/deployex.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/flowx
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\flowx
+  owner: L4-TOOLS
+  pole_id: POLE-TOOLING-001
+  profil: TOOL
+  semantic_clusters:
+    - tooling
+    - flow
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: Flow tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/flowx.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/llm-core
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L1-INFRA\LLM-CORE
+  owner: L1-INFRA
+  pole_id: POLE-LLM-001
+  profil: TOOL
+  semantic_clusters:
+    - llm
+    - core
+  status: dormant
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: LLM core tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L1-INFRA
+  remote: https://github.com/gerivdb/llm-core.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/piano
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\REPO-STANDARDS\PIANO
+  owner: L4-TOOLS
+  pole_id: POLE-TOOLING-001
+  profil: TOOL
+  semantic_clusters:
+    - tooling
+    - piano
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: Piano tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/piano.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/trix
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\TRIX
+  owner: L4-TOOLS
+  pole_id: POLE-RLM-001
+  profil: TOOL
+  semantic_clusters:
+    - rlm
+    - zig
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: TRIX runtime
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/trix.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/conversation-cognitive
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\conversation-cognitive
+  owner: L4-TOOLS
+  pole_id: POLE-COGNITIVE-001
+  profil: TOOL
+  semantic_clusters:
+    - cognitive
+    - conversation
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: Conversation cognitive tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/conversation-cognitive.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/flex
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\FLEX
+  owner: L4-TOOLS
+  pole_id: POLE-TOOLING-001
+  profil: TOOL
+  semantic_clusters:
+    - tooling
+    - flex
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: Flex tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/flex.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/infx
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\INFX
+  owner: L4-TOOLS
+  pole_id: POLE-TOOLING-001
+  profil: TOOL
+  semantic_clusters:
+    - tooling
+    - infra
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: Infrastructure tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/infx.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/codedb-e5620
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L4-TOOLS\CodeDB-E5620
+  owner: L4-TOOLS
+  pole_id: POLE-TOOLING-001
+  profil: TOOL
+  semantic_clusters:
+    - tooling
+    - database
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: Code database for E5620
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L4-TOOLS
+  remote: https://github.com/gerivdb/codedb-e5620.git
+
+- do_not_create: true
+  entity_type: REPO
+  repo: gerivdb/nexus
+  layer: N+3
+  local_path: D:\DO\WEB\TOOLS\L1-INFRA\NEXUS
+  owner: L1-INFRA
+  pole_id: POLE-ORCHESTRATION-001
+  profil: TOOL
+  semantic_clusters:
+    - orchestration
+    - nexus
+  status: active
+  author: gerivdb
+  created: '2026-01-01'
+  updated: '2026-09-28'
+  description: Nexus orchestration tool
+  rss_version: '2.0'
+  immutable_paths: []
+  strate: L1-INFRA
+  remote: https://github.com/gerivdb/nexus.git

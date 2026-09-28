@@ -12,7 +12,7 @@ IntentHash: 0xPRD_MOC_VOLTX_PHASE3_RUNNERS_STANDARD_20260905
 from __future__ import annotations
 
 import signal
-from abc import ABC
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
@@ -62,22 +62,27 @@ class BaseRunner(ABC):
         """Handler SIGINT standardisé."""
         self.stop()
 
+    @abstractmethod
     def start(self) -> dict:
         """Démarre le service. Retourne {status, pid?, detail?}."""
         raise NotImplementedError
 
+    @abstractmethod
     def stop(self, pid: int | None = None) -> dict:
         """Arrête le processus identifié par pid."""
         raise NotImplementedError
 
+    @abstractmethod
     def status(self, pid: int) -> dict:
         """Retourne {status, pid} — running ou stopped."""
         raise NotImplementedError
 
+    @abstractmethod
     def health(self) -> dict:
         """Interroge le endpoint de santé. Retourne {status, http_status?, detail?}."""
         raise NotImplementedError
 
+    @abstractmethod
     def logs(self, lines: int = 100) -> str:
         """Retourne les dernières lignes de logs."""
         raise NotImplementedError

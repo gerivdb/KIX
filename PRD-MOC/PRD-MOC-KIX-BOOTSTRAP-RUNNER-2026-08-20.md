@@ -344,6 +344,22 @@ thought_chain:
 | **P-302** | Endpoints `/bootstrap/*` implémentés et testés | ✅ VALIDÉ |
 | **P-303** | ECOS CLI integration + watchdog self-healing | ✅ VALIDÉ |
 
+### 11.3 Modèle de Rôle/Fonction KIX
+
+Ce PRD MOC s'aligne sur le modèle de rôle/fonction défini dans `PRD-MOC-KIX-MASTER.md` section 2.3 :
+
+- **RBAC** : `admin`, `operator`, `viewer` (JWT dans `src/auth.py`)
+- **Functional Roles** : 21 catégories (`orchestrator`, `cognitive`, `governance`, `infrastructure`, etc.)
+- **Capability Model** : 7 capabilities (`runner-lifecycle`, `process-manager`, `pid-tracker`, `exe-launcher`, etc.)
+- **Dual-Role Pattern** : TRIX/TRIXD/PLIX = RLM + TLM
+- **ActorSpec** : intégration via `KIXProcessManagerAdapter`
+
+Le runner `bootstrap` utilise les capabilities suivantes :
+- `runner:start` — démarrer les services dépendants
+- `runner:stop` — arrêter les services en erreur
+- `process:restart` — redémarrer les processus zombies
+- `health:check` — vérifier la santé des dépendances
+
 ---
 
 ## 12. PREUVE-OF-LIFE
@@ -356,6 +372,10 @@ thought_chain:
 - [x] 2026-08-20T00:00:00+02:00 — ECOS CLI intégré (`Invoke-BootstrapGate`, budget 30s)
 - [x] 2026-08-20T00:00:00+02:00 — Self-healing watchdog actif (interval 3s, recovery 8.1s)
 - [x] 2026-09-27T06:49:00+02:00 — PRD-MOC-KIX-BOOTSTRAP-RUNNER créé et référencé dans PRD-MOC-KIX-MASTER.md
+- [x] 2026-09-27T23:00:00+02:00 — Modèle de rôle/fonction documenté dans PRD-MOC-KIX-MASTER.md section 2.3.7
+- [x] 2026-09-27T23:00:00+02:00 — Capability model implémenté : `src/capability.py` + `requires_capability` decorator
+- [x] 2026-09-28T01:16:14+02:00 — 24 endpoints KIX protégés par `@requires_capability` (start/stop/restart/doctor/audit/schedules/release-handles/health/logs/metrics/swarm/alerts/events/notifications/dashboard)
+- [x] 2026-09-28T01:16:14+02:00 — Tests d'intégration corrigés : 13 passants (auth capability appliqué)
 
 ---
 

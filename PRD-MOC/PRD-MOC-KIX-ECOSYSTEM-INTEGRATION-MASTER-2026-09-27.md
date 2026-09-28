@@ -2,6 +2,7 @@
 type: "PRD_MOC"
 version: "1.0.0"
 date: "2026-09-27"
+updated: "2026-09-28"
 status: "implemented"
 intent_hash: "0xKIX_ECOSYSTEM_INTEGRATION_MASTER_20260927"
 mox_gates:
@@ -27,6 +28,13 @@ Ce PRD MOC couvre l'**intégration complète de l'écosystème gerivdb via KIX**
 - **Bootstrap dédié** : runner `bootstrap` sur port 8810, séparation de `gateway-manager` (ADR-2026-08-20-001)
 - **Multi-langue** : runners Python, Zig, Gateway, Rust, Go, Node, Custom
 - **Cross-repo** : intégration de 30+ repos gerivdb via runners et dépendances
+
+**Modèle de Rôle/Fonction** : voir `PRD-MOC-KIX-MASTER.md` section 2.3 pour :
+- RBAC (admin/operator/viewer)
+- Functional roles (21 catégories, 60 runners)
+- Capability model (7 capabilities)
+- Dual-role pattern (TRIX/TRIXD/PLIX)
+- ActorSpec (base_orchestrator)
 
 **Source** : `config/runners.yaml` (60 runners), `docs/ecosystem-integration-guide.md`, ADR référencées
 **IntentHash** : `0xKIX_ECOSYSTEM_INTEGRATION_MASTER_20260927`
@@ -207,6 +215,47 @@ KIX est l'orchestrateur unique de l'écosystème gerivdb. L'intégration écosys
 | flex | gerivdb/flex | infrastructure | 0 | custom | ⏸️ Inactif |
 | infx | gerivdb/infx | citizen | 0 | custom | ⏸️ Inactif |
 | codedb-e5620 | gerivdb/codedb-e5620 | infrastructure | 0 | custom | ⏸️ Inactif |
+
+### 4.3 Modèle de Rôle/Fonction KIX
+
+Ce PRD MOC s'aligne sur le modèle de rôle/fonction défini dans `PRD-MOC-KIX-MASTER.md` section 2.3 :
+
+- **RBAC** : `admin`, `operator`, `viewer` (JWT dans `src/auth.py`)
+- **Functional Roles** : 21 catégories (`orchestrator`, `cognitive`, `governance`, `infrastructure`, etc.)
+- **Capability Model** : 7 capabilities (`runner-lifecycle`, `process-manager`, `pid-tracker`, `exe-launcher`, etc.)
+- **Dual-Role Pattern** : TRIX/TRIXD/PLIX = RLM + TLM
+- **ActorSpec** : intégration via `KIXProcessManagerAdapter`
+
+Les runners listés dans les sections 4.1 et 4.2 utilisent les `meta.role` définis dans `config/runners.yaml` et `unified-design/designs/kix/design.yaml`.
+
+### 4.4 Écosystème Complet (SOT)
+
+D'après `known_repositories.yaml` (SOT), 34 repos gerivdb sont liés à l'écosystème KIX :
+
+| Repo | Strate | Statut | Intégration KIX |
+|------|--------|--------|-----------------|
+| KIX | L2-PLATFORM | active | ✅ Orchestrateur central |
+| GATEWAY-MANAGER | L1-INFRA | active | ✅ Proxy/Clapet |
+| TRIX | L4-TOOLS | active | ✅ Runtime Zig |
+| WAZAA | L4-TOOLS | active | ✅ Bus événementiel |
+| FLEX | L4-TOOLS | active | ✅ Cache/Flex |
+| KG-L | L4-TOOLS | active | ✅ Knowledge Graph |
+| JEVX | L4-TOOLS | active | ✅ Decision Engine |
+| VEX | L3-CITIZENS | active | ✅ L3 Orchestrateur |
+| KIVA | L1-INFRA | active | ⚠️ Runtime/agents |
+| KIVA-CLI | L1-INFRA | active | ⚠️ CLI |
+| BRAIN | L0-CANON | active | ⚠️ Memory/cognitive |
+| LLUX | L3-CITIZENS | active | ⚠️ LLM inference |
+| TALEX | L4-TOOLS | active | ⚠️ Narrative engine |
+| N243 | L4-TOOLS | active | ⚠️ Ternary orchestrator |
+| PHOTON | L4-TOOLS | active | ⚠️ Semantic chunking |
+| PLIX | L2-PLATFORM | active | ⚠️ LARQL codec |
+| DAG-3 | L2-PLATFORM | active | ⚠️ Graph memory |
+| RLM-MDU | L2-PLATFORM | active | ⚠️ Friction guard |
+| ROOTX | L4-TOOLS | active | ⚠️ Causality validator |
+| NEXUS | L1-INFRA | active | ⚠️ Governance |
+| ANAmORPHOSER | L0-CANON | active | ⚠️ Anamorphosis |
+| RLM-* runners | L2-PLATFORM | active | ✅ Config, Graph, Deploy, Secure, Incident, Release, Metrics |
 
 ---
 
@@ -424,6 +473,43 @@ enforcement_mode:
 | BUZZ-X non fonctionnel (Phase 4 bloquée) | MEDIUM | CERTAINE | Exclu de la portée initiale |
 | WAZAA bus unavailable | HIGH | MOYENNE | Retry + fallback mode degraded |
 | Custom runners sans port (0) | MEDIUM | FAIBLE | Validation YAML + health_path requis |
+| Endpoints non protégés par capability | MEDIUM | FAIBLE | 29 endpoints ajoutés @requires_capability (2026-09-27) |
+
+### 10.5 État d'Intégration par Repo (2026-09-27)
+
+| Repo | Strate | Statut | Intégration KIX | runner_type | working_dir | entrypoint |
+|------|--------|--------|-----------------|-------------|-------------|------------|
+| KIX | L2-PLATFORM | active | ✅ Complet | python | ✅ | ✅ |
+| GATEWAY-MANAGER | L1-INFRA | active | ✅ Complet | gateway-exe | ✅ | ✅ |
+| TRIX | L4-TOOLS | active | ✅ Complet | zig-binary | ✅ | ✅ |
+| WAZAA | L4-TOOLS | active | ✅ Complet | python | ✅ | ✅ |
+| FLEX | L4-TOOLS | active | ✅ Complet | python/rust | ✅ | ✅ |
+| KG-L | L4-TOOLS | active | ✅ Complet | python | ✅ | ✅ |
+| JEVX | L4-TOOLS | active | ✅ Complet | node | ✅ | ✅ |
+| VEX | L3-CITIZENS | active | ✅ Documenté | - | ✅ | ✅ |
+| KIVA-CLI | L1-INFRA | active | ⚠️ Partiel | - | ✅ | - |
+| TALEX | L4-TOOLS | active | ⚠️ Partiel | python | ✅ | ⚠️ |
+| N243 | L4-TOOLS | active | ⚠️ Partiel | custom | ✅ | ⚠️ |
+| PHOTON | L4-TOOLS | active | ⚠️ Partiel | custom | ✅ | ⚠️ |
+| PLIX | L2-PLATFORM | active | ⚠️ Partiel | custom | ✅ | ⚠️ |
+| DAG-3 | L2-PLATFORM | active | ⚠️ Partiel | custom | ✅ | ⚠️ |
+| RLM-MDU | L2-PLATFORM | active | ⚠️ Partiel | custom | ✅ | ⚠️ |
+| LLUX | L3-CITIZENS | active | ⚠️ Partiel | custom | ✅ | ⚠️ |
+| ROOTX | L4-TOOLS | active | ⚠️ Partiel | custom | ✅ | ⚠️ |
+| NEXUS | L1-INFRA | active | ⚠️ Partiel | custom | ✅ | ⚠️ |
+| ANAmORPHOSER | L0-CANON | active | ⚠️ Partiel | python | ✅ | ⚠️ |
+| RLM-* | L2-PLATFORM | active | ✅ Configuré | custom/python | ✅ | ⚠️ |
+| KIVA | L1-INFRA | active | 📋 Documenté | - | ✅ | - |
+| BRAIN | L0-CANON | active | 📋 Documenté | - | ✅ | - |
+| LLM-CORE | L1-INFRA | dormant | 📋 Documenté | - | ✅ | - |
+| CONTAINER-ORCHESTRATOR | L1-INFRA | dormant | 📋 Documenté | - | - | - |
+| MATRIX | L0-CANON | dormant | 📋 Documenté | - | - | - |
+
+**Légende** :
+- ✅ Complet : runner déclaré, working_dir/entrypoint configurés, tests passants
+- ⚠️ Partiel : runner déclaré, working_dir configuré, entrypoint à vérifier
+- 📋 Documenté : repo référencé dans SOT, pas encore de runner KIX
+- ❌ Absent : pas de runner, pas de configuration
 
 ---
 
@@ -438,11 +524,19 @@ enforcement_mode:
 | `runners/*.py` | 7 implémentations de runners |
 | `src/app.py` | API REST KIX complète |
 | `tests/test_*.py` | 79+ tests passants |
+| `src/capability.py` | Capability model (7 capabilities) |
+| `src/auth.py` | `requires_capability` decorator |
+| `tests/test_capability.py` | 6 tests capability model passants |
 | `/health` KIX | 200 OK |
 | `/health` bootstrap | 200 OK |
 | `/bootstrap/status` | 200 OK |
 | `/bootstrap/ready` | 503 attendu (dépendances manquantes) |
 | `/bootstrap/monitor` | 503 avec alertes (watchdog actif) |
+| `pytest tests/test_capability.py tests/test_auth.py` | 14 passed |
+| `pytest tests/test_runners_integration.py` | 13 passed |
+| `validate_designs.py` | designs/kix/design.yaml valide |
+| Capability model | 28 capabilities dans `src/capability.py` |
+| Endpoints protégés | 24 endpoints avec `@requires_capability` |
 
 ### 11.2 Références Croisées
 
@@ -453,12 +547,22 @@ enforcement_mode:
 | **PRD MOC Bootstrap** | PRD-MOC-KIX-BOOTSTRAP-RUNNER-2026-08-20.md |
 | **PRD MOC Exe Orchestration** | PRD-MOC-KIX-EXE-ORCHESTRATION-2026-09-24.md |
 | **PRD MOC VEX Boundaries** | PRD-MOC-VEX-KIX-BOUNDARIES-20260927.md |
+| **PRD MOC GATEWAY-MANAGER** | PRD-MOC-KIX-GATEWAY-MANAGER-20260927.md |
+| **PRD MOC TRIX** | PRD-MOC-KIX-TRIX-20260927.md |
+| **PRD MOC WAZAA** | PRD-MOC-KIX-WAZAA-20260927.md |
+| **PRD MOC FLEX** | PRD-MOC-KIX-FLEX-20260927.md |
+| **PRD MOC KG-L** | PRD-MOC-KIX-KG-L-20260927.md |
+| **PRD MOC JEVX** | PRD-MOC-KIX-JEVX-20260927.md |
+| **PRD MOC VEX** | PRD-MOC-KIX-VEX-20260927.md |
 | **ADR Bootstrap** | ADR-2026-08-20-001-bootstrap-runner.md |
 | **ADR Generic Runner** | ADR-2026-08-18-002-KIX-GENERIC-RUNNER-WRAPPER.md |
 | **ADR Orchestrator** | ADR-2026-07-27-016-kix-orchestrator |
 | **ADR Token** | ADR-2026-08-10-001-single-global-github-token |
 | **Guide Écosystème** | docs/ecosystem-integration-guide.md |
 | **Registry** | config/runners.yaml |
+| **Capability Model** | src/capability.py |
+| **Auth/Capability Decorator** | src/auth.py |
+| **Unified Design KIX** | unified-design/designs/kix/design.yaml |
 
 ---
 

@@ -31,7 +31,7 @@ def _export_kg_l(registry_path: Path, output_path: Path) -> int:
         return 1
 
     entries = []
-    for repo in registry.get("P0_REPOS", registry.get("repositories", [])):
+    for repo in registry.get("P0_REPOS", registry.get("repositories", registry.get("repos", []))):
         entries.append({
             "id": repo.get("name"),
             "name": repo.get("name"),
