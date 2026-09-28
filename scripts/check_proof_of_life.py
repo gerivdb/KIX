@@ -11,25 +11,28 @@ for path in files:
     
     filename = os.path.basename(path)
     
-    # Find proof-of-life section
-    if '## 9. PROOF-OF-LIFE' in content:
-        start = content.find('## 9. PROOF-OF-LIFE')
-        end = content.find('## 10.', start)
-        if end == -1:
-            end = len(content)
-        section = content[start:end]
-        print(f'{filename}:')
-        print(section[:400])
-        print('...')
-    elif '## 9. PREUVE-OF-LIFE' in content:
-        start = content.find('## 9. PREUVE-OF-LIFE')
-        end = content.find('## 10.', start)
-        if end == -1:
-            end = len(content)
-        section = content[start:end]
-        print(f'{filename}:')
-        print(section[:400])
-        print('...')
-    else:
+    # Find proof-of-life section regardless of section number
+    markers = [
+        '## 9. PROOF-OF-LIFE',
+        '## 9. PREUVE-OF-LIFE',
+        '## 8. PROOF-OF-LIFE',
+        '## 8. PREUVE-OF-LIFE',
+        '## PROOF-OF-LIFE',
+        '## PREUVE-OF-LIFE',
+    ]
+    found = False
+    for marker in markers:
+        if marker in content:
+            start = content.find(marker)
+            end = content.find('\n## ', start + 1)
+            if end == -1:
+                end = len(content)
+            section = content[start:end]
+            print(f'{filename}:')
+            print(section[:400])
+            print('...')
+            found = True
+            break
+    if not found:
         print(f'{filename}: No proof-of-life section found')
     print()
