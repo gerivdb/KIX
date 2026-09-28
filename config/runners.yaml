@@ -8,17 +8,32 @@ runners:
   depends_on:
   - kix
   - wazaa
+  meta:
+    repo: gerivdb/KIX
+    role: operational
+  working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/KG-L
+  entrypoint: services/coherence_watchdog.py
 - name: nodex
   runner_type: python
   port: 8821
   depends_on:
   - ontology
   - knowledge-graph-memory
+  meta:
+    repo: gerivdb/KIX
+    role: cognitive
+  working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/TALEX
+  entrypoint: services/nodex_service.py
 - name: rootx
   runner_type: python
   port: 8823
   depends_on:
   - knowledge-graph-memory
+  meta:
+    repo: gerivdb/KIX
+    role: cognitive
+  working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/ROOTX
+  entrypoint: services/rootx_service.py
 - name: talex
   runner_type: python
   port: 8822
@@ -28,6 +43,11 @@ runners:
   - timx-feature-store
   - rootx
   - llm-core
+  meta:
+    repo: gerivdb/KIX
+    role: cognitive
+  working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/TALEX
+  entrypoint: services/talex_service.py
 - name: friction-analyzer
   runner_type: python
   port: 8815
@@ -37,11 +57,21 @@ runners:
   - rootx
   - prognex
   - referex
+  meta:
+    repo: gerivdb/KIX
+    role: cognitive
+  working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/RLM-MDU
+  entrypoint: services/friction_analyzer.py
 - name: agent-manager
   runner_type: gateway-exe
   port: 18001
   depends_on:
   - kix
+  meta:
+    repo: gerivdb/KIX
+    role: orchestrator
+  working_dir: D:/DO/WEB/TOOLS/L1-INFRA/AGENT-MANAGER
+  binary: agent-manager.exe
 - name: llm-gateway
   runner_type: gateway-exe
   port: 18000
@@ -55,6 +85,7 @@ runners:
   meta:
     repo: gerivdb/ECOS-CLI
     role: llm-gateway
+  binary: gateway-manager.exe
 - name: batmcp
   runner_type: gateway-exe
   port: 8000
@@ -77,6 +108,7 @@ runners:
   meta:
     repo: gerivdb/BatMCP
     role: mcp-server
+  binary: batmcp.exe
 - name: kix
   runner_type: python
   port: 8800
@@ -197,9 +229,9 @@ runners:
   working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/JEVX
   entrypoint: src/server.ts
   command:
-    - npx
-    - ts-node
-    - src/server.ts
+  - npx
+  - ts-node
+  - src/server.ts
   depends_on:
   - kix
   meta:
@@ -565,7 +597,7 @@ runners:
 - name: rlm-mdu
   runner_type: custom
   port: 0
-  working_dir: ''
+  working_dir: D:\DO\WEB\TOOLS\L2-PLATFORM\RLM-MDU
   depends_on:
   - kix
   health_path: /health
@@ -601,7 +633,7 @@ runners:
 - name: llm-core
   runner_type: custom
   port: 0
-  working_dir: ''
+  working_dir: D:\DO\WEB\TOOLS\L1-INFRA\LLM-CORE
   depends_on:
   - kix
   health_path: /health
@@ -613,7 +645,7 @@ runners:
 - name: piano
   runner_type: custom
   port: 0
-  working_dir: ''
+  working_dir: D:\DO\WEB\TOOLS\L4-TOOLS\REPO-STANDARDS\PIANO
   depends_on:
   - kix
   health_path: /health
@@ -625,7 +657,7 @@ runners:
 - name: trix
   runner_type: custom
   port: 0
-  working_dir: ''
+  working_dir: D:\DO\WEB\TOOLS\L4-TOOLS\TRIX
   depends_on:
   - kix
   health_path: /health
@@ -649,7 +681,7 @@ runners:
 - name: flex
   runner_type: custom
   port: 0
-  working_dir: ''
+  working_dir: D:\DO\WEB\TOOLS\L4-TOOLS\FLEX
   depends_on:
   - kix
   health_path: /health
@@ -661,7 +693,7 @@ runners:
 - name: infx
   runner_type: custom
   port: 0
-  working_dir: ''
+  working_dir: D:\DO\WEB\TOOLS\L4-TOOLS\INFX
   depends_on:
   - kix
   health_path: /health
@@ -673,7 +705,7 @@ runners:
 - name: codedb-e5620
   runner_type: custom
   port: 0
-  working_dir: ''
+  working_dir: D:\DO\WEB\TOOLS\L4-TOOLS\CodeDB-E5620
   depends_on:
   - kix
   health_path: /health
@@ -694,6 +726,7 @@ runners:
   meta:
     repo: gerivdb/nexus
     role: governance
+  entrypoint: nexus.exe
 - name: anamorphoser
   runner_type: python
   port: 8831

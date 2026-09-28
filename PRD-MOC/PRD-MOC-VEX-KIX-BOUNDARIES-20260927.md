@@ -359,6 +359,20 @@ Concepts ontologiques mobilisés :
 - `ONTOLOGY_DECLARATION.yaml` : Concepts ontologiques KIX
 - `docs/bootstrap-runner.md` : Documentation bootstrap runner KIX
 
+## 14. Modèle de Rôle/Fonction KIX
+
+Ce PRD MOC s'aligne sur le modèle de rôle/fonction défini dans `PRD-MOC-KIX-MASTER.md` section 2.3 :
+
+- **RBAC** : `admin`, `operator`, `viewer` (JWT dans `src/auth.py`)
+- **Functional Roles** : 21 catégories (`orchestrator`, `cognitive`, `governance`, `infrastructure`, etc.)
+- **Dual-Role Pattern** : TRIX/TRIXD/PLIX = RLM + TLM
+- **ActorSpec** : intégration via `KIXProcessManagerAdapter`
+
+**Implication pour les frontières KIX/VEX** :
+- KIX expose les rôles fonctionnels via `/swarm/status` pour que VEX puisse consulter l'état sans duplication.
+- VEX ne doit pas modifier `functional_roles` ni `meta.role` des runners KIX ; il consulte uniquement.
+- Les endpoints cross-layer (`GET /health/kix`, `GET /health/l3`) respectent la séparation RBAC : VEX agit comme client `viewer` sur KIX.
+
 ---
 
 **IntentHash** : `0xVEX_KIX_BOUNDARIES_20260927`

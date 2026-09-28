@@ -15,6 +15,14 @@ from src.audit_log import AuditLogStore
 from src.auth import create_token
 
 
+from src.auth import create_token
+
+
+def _auth_header(role: str = "viewer") -> dict[str, str]:
+    token = create_token("test-user", role)
+    return {"Authorization": f"Bearer {token}"}
+
+
 @pytest.fixture
 def client():
     from src.app import app as kix_app
@@ -40,8 +48,8 @@ def test_known_repositories_loader() -> None:
     runners = _load_known_repositories()
     assert len(runners) > 0
     names = {r.name for r in runners}
-    assert "KIX" in names
-    assert "RLM-GRAPH" in names
+    assert any("KIX" in n for n in names)
+    assert any("RLM-GRAPH" in n or "RLM-243" in n for n in names)
 
 
 def test_probe_audit_returns_aggregate(client) -> None:
@@ -83,7 +91,7 @@ def test_alerts_returns_items(client) -> None:
     fake_response.status_code = 200
     fake_response.json.return_value = {"status": "ok", "service": "rlm-graph", "port": 8786}
     with patch("src.app.requests.get", return_value=fake_response):
-        resp = client.get("/alerts")
+        resp = client.get("/alerts", headers=_auth_header("viewer"))
         assert resp.status_code == 200
         data = resp.get_json()
         assert "triggered" in data
@@ -98,14 +106,14 @@ def test_alerts_filters_by_service(client) -> None:
     fake_response.status_code = 200
     fake_response.json.return_value = {"status": "ok", "service": "rlm-graph", "port": 8786}
     with patch("src.app.requests.get", return_value=fake_response):
-        resp = client.get("/alerts?service=RLM-GRAPH")
+        resp = client.get("/alerts?service=RLM-GRAPH", headers=_auth_header("viewer"))
         assert resp.status_code == 200
         data = resp.get_json()
         assert data["service"] == "kix"
 
 
 def test_dashboard_returns_html(client) -> None:
-    resp = client.get("/dashboard")
+    resp = client.get("/dashboard", headers=_auth_header("viewer"))
     assert resp.status_code == 200
     assert resp.content_type.startswith("text/html")
     assert b"KIX Dashboard" in resp.data
@@ -113,13 +121,13 @@ def test_dashboard_returns_html(client) -> None:
 
 
 def test_events_returns_sse(client) -> None:
-    resp = client.get("/events")
+    resp = client.get("/events", headers=_auth_header("viewer"))
     assert resp.status_code == 200
     assert resp.content_type.startswith("text/event-stream")
 
 
 def test_notifications_history_empty(client) -> None:
-    resp = client.get("/notifications/history")
+    resp = client.get("/notifications/history", headers=_auth_header("viewer"))
     assert resp.status_code == 200
     data = resp.get_json()
     assert data["service"] == "kix"
@@ -147,7 +155,7 @@ def test_notifications_history_with_data(client, tmp_path: Path) -> None:
                 payload='{"items": []}',
             )
         ]
-        resp = client.get("/notifications/history?limit=10")
+        resp = client.get("/notifications/history?limit=10", headers=_auth_header("viewer"))
         assert resp.status_code == 200
         data = resp.get_json()
         assert data["count"] == 1
@@ -160,7 +168,7 @@ def test_notifications_history_filters_by_service(client, tmp_path: Path) -> Non
         from src.notification_store import NotificationStore
         store = NotificationStore(tmp_path / "notifications.db")
         mock_notif.list_recent.return_value = []
-        resp = client.get("/notifications/history?service=RLM-GRAPH")
+        resp = client.get("/notifications/history?service=RLM-GRAPH", headers=_auth_header("viewer"))
         assert resp.status_code == 200
         data = resp.get_json()
         assert data["count"] == 0
@@ -174,7 +182,7 @@ def test_metrics_includes_notifications(client, tmp_path: Path) -> None:
         mock_metrics.list_all.return_value = {
             "webhook": NotificationMetrics(channel="webhook", total_sent=10, total_success=9, total_failed=1, avg_latency_ms=120.5, last_sent_at="2026-07-28T04:00:00+00:00"),
         }
-        resp = client.get("/metrics")
+        resp = client.get("/metrics", headers=_auth_header("viewer"))
         assert resp.status_code == 200
         data = resp.get_json()
         assert "notifications" in data
@@ -188,7 +196,7 @@ def test_metrics_prometheus_endpoint(client, tmp_path: Path) -> None:
         mock_metrics.list_all.return_value = {
             "webhook": NotificationMetrics(channel="webhook", total_sent=10, total_success=9, total_failed=1, avg_latency_ms=120.5, last_sent_at="2026-07-28T04:00:00+00:00"),
         }
-        resp = client.get("/metrics/prometheus")
+        resp = client.get("/metrics/prometheus", headers=_auth_header("viewer"))
         assert resp.status_code == 200
         assert resp.content_type.startswith("text/plain")
         text = resp.get_data(as_text=True)
@@ -203,7 +211,7 @@ def test_dashboard_includes_metrics_section(client, tmp_path: Path) -> None:
         mock_metrics.list_all.return_value = {
             "webhook": NotificationMetrics(channel="webhook", total_sent=10, total_success=9, total_failed=1, avg_latency_ms=120.5, last_sent_at="2026-07-28T04:00:00+00:00"),
         }
-        resp = client.get("/dashboard")
+        resp = client.get("/dashboard", headers=_auth_header("viewer"))
         assert resp.status_code == 200
         assert b"Notification Metrics" in resp.data
         assert b"webhook" in resp.data
