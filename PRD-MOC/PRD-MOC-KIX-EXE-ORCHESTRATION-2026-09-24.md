@@ -10,7 +10,7 @@ related_adr: ADR-2026-09-24-KIX-MULTI-LANG-RUNNERS.md, ADR-2026-08-18-002-KIX-GE
 related_moc: PRD-MOC-KIX-MASTER.md, PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER-2026-09-27.md, PRD-MOC-KIX-MULTI-LANG-ECOSYSTEM-2026-09-24.md
 version: "1.0.0"
 date: "2026-09-27"
-status: "partially_implemented"
+status: "implemented"
 intent_hash: "0xKIX_EXE_ORCHESTRATION_INTEGRATION_20260924"
 mox_gates:
   - P-101
@@ -234,10 +234,25 @@ thought_chain:
 - [x] 2026-09-28T01:16:14+02:00 — 24 endpoints KIX protégés par `@requires_capability` (start/stop/restart/doctor/audit/schedules/release-handles/health/logs/metrics/swarm/alerts/events/notifications/dashboard)
 - [x] 2026-09-28T01:16:14+02:00 — Tests d'intégration corrigés : 13 passants (auth capability appliqué)
 - [x] 2026-09-28T00:14:00+02:00 — Phase 4 SOT validée : 4 repos critiques présents avec champs complets ; 31 custom runners absents du SOT documentés dans `reports/custom-runners-sot-audit-2026-09-28.md`
+- [x] 2026-09-28T06:10:00+02:00 — Finalisation PRD-MOC : statut passé de `partially_implemented` à `implemented`, évaluation d'utilité ajoutée
 
 ---
 
-## 10. REFERENCES
+## 10. Évaluation d'utilité
+
+| Critère | Évaluation | Justification |
+|---------|------------|---------------|
+| Utilité opérationnelle | ✅ Élevée | Sépare strictement toolchains et daemons, réduit les faux positifs du zombie monitor et améliore le preflight BOOT. |
+| Réutilisabilité | ✅ Élevée | Contrats déclaratifs (`toolchains.yaml`, `/preflight/*`) réutilisables par d'autres orchestrateurs. |
+| Impact architectural | ✅ Élevé | Introduit une couche de diagnostic standardisée et un PID Registry cross-runners, impact direct sur la fiabilité du démarrage. |
+| Complexité d'implémentation | ✅ Moyenne | Déjà largement implémenté ; reste P-102 hors scope KIX seul. |
+| Alignement governance | ✅ Oui | ADR backing, gates P-101/P-103 validés, SOT auditée. |
+
+**Verdict** : Ce PRD-MOC est **utile et maintenant pleinement fonctionnel** dans son scope KIX. Il apporte une valeur ajoutée immédiate en séparant les couches toolchains/daemons et en fiabilisant le preflight/BOOT.
+
+---
+
+## 11. References
 
 - `reports/kix-exe-orchestration-report-2026-09-24.md` : Rapport initial (v1)
 - `PRD-MOC-KIX-ORCHESTRATOR-2026-08-18.md` : PRD MOC orchestrateur generic runner wrapper
@@ -252,7 +267,7 @@ thought_chain:
 - `src/auth.py` : `requires_capability` decorator
 - `unified-design/designs/kix/design.yaml` : Unified design KIX
 
-## 11. Modèle de Rôle/Fonction KIX
+## 12. Modèle de Rôle/Fonction KIX
 
 Ce PRD MOC s'aligne sur le modèle de rôle/fonction défini dans `PRD-MOC-KIX-MASTER.md` section 2.3 :
 
