@@ -31,8 +31,12 @@ def load_sot() -> dict[str, Any]:
 
 def audit() -> dict[str, Any]:
     data = load_sot()
-    repos = data.get("P0_REPOS", [])
-    by_name = {r.get("name"): r for r in repos}
+    repos = data.get("repos", [])
+    by_name = {}
+    for r in repos:
+        repo = r.get("repo") or r.get("name") or ""
+        name = repo.split("/")[-1] if "/" in repo else repo
+        by_name[name] = r
 
     results = []
     for crit in CRITICAL_REPOS:
