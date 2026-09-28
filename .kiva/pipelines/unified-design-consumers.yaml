@@ -1,0 +1,41 @@
+# .kiva/pipelines/unified-design-consumers.yaml
+# KIVA-CLI Unified Design Consumers Pipeline (PRD-MOC-KIX-TALEX-FRICTION-ANALYZER-CONSUMER-20260928)
+# IntentHash: 0xPRD_MOC_KIX_TALEX_FRICTION_ANALYZER_CONSUMER_20260928
+# Gate: D3 — Run after consumer PRD-MOC and tests are implemented
+#
+# Usage:
+#   kiva pipeline show unified-design-consumers
+#   kiva pipeline run unified-design-consumers --dry-run
+#   kiva pipeline validate unified-design-consumers
+
+name: unified-design-consumers
+version: "1.0"
+description: "Validate TALEX friction analyzer consumer integration in KIX — tests + imports + dry-run"
+
+repo: gerivdb/KIX
+local_path: "D:\\DO\\WEB\\TOOLS\\L2-PLATFORM\\KIX"
+
+steps:
+  - name: test_talex_friction_unit
+    description: "Run TALEX friction analyzer unit tests (8/8)"
+    command: "python -m pytest tests/unit/kix/test_talex_friction_analyzer.py -v"
+    expected_exit: 0
+    timeout: 60
+
+  - name: test_talex_friction_integration
+    description: "Run TALEX friction analyzer integration tests (3/3)"
+    command: "python -m pytest tests/test_talex_friction_analyzer_integration.py -v"
+    expected_exit: 0
+    timeout: 60
+
+  - name: verify_import
+    description: "Verify TALEX friction analyzer integration module is importable"
+    command: "python -c \"import sys; sys.path.insert(0, 'src'); from kix.pipelines.talex_friction_analyzer import TalexFrictionAnalyzerKix; from kix.talex_friction_analyzer_integration import get_talex_friction_analyzer_integration; print('OK')\""
+    expected_exit: 0
+    timeout: 30
+
+  - name: dry_run_friction_analysis
+    description: "Run dry-run friction analysis with test context"
+    command: "python -c \"import sys; sys.path.insert(0, 'src'); from kix.pipelines.talex_friction_analyzer import TalexFrictionAnalyzerKix; a=TalexFrictionAnalyzerKix(context={'frictions':[{'code':'ERR-TEST','message':'test','category':'tool','severity':'low','structural':False,'causal':True}]}); r=a.analyze(); print('STATUS', r.get('status')); print('TOTAL', r.get('summary',{}).get('total'))\""
+    expected_exit: 0
+    timeout: 30
