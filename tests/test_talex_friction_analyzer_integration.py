@@ -21,7 +21,7 @@ def test_talex_friction_analyzer_integration_allow():
         "consumer": "KIX",
     }
     result = integration.validate(context)
-    assert result.get("status") == "OK"
+    assert result.get("status") == "COMPLETED"
 
 
 def test_talex_friction_analyzer_integration_deny_missing_hash():
@@ -29,7 +29,7 @@ def test_talex_friction_analyzer_integration_deny_missing_hash():
     integration = get_talex_friction_analyzer_integration()
     context = {"consumer": "KIX"}
     result = integration.validate(context)
-    assert result.get("status") == "OK"
+    assert result.get("status") == "COMPLETED"
 
 
 def test_talex_friction_analyzer_integration_singleton():

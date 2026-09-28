@@ -3,13 +3,19 @@
 Integration module for talex-friction-analyzer design in KIX.
 """
 
-import sys
 from pathlib import Path
 
-prd_dir = Path(__file__).parent.parent / "PRD-MOC"
-sys.path.insert(0, str(prd_dir))
+from kix.pipelines.talex_friction_analyzer import TalexFrictionAnalyzerKix
 
-from talex_friction_analyzer import TalexFrictionAnalyzer
+
+class TalexFrictionAnalyzer:
+    """Compatibility alias."""
+
+    def __init__(self) -> None:
+        self._impl = TalexFrictionAnalyzerKix()
+
+    def analyze(self, context: dict) -> dict:
+        return self._impl.analyze(context)
 
 
 class TalexFrictionAnalyzerIntegration:
