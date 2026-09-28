@@ -72,7 +72,7 @@ class NodeRunner(RunnerBase):
 def _is_process_alive(pid: int) -> bool:
     if sys.platform == "win32":
         cmd = f"Get-Process -Id {pid} -ErrorAction SilentlyContinue"
-        return os.system(f"powershell -Command \"{cmd}\"") == 0
+        return os.system(f"powershell -WindowStyle Hidden -Command \"{cmd}\"") == 0
     try:
         os.kill(pid, 0)
         return True
