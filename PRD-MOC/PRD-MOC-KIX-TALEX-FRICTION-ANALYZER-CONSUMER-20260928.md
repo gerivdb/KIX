@@ -92,7 +92,7 @@ class TalexFrictionAnalyzerKix:
 [x] Chaque consumer a un PRD-MOC local dans son propre repo.
 [x] Chaque PRD-MOC contient une Proof-of-Life horodatee.
 [x] Le hook pre-commit `validate_consumer_designs.py` est installe dans tous les repos consumers.
-[ ] Le pipeline KIVA `unified-design-consumers` passe en CI locale.
+[x] Le pipeline KIVA `unified-design-consumers` passe en CI locale.
 [x] Aucun design ACTIVE/STANDARD n'a `consumers: []`.
 [x] Les implementations sont integrees dans le code metier de chaque consumer.
 [x] Tests unitaires passent pour chaque design par consumer.
@@ -113,7 +113,7 @@ class TalexFrictionAnalyzerKix:
 - [x] 2026-09-28T04:03:02+02:00 -- Dry-run causal passe : 100% prod-ready.
 - [x] 2026-09-29T21:53:00+02:00 -- Integration fonctionnelle dans le code metier : module + imports OK.
 - [x] 2026-09-29T21:53:00+02:00 -- Tests unitaires par consumer/design : 11/11 passants.
-- [ ] 2026-09-29T21:53:00+02:00 -- Pipeline KIVA `unified-design-consumers` active.
+- [x] 2026-09-29T21:53:00+02:00 -- Pipeline KIVA `unified-design-consumers` active.
 
 ## 10. Analyse TALEX des frictions de la conversation
 
