@@ -26,7 +26,7 @@ class GatewayRunner(RunnerBase):
                 proc = subprocess.Popen(
                     command,
                     cwd=str(self.spec.working_dir),
-                    creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
+                    creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0) | getattr(subprocess, "CREATE_NO_WINDOW", 0),
                 )
             else:
                 proc = subprocess.Popen(command, cwd=str(self.spec.working_dir), start_new_session=True)
@@ -74,7 +74,7 @@ class GatewayRunner(RunnerBase):
 def _is_process_alive(pid: int) -> bool:
     if sys.platform == "win32":
         cmd = f"Get-Process -Id {pid} -ErrorAction SilentlyContinue"
-        return os.system(f"powershell -Command \"{cmd}\"") == 0
+        return os.system(f"powershell -WindowStyle Hidden -Command \"{cmd}\"") == 0
     try:
         os.kill(pid, 0)
         return True
