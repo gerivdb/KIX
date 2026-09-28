@@ -13,6 +13,7 @@ runners:
     role: operational
   working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/KG-L
   entrypoint: services/coherence_watchdog.py
+  auto_start: true
 - name: nodex
   runner_type: python
   port: 8821
@@ -24,6 +25,7 @@ runners:
     role: cognitive
   working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/TALEX
   entrypoint: services/nodex_service.py
+  auto_start: true
 - name: rootx
   runner_type: python
   port: 8823
@@ -34,6 +36,7 @@ runners:
     role: cognitive
   working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/ROOTX
   entrypoint: services/rootx_service.py
+  auto_start: true
 - name: talex
   runner_type: python
   port: 8822
@@ -48,6 +51,7 @@ runners:
     role: cognitive
   working_dir: D:/DO/WEB/TOOLS/L4-TOOLS/TALEX
   entrypoint: services/talex_service.py
+  auto_start: true
 - name: friction-analyzer
   runner_type: python
   port: 8815
@@ -62,6 +66,7 @@ runners:
     role: cognitive
   working_dir: D:/DO/WEB/TOOLS/L2-PLATFORM/RLM-MDU
   entrypoint: services/friction_analyzer.py
+  auto_start: true
 - name: agent-manager
   runner_type: gateway-exe
   port: 18001
@@ -72,6 +77,7 @@ runners:
     role: orchestrator
   working_dir: D:/DO/WEB/TOOLS/L1-INFRA/AGENT-MANAGER
   binary: agent-manager.exe
+  auto_start: true
 - name: llm-gateway
   runner_type: gateway-exe
   port: 18000
@@ -86,6 +92,7 @@ runners:
     repo: gerivdb/ECOS-CLI
     role: llm-gateway
   binary: gateway-manager.exe
+  auto_start: true
 - name: batmcp
   runner_type: gateway-exe
   port: 8000
@@ -109,6 +116,7 @@ runners:
     repo: gerivdb/BatMCP
     role: mcp-server
   binary: batmcp.exe
+  auto_start: true
 - name: kix
   runner_type: python
   port: 8800
@@ -149,6 +157,7 @@ runners:
   meta:
     repo: gerivdb/KIX
     role: metrics collector
+  auto_start: true
 - name: rlm-config
   runner_type: python
   port: 8794
@@ -159,6 +168,7 @@ runners:
   meta:
     repo: gerivdb/KIX
     role: configuration service
+  auto_start: true
 - name: rlm-deploy
   runner_type: python
   port: 8795
@@ -169,6 +179,7 @@ runners:
   meta:
     repo: gerivdb/KIX
     role: deployment service
+  auto_start: true
 - name: rlm-graph
   runner_type: python
   port: 8797
@@ -179,6 +190,7 @@ runners:
   meta:
     repo: gerivdb/KIX
     role: graph service
+  auto_start: true
 - name: rlm-secure
   runner_type: python
   port: 8796
@@ -189,6 +201,7 @@ runners:
   meta:
     repo: gerivdb/KIX
     role: security service
+  auto_start: true
 - name: rlm-incident
   runner_type: python
   port: 8798
@@ -199,6 +212,7 @@ runners:
   meta:
     repo: gerivdb/KIX
     role: incident service
+  auto_start: true
 - name: rlm-release
   runner_type: python
   port: 8799
@@ -209,6 +223,7 @@ runners:
   meta:
     repo: gerivdb/KIX
     role: release service
+  auto_start: true
 - name: kg-l
   runner_type: python
   port: 8888
@@ -223,6 +238,7 @@ runners:
   meta:
     repo: gerivdb/KG-L
     role: knowledge-graph service
+  auto_start: true
 - name: jevx
   runner_type: node
   port: 8889
@@ -237,6 +253,7 @@ runners:
   meta:
     repo: gerivdb/JEVX
     role: decision-engine
+  auto_start: true
 - name: flex-rust
   runner_type: rust
   port: 7718
@@ -254,6 +271,7 @@ runners:
   meta:
     repo: gerivdb/FLEX
     role: rust-service
+  auto_start: true
 - name: go-service
   runner_type: go
   port: 7717
@@ -271,6 +289,7 @@ runners:
   meta:
     repo: gerivdb/GO-SERVICE
     role: go-service
+  auto_start: true
 - name: node-service
   runner_type: node
   port: 7716
@@ -286,6 +305,7 @@ runners:
   meta:
     repo: gerivdb/NODE-SERVICE
     role: node-service
+  auto_start: true
 - name: kix-ecosystem
   runner_type: python
   port: 8811
@@ -298,6 +318,7 @@ runners:
   meta:
     repo: gerivdb/KIX
     role: ecosystem-orchestrator
+  auto_start: true
 - name: wazaa-bus
   runner_type: python
   port: 1874
@@ -309,6 +330,7 @@ runners:
   meta:
     repo: gerivdb/WAZAA
     role: event-bus
+  auto_start: true
 - name: trixd
   runner_type: zig-binary
   port: 7243
@@ -328,6 +350,7 @@ runners:
   meta:
     repo: gerivdb/TRIX
     role: zig-runtime
+  auto_start: true
 - name: gitex
   runner_type: custom
   port: 0
