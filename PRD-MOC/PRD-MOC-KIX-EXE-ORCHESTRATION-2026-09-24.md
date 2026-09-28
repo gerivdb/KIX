@@ -246,6 +246,7 @@ thought_chain:
 - [x] 2026-09-28T06:55:00+02:00 — Gap antipattern fenêtres/popups ajouté ; Phase 6 planifiée dans PRD-MOC-KIX-EXE-ORCHESTRATION-2026-09-24.md
 - [x] 2026-09-28T06:58:00+02:00 — Phase 6 implémentée : CREATE_NO_WINDOW dans 4 runners + bootstrap_runner, -WindowStyle Hidden dans 7 appels PowerShell, auto_start=False par défaut + runners.yaml explicite
 - [x] 2026-09-28T07:26:00+02:00 — Tâches planifiées Windows masquées : 8 tâches mises à jour avec -WindowStyle Hidden, KIX PULSE Scan désactivée (script orphelin)
+- [x] 2026-09-28T07:39:00+02:00 — Validation locale : 69 tests KIX passent ; VEX py_compile OK, tests préexistants échouent sur Path("vex.yaml") sans rapport avec l’anti-pattern ; commits atomiques KIX pushés sur origin/main (5 commits : runners, bootstrap, src, config, PRD-MOC)
 
 ---
 
