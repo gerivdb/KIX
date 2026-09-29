@@ -98,8 +98,8 @@ class TestRunAllChecks:
         assert "warn" in report
         assert "error" in report
         assert "checks" in report
-        assert report["total"] == 4
-        assert len(report["checks"]) == 4
+        assert report["total"] == 6
+        assert len(report["checks"]) == 6
 
     def test_checks_have_required_fields(self):
         report = run_all_checks()

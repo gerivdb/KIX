@@ -212,20 +212,20 @@ class TestKGLSchema:
 class TestWazaaPublish:
     """Tests de publication vers KG-WAZAA (avec mock)."""
 
-    @patch("conversation_cognitive_runner.requests.post")
+    @patch("services.conversation_cognitive_runner.requests.post")
     def test_publish_success(self, mock_post):
         mock_post.return_value.status_code = 200
         decision = {"type": "Decision", "intent_hash": "0xTEST"}
         assert publish_waazaa(decision) is True
         mock_post.assert_called_once()
 
-    @patch("conversation_cognitive_runner.requests.post")
+    @patch("services.conversation_cognitive_runner.requests.post")
     def test_publish_failure(self, mock_post):
         mock_post.side_effect = Exception("Connection refused")
         decision = {"type": "Decision", "intent_hash": "0xTEST"}
         assert publish_waazaa(decision) is False
 
-    @patch("conversation_cognitive_runner.requests.post")
+    @patch("services.conversation_cognitive_runner.requests.post")
     def test_publish_timeout(self, mock_post):
         import requests
         mock_post.side_effect = requests.exceptions.Timeout()

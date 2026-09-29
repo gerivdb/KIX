@@ -180,13 +180,17 @@ class TestGovernanceEndpoints:
     def client(self, tmp_path):
         """Client Flask de test."""
         import importlib
-        if "conversation_cognitive_runner" in sys.modules:
-            importlib.reload(sys.modules["conversation_cognitive_runner"])
+        # Ensure KIX local module is used, not any stale GOVERNANCE-HUB runner
+        for mod_name in list(sys.modules):
+            if mod_name == "conversation_cognitive_runner" or mod_name.startswith("conversation_cognitive_runner."):
+                del sys.modules[mod_name]
+        if "services.conversation_cognitive_runner" in sys.modules:
+            importlib.reload(sys.modules["services.conversation_cognitive_runner"])
         
         # Patch les chemins de données
-        with patch("conversation_cognitive_runner.DATA_DIR", tmp_path / "cognitive"):
-            with patch("conversation_cognitive_runner.DECISIONS_FILE", tmp_path / "cognitive" / "cognitive_decisions.json"):
-                from conversation_cognitive_runner import app
+        with patch("services.conversation_cognitive_runner.DATA_DIR", tmp_path / "cognitive"):
+            with patch("services.conversation_cognitive_runner.DECISIONS_FILE", tmp_path / "cognitive" / "cognitive_decisions.json"):
+                from services.conversation_cognitive_runner import app
                 app.config["TESTING"] = True
                 with app.test_client() as client:
                     yield client

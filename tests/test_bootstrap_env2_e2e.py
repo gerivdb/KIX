@@ -63,7 +63,7 @@ class TestEndToEndBootstrapENV2(unittest.TestCase):
 
         if not cls.kix_ready:
             cls.tearDownClass()
-            cls.skipTest("KIX did not become ready in time")
+            raise unittest.SkipTest("KIX did not become ready in time")
 
         # Attendre que bootstrap soit pret
         for _ in range(60):

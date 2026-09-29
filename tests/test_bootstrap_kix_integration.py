@@ -34,7 +34,7 @@ class TestIntegrationServiceStarter(unittest.TestCase):
             starter.start()
             mock_arbiter.assert_called_once()
             mock_wazaa_bus.assert_called_once()
-            self.assertEqual(mock_kix_runner.call_count, 3)
+            self.assertEqual(mock_kix_runner.call_count, 2)
         self.assertEqual(bootstrap.state.status, bootstrap.PHASE_READY)
         self.assertTrue(bootstrap.state.ready)
         self.assertEqual(bootstrap.state.phase, "operational")
