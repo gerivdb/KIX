@@ -601,3 +601,27 @@ KIX interroge VEX (`/health/window-policy`) pour chaque service enregistré et a
 - **ADR** : `ADR-KIX-WINDOW-POLICY-20260928.md`
 
 
+
+
+## Cross-Repo N243/KIX Integration
+
+KIX participe a l'implementation cross-repo atomique de VEX vers CTULU et BRAIN :
+
+- GET /health/kix : endpoint de sante integre VEX
+- GET /health/l3 : endpoint L3 pour daemons VEX
+- PRD-MOC-KIX-VEX-20260927.md : contrat d'integration VEX
+
+### Validation
+
+`ash
+curl http://localhost:8800/health/kix
+curl http://localhost:8800/health/l3
+` 
+
+### References
+
+- **PRD-MOC** : PRD-MOC-KIX-VEX-20260927.md 
+- **VEX Master** : PRD-MOC-VEX-CROSS-REPO-ATOMIC-IMPLEMENTATION-20260929.md 
+- **CTULU** : PRD-MOC-CTULU-CROSS-REPO-N243-KIX-INTEGRATION-20260929.md 
+- **BRAIN** : PRD-MOC-BRAIN-CROSS-REPO-N243-KIX-INTEGRATION-20260929.md 
+

@@ -78,6 +78,8 @@ VEX consulte KIX en tant que `viewer` sur les endpoints :
 - `PRD-MOC-VEX-KIX-BOUNDARIES-20260927.md` : Contrat de frontieres KIX/VEX
 - `PRD-MOC-KIX-ECOSYSTEM-INTEGRATION-MASTER-2026-09-27.md` : Integration ecosysteme master
 - `src/app.py` : Endpoints `/health/kix`, `/health/l3`
+- `PRD-MOC-CTULU-CROSS-REPO-N243-KIX-INTEGRATION-20260929.md` : Integration cross-repo CTULU
+- `PRD-MOC-BRAIN-CROSS-REPO-N243-KIX-INTEGRATION-20260929.md` : Integration cross-repo BRAIN
 
 ---
 
