@@ -1,0 +1,6 @@
+{
+  "required": [
+    "PRD-MOC/PRD-MOC-CTULU-CROSS-REPO-N243-KIX-INTEGRATION-20260929.md",
+    "scripts/n243_kix_integration_validator.py"
+  ]
+}

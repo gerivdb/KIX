@@ -1,0 +1,359 @@
+[
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-29T21:46:41.245630+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-29T21:47:47.973445+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-29T21:51:50.886258+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-29T21:52:55.404302+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-29T22:01:58.345108+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-29T22:23:53.502434+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-29T22:32:46.859603+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-29T22:38:00.321675+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-29T22:39:37.901173+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-29T22:40:40.162435+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-29T22:47:10.299914+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-29T22:52:06.088485+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-29T22:53:06.550558+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-29T23:03:07.731533+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-29T23:13:23.999206+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-29T23:19:22.418360+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-29T23:20:26.345040+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-29T23:27:06.629910+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-29T23:28:51.649809+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-29T23:31:42.910642+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-29T23:36:47.577560+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-29T23:45:21.026642+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-29T23:50:37.898485+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-29T23:56:42.517363+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T00:02:28.084946+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T00:07:36.520654+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T00:08:38.371984+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T00:09:44.692385+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T00:13:29.781845+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T00:19:55.648424+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T00:23:26.228775+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T00:27:28.265327+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T00:32:32.577369+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T00:40:44.297966+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T00:48:18.397930+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T00:53:15.340286+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T01:00:21.090277+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T02:45:14.031481+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T02:47:43.089356+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T02:52:10.695733+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T02:55:44.378294+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T04:49:08.265141+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T05:42:27.646794+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T17:23:55.013309+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T17:28:55.759077+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T17:36:37.793377+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T17:41:42.586087+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T17:51:39.090627+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T17:58:08.150813+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T18:12:01.147435+00:00",
+    "created_by": "admin"
+  },
+  {
+    "service": "PLIX",
+    "cron": "0 0 * * *",
+    "action": "backup",
+    "created_at": "2026-09-30T18:31:42.426335+00:00",
+    "created_by": "admin"
+  }
+]
