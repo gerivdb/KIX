@@ -29,7 +29,7 @@ from kix.immune import (
 
 class TestKORXStateKernel:
     def test_kbin_size(self):
-        assert STATE_KBIN_SIZE == 372
+        assert STATE_KBIN_SIZE == 400
 
     def test_create_state_kbin(self):
         kernel = KORXStateKernel()

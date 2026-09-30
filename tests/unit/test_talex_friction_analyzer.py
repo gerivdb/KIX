@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -60,6 +60,13 @@ class TestTalexFrictionAnalyzerKix:
         friction = {"code": "ERR-KIX-MERGE-CONFLICT-INTERCEPTION-LOG"}
         result = analyzer.propose_correction(friction)
         assert result["action"] == "resolve_in_favor_of_main"
+        assert result["atomic"] is True
+
+    def test_propose_correction_err_kix_hook_cyclic_regen(self):
+        analyzer = TalexFrictionAnalyzerKix()
+        friction = {"code": "ERR-KIX-HOOK-CYCLIC-REGEN"}
+        result = analyzer.propose_correction(friction)
+        assert result["action"] == "add_dirty_check"
         assert result["atomic"] is True
 
     def test_propose_correction_err_kix_powershell_invoke_rest(self):
@@ -133,3 +140,30 @@ class TestTalexFrictionAnalyzerKix:
         result = analyze_friction(context)
         assert result["status"] == "COMPLETED"
         assert result["summary"]["total"] == 1
+
+    def test_main_block_execution(self):
+        """Coverage for __main__ block (lines 167-240) using compile/exec pattern."""
+        source = Path("src/kix/pipelines/talex_friction_analyzer.py").read_text(encoding="utf-8")
+        code = compile(source, str(Path("src/kix/pipelines/talex_friction_analyzer.py")), "exec")
+        
+        mock_result = {
+            "status": "COMPLETED",
+            "summary": {"total": 7, "known": 5, "unknown": 2, "structural": 5, "causal": 7},
+        }
+        
+        captured = []
+        def mock_print(*args, **kwargs):
+            captured.append(args[0] if args else "")
+        
+        with patch("src.kix.pipelines.talex_friction_analyzer.analyze_friction", return_value=mock_result):
+            with patch("builtins.print", side_effect=mock_print):
+                exec(code, {
+                    "__name__": "__main__",
+                    "__file__": str(Path("src/kix/pipelines/talex_friction_analyzer.py")),
+                    "analyze_friction": analyze_friction,
+                    "print": mock_print,
+                })
+        
+        assert len(captured) >= 1
+        assert captured[0].startswith("[ACT-017]")
+        assert "COMPLETED" in captured[0]

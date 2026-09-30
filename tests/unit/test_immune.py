@@ -318,3 +318,34 @@ class TestImmuneCLI:
                 with patch("builtins.print") as mock_print:
                     main()
         assert any("Git count" in str(call.args[0]) for call in mock_print.call_args_list)
+
+    def test_ensure_file_creates_new_file(self, tmp_path):
+        """Lines 204-223: _ensure_file creates state.kbin with correct header."""
+        kbin = tmp_path / "state.kbin"
+        assert not kbin.exists()
+        korx = KORXStateKernel(path=kbin)
+        assert kbin.exists()
+        data = kbin.read_bytes()
+        assert data[0:4] == b"KORX"
+        assert len(data) == 400
+
+    def test_main_block_execution(self, tmp_path):
+        """Lines 399-400: __main__ block execution."""
+        source = Path("src/kix/immune.py").read_text(encoding="utf-8")
+        code = compile(source, str(Path("src/kix/immune.py")), "exec")
+        captured = []
+        def mock_print(*args, **kwargs):
+            captured.append(args[0] if args else "")
+        
+        with patch("sys.argv", ["immune.py", "status"]):
+            with patch("builtins.print", side_effect=mock_print):
+                with patch("sys.exit") as mock_exit:
+                    exec(code, {
+                        "__name__": "__main__",
+                        "__file__": str(Path("src/kix/immune.py")),
+                        "print": mock_print,
+                    })
+        
+        assert len(captured) >= 1
+        assert "NORMAL" in captured[0] or "CRITICAL" in captured[0] or "LOW_FREQUENCY" in captured[0]
+        mock_exit.assert_called_once_with(0)
