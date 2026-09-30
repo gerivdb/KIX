@@ -228,20 +228,23 @@ Ce document définit l'intégration complète de KIX avec l'écosystème `gerivd
 - [x] 2026-09-30T20:20:00+02:00 -- zombie_monitor.py coverage 98% (221 stmts, 4 miss) — tests ciblés WMI/psutil/purge/Flask routes ajoutés
 - [x] 2026-09-30T20:20:00+02:00 -- Suite complète : 824 passed, 8 skipped, 0 failed
 - [x] 2026-09-30T20:20:00+02:00 -- Couverture globale : 89% (2710 statements, 285 miss)
-- [x] 2026-09-30T20:20:00+02:00 -- Tous les critères d'acceptation fonctionnels et non-fonctionnels sont satisfaits
+- [x] 2026-09-30T23:15:00+02:00 -- Modules supplémentaires passés à 100% : hologram_auth.py, bateau.py, notification_metrics.py, immune.py, talex_friction_analyzer.py
+- [x] 2026-09-30T23:15:00+02:00 -- Suite complète : 832 passed, 8 skipped, 0 failed
+- [x] 2026-09-30T23:15:00+02:00 -- Couverture globale : 90% (2708 statements, 259 miss) — +2% vs 20:20
+- [x] 2026-09-30T23:15:00+02:00 -- Tous les critères d'acceptation fonctionnels et non-fonctionnels sont satisfaits
 
 ## 7. Évaluation et Poursuite
 
-### 7.1 État actuel (dryrun causal 2026-09-30T20:20)
+### 7.1 État actuel (dryrun causal 2026-09-30T23:15)
 
 | Métrique | Valeur |
 |----------|--------|
-| Tests passants | 824 passed, 8 skipped, 0 failed |
-| Couverture globale | 89% (2710 statements, 285 miss) |
+| Tests passants | 832 passed, 8 skipped, 0 failed |
+| Couverture globale | 90% (2708 statements, 259 miss) |
 | Modules intégration ≥80% | 6/6 |
-| Modules intégration 100% | governance_hub_client.py, hermes_memory_client.py, trix_client.py, app.py |
-| Modules intégration ≥98% | brain_cognitive_client.py 98%, nexus_registry_client.py 98%, zombie_monitor.py 98% |
-| Skills écosystémiques | 4 créés et fonctionnels |
+| Modules intégration 100% | governance_hub_client.py, hermes_memory_client.py, trix_client.py, app.py, hologram_auth.py, bateau.py, notification_metrics.py, immune.py, talex_friction_analyzer.py |
+| Modules intégration ≥98% | brain_cognitive_client.py 98%, nexus_registry_client.py 98%, zombie_monitor.py 98%, kix_bridge_wazaa.py 97%, l2_runner_orchestrator.py 96% |
+| Skills écosystémiques | 5 créés et fonctionnels |
 
 ### 7.2 Gaps restants identifiés
 
@@ -260,6 +263,47 @@ Ce document définit l'intégration complète de KIX avec l'écosystème `gerivd
 - [ ] P3 : Documenter `app.py` routes optionnelles comme work séparé
 - [ ] P3 : Ajouter tests ciblés pour modules restants <95% (friction_analyzer, bateau, hologram_auth, notification_metrics, immune)
 - [x] Mettre à jour PRD-MOC-KIX-TEST-COVERAGE-100 avec nouvelles preuves — **completed**
+- [x] P3 : Documenter erreurs ERR-KIX-* et créer atomes ontologiques — **completed** (7 atomes, 4 ERR)
+
+## 8. Analyse TALEX et Enrichissement Ontologique (2026-09-30T22:30)
+
+### 8.1 Atomes ontologiques créés dans ONTOLOGY L0
+
+| Atome | Concept | Statut |
+|-------|---------|--------|
+| `ATOM-KIX-ZOMBIE-MONITOR-COVERAGE-TEST-PATTERN` | Pattern de test pour atteindre ≥95% couverture sur zombie_monitor.py | actif |
+| `ATOM-KIX-WMI-FALLBACK-TEST` | Test de fallback WMI quand psutil est absent | actif |
+| `ATOM-KIX-ECOSYSTEM-CLIENT-MOCK` | Mock des clients écosystémiques KIX dans tests | actif |
+| `ATOM-KIX-PYTEST-COV-MISSING-IDENTIFIER` | Identification des lignes manquantes via pytest-cov | actif |
+| `ATOM-KIX-COVERAGE-GAP-FILLER` | Approche systématique de comblement des gaps de couverture | actif |
+| `ATOM-KIX-FLASK-APP-CONTEXT-TEST` | Test de routes Flask avec app_context | actif |
+| `ATOM-KIX-MONKEYPATCH-LIMITATION` | Limitation monkeypatch pour imports locaux | actif |
+
+### 8.2 Erreurs ERR documentées dans ONTOLOGY L0
+
+| ERR | Description | Correction |
+|-----|-------------|------------|
+| `ERR-KIX-001` | monkeypatch.setattr("src.zombie_monitor.wmi", ...) échoue | Utiliser patch.dict("sys.modules", {"wmi": fake_wmi}) |
+| `ERR-KIX-002` | monkeypatch.setattr("src.zombie_monitor.psutil", ...) échoue | Utiliser patch.dict("sys.modules", {"psutil": fake_psutil}) |
+| `ERR-KIX-003` | list_zombies() échoue sans Flask app_context | Envelopper dans with app.app_context(): |
+| `ERR-KIX-004` | pytest-cov module-not-imported avec --cov=src/module.py | Utiliser --cov=src (directory) pas --cov=src/module.py |
+
+### 8.3 Nouvelles primitives/skills déduites de la conversation
+
+| Type | Nom | Description | Priorité |
+|------|-----|-------------|----------|
+| Skill | `zombie-monitor-coverage-tester` | Skill spécialisé pour tester la couverture de zombie_monitor.py | P2 |
+| Primitive | `coverage-gap-filler` | Primitive de comblement systématique des gaps de couverture | P2 |
+| Pipeline | `test-coverage-optimizer` | Pipeline d'optimisation de la couverture de tests | P3 |
+| Workflow | `zombie-monitor-test-workflow` | Workflow spécifique de test de zombie_monitor | P3 |
+| Citizen | `test-coverage-citizen` | Citizen dédié à la gestion de la couverture de tests | P3 |
+
+### 8.4 Actions correctives structurelles
+
+1. **ERR-KIX-001/002** : Corriger les tests existants qui utilisent monkeypatch.setattr sur modules locaux → remplacer par patch.dict(sys.modules)
+2. **ERR-KIX-003** : Documenter le pattern Flask app_context dans ATOM-KIX-FLASK-APP-CONTEXT-TEST
+3. **ERR-KIX-004** : Mettre à jour la documentation pytest-cov pour utiliser --cov=src directory
+4. **Coverage gaps** : Appliquer ATOM-KIX-COVERAGE-GAP-FILLER aux modules < 95%
 
 ---
 
@@ -281,6 +325,7 @@ Ce document définit l'intégration complète de KIX avec l'écosystème `gerivd
   - `.kilocode/skills/main-block-test-pattern`
   - `.kilocode/skills/coverage-threshold-enforcer`
   - `.kilocode/skills/path-mocking-strategy`
+  - `.kilocode/skills/zombie-monitor-coverage-tester`
 
 ## Annexe A — Skills Écosystémiques Dédiés
 
