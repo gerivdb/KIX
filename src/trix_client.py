@@ -17,7 +17,7 @@ def _request(url: str, data: dict | None = None) -> dict:
             headers={"Content-Type": "application/json"},
             method="POST" if data is not None else "GET",
         )
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        with urllib.request.urlopen(req, timeout=10) as resp:
             return json.loads(resp.read().decode("utf-8"))
     except (ConnectionResetError, ConnectionAbortedError, urllib.error.URLError, json.JSONDecodeError) as exc:
         return {"error": str(exc)}
@@ -53,3 +53,62 @@ def health_check() -> bool:
     """
     resp = _request(f"{BASE_URL}/health")
     return "error" not in resp
+
+
+def kiva_run(config: dict) -> dict:
+    """Start a container via TRIX.
+
+    Args:
+        config: Container configuration (image, cpu, memory, etc.)
+
+    Returns:
+        JSON response with container details or {"error": "..."}.
+    """
+    return _request(f"{BASE_URL}/kiva-run", config)
+
+
+def kiva_stop(container: str) -> dict:
+    """Stop a container via TRIX.
+
+    Args:
+        container: Container name or ID.
+
+    Returns:
+        JSON response or {"error": "..."}.
+    """
+    return _request(f"{BASE_URL}/containers/{container}/stop")
+
+
+def kiva_list() -> dict:
+    """List all containers via TRIX.
+
+    Returns:
+        JSON response with containers list or {"error": "..."}.
+    """
+    return _request(f"{BASE_URL}/kiva-list")
+
+
+def kiva_snapshot(container: str) -> dict:
+    """Create a snapshot of a container via TRIX.
+
+    Args:
+        container: Container name or ID.
+
+    Returns:
+        JSON response with snapshot details or {"error": "..."}.
+    """
+    return _request(f"{BASE_URL}/containers/{container}/snapshot")
+
+
+def kiva_restore(container: str, snapshot: str) -> dict:
+    """Restore a container from snapshot via TRIX.
+
+    Args:
+        container: Container name or ID.
+        snapshot: Snapshot name or ID.
+
+    Returns:
+        JSON response or {"error": "..."}.
+    """
+    return _request(f"{BASE_URL}/containers/{container}/restore", {"snapshot": snapshot})
+
