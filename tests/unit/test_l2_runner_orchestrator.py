@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
@@ -48,6 +49,13 @@ class TestKIXProcessManagerAdapter:
         adapter = KIXProcessManagerAdapter(process_manager=process_manager)
         result = adapter.get(1234)
         assert result.pid == 1234
+
+    def test_get_returns_none_when_missing(self):
+        process_manager = MagicMock()
+        process_manager.get_process.return_value = None
+        adapter = KIXProcessManagerAdapter(process_manager=process_manager)
+        result = adapter.get(9999)
+        assert result is None
 
     def test_prune_dead(self):
         process_manager = MagicMock()
@@ -121,3 +129,8 @@ class TestL2RunnerOrchestrator:
         process_manager = MagicMock()
         orchestrator = L2RunnerOrchestrator(runner_registry=registry, process_manager=process_manager)
         assert orchestrator is not None
+
+    def test_import_fallback_branch(self):
+        """Lines 25-28: ImportError fallback from process_manager to src.process_manager."""
+        with patch.dict("sys.modules", {"process_manager": None}):
+            importlib.reload(__import__("src.kix.orchestrator.l2_runner_orchestrator", fromlist=[""]))

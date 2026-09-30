@@ -25,7 +25,7 @@ from base_orchestrator import (
 try:
     from process_manager import ProcessManager, ProcessEntry as KIXProcessEntry
 except ImportError:
-    from kix.process_manager import ProcessManager, ProcessEntry as KIXProcessEntry
+    from src.process_manager import ProcessManager, ProcessEntry as KIXProcessEntry
 from kix.runner_base import BaseRunner
 
 
