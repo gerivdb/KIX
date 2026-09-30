@@ -5,7 +5,7 @@ Composants :
 - SOMA thermal/RAM regulation
 - Bernstein G1 cycle detection
 - TIMX JWT temps cognitif
-- KORX-L1 state.kbin persistence (372 octets)
+    - KORX-L1 state.kbin persistence (400 octets)
 - Git Process Semaphore (max 4 git.exe)
 - BOINC-LLM offloading (SOMA critical)
 
@@ -29,7 +29,7 @@ from typing import Dict, List, Optional
 # ── Constants ─────────────────────────────────────────────────────────
 
 STATE_KBIN_PATH = Path(__file__).resolve().parents[2] / "data" / "state.kbin"
-STATE_KBIN_SIZE = 372
+STATE_KBIN_SIZE = 400
 
 HEADER_MAGIC = b"KORX"
 WAL_SEQ_OFFSET = 0x004
@@ -191,7 +191,7 @@ class BernsteinG1:
 # ── KORX-L1 State Kernel ─────────────────────────────────────────────
 
 class KORXStateKernel:
-    """Persistance binaire KORX-L1 via mmap sur state.kbin (372 octets)."""
+    """Persistance binaire KORX-L1 via mmap sur state.kbin (400 octets)."""
 
     def __init__(self, path: Optional[Path] = None) -> None:
         self.path = path or STATE_KBIN_PATH

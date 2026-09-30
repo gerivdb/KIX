@@ -32,8 +32,6 @@ def validate_token(token: str) -> dict:
     """
     if token in _TOKENS:
         return _TOKENS[token]
-    if token == "test_token":
-        return {"sub": "dev-user", "scope": "hologram:read"}
     raise ValueError("Invalid or expired token")
 
 
