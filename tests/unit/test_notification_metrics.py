@@ -49,3 +49,15 @@ class TestNotificationMetricsStore:
         store = NotificationMetricsStore(db)
         all_metrics = store.list_all()
         assert all_metrics == {}
+
+    def test_transaction_rollback_on_exception(self, tmp_path):
+        """Lines 43-45: transaction rollback on exception."""
+        db = tmp_path / "metrics.db"
+        store = NotificationMetricsStore(db)
+        with pytest.raises(RuntimeError):
+            with store.transaction() as conn:
+                conn.execute("INSERT INTO notification_metrics VALUES ('test', 1, 1, 0, 0.0, '2026-01-01')")
+                raise RuntimeError("forced error")
+        # Verify rollback: no data should be persisted
+        all_metrics = store.list_all()
+        assert all_metrics == {}

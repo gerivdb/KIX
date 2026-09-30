@@ -133,3 +133,46 @@ class TestMain:
         mock_print.assert_called_once()
         printed = mock_print.call_args[0][0]
         assert "registre" in printed
+
+    def test_main_zone_all(self, tmp_path):
+        """Line 115: args.zone == 'all' branch."""
+        (tmp_path / "MANIFEST.yaml").write_text("name: test\n")
+        with patch("sys.argv", ["bateau.py", "--repo", str(tmp_path), "--zone", "all"]):
+            with patch("builtins.print") as mock_print:
+                main()
+        mock_print.assert_called_once()
+        printed = mock_print.call_args[0][0]
+        assert "coque" in printed
+
+    def test_utf8_wrapper_non_utf8_encoding(self, monkeypatch):
+        """Lines 18-21: UTF-8 wrapper when encoding is not UTF-8."""
+        import io
+        fake_stdout = io.TextIOWrapper(io.BytesIO(), encoding="ascii", errors="replace")
+        fake_stderr = io.TextIOWrapper(io.BytesIO(), encoding="ascii", errors="replace")
+        monkeypatch.setattr("sys.stdout", fake_stdout)
+        monkeypatch.setattr("sys.stderr", fake_stderr)
+        # Re-import to trigger wrapper
+        import importlib
+        import src.holograms.bateau as bateau_module
+        importlib.reload(bateau_module)
+        assert bateau_module.sys.stdout.encoding == "utf-8"
+
+    def test_main_block_execution(self, tmp_path):
+        """Line 121: __main__ block execution."""
+        source = Path("src/holograms/bateau.py").read_text(encoding="utf-8")
+        code = compile(source, str(Path("src/holograms/bateau.py")), "exec")
+        (tmp_path / "MANIFEST.yaml").write_text("name: test\n")
+        captured = []
+        def mock_print(*args, **kwargs):
+            captured.append(args[0] if args else "")
+        
+        with patch("sys.argv", ["bateau.py", "--repo", str(tmp_path), "--zone", "all"]):
+            with patch("builtins.print", side_effect=mock_print):
+                exec(code, {
+                    "__name__": "__main__",
+                    "__file__": str(Path("src/holograms/bateau.py")),
+                    "print": mock_print,
+                })
+        
+        assert len(captured) >= 1
+        assert "coque" in captured[0]
