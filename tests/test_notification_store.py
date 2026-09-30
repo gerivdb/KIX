@@ -97,3 +97,17 @@ def test_schema_created_once(tmp_path: Path) -> None:
     )
     records = store2.list_recent(limit=10)
     assert len(records) == 1
+
+
+def test_transaction_rollback_on_exception(tmp_path: Path) -> None:
+    db = tmp_path / "notifications.db"
+    store = NotificationStore(db)
+    with pytest.raises(ValueError):
+        with store.transaction() as conn:
+            conn.execute(
+                "INSERT INTO notifications (event, timestamp, phi_cps, threshold, consecutive_cycles, channel, payload) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                ("bad", "2026-07-28T04:00:00+00:00", 0.7, 0.9, 3, "webhook", "{}"),
+            )
+            raise ValueError("intentional")
+    records = store.list_recent(limit=10)
+    assert len(records) == 0

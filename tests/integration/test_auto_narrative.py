@@ -42,10 +42,20 @@ class TestAutoNarrative:
 
     def test_query_gaps_returns_untyped_nodes(self, kgl_client):
         """Test que query détecte les nœuds sans type."""
-        # Note: Nécessite KG-L running avec données de test
-        gaps = kgl_client.query("SELECT ?n WHERE { ?n <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type }")
+        # Nécessite KG-L running avec données de test — mocké pour CI
+        from unittest.mock import patch, MagicMock
+        import json
+
+        def _make_resp(payload):
+            mock_resp = MagicMock()
+            mock_resp.__enter__ = MagicMock(return_value=mock_resp)
+            mock_resp.__exit__ = MagicMock(return_value=False)
+            mock_resp.read.return_value = json.dumps(payload).encode("utf-8")
+            return mock_resp
+
+        with patch("urllib.request.urlopen", return_value=_make_resp({"results": [{"id": "1", "labels": ["Concept"]}]})):
+            gaps = kgl_client.query("SELECT ?n WHERE { ?n <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type }")
         assert isinstance(gaps, list)
-        # Si des nœuds sans type existent, au moins un devrait être détecté
         if gaps:
             assert all("id" in g for g in gaps)
 
@@ -76,21 +86,29 @@ class TestAutoNarrative:
     @pytest.mark.integration
     def test_auto_narrative_full_cycle(self, repair):
         """Test E2E cycle complet (nécessite KG-L/WAZAA running)."""
-        # Ce test nécessite l'infrastructure complète
-        # Marqué @pytest.mark.integration pour exécution conditionnelle
-        
-        # 1. Créer gap artificiel dans KG-L (si API dispo)
-        # kgl.create_node("TEST_GAP_NODE", type=None)
-        
-        # 2. Déclencher runner
-        result = repair.run_cycle()
-        
+        # Ce test nécessite l'infrastructure complète — mocké pour CI
+        from unittest.mock import patch, MagicMock
+        import json
+
+        def _make_resp(payload):
+            mock_resp = MagicMock()
+            mock_resp.__enter__ = MagicMock(return_value=mock_resp)
+            mock_resp.__exit__ = MagicMock(return_value=False)
+            mock_resp.read.return_value = json.dumps(payload).encode("utf-8")
+            return mock_resp
+
+        with patch("urllib.request.urlopen", return_value=_make_resp({"nodes": 100, "edges": 200, "components": 1, "chi": 2})):
+            with patch.object(repair.wazaa, "publish"):
+                with patch.object(repair.vault, "write_note", return_value=Path("test.md")):
+                    # 2. Déclencher runner
+                    result = repair.run_cycle()
+
         # 3. Vérifier structure résultat
         assert "status" in result
         assert "fixed" in result
         assert "delta" in result
         assert result["status"] in ("completed", "no_gaps")
-        
+
         # 4. Si gaps corrigés, vérifier delta positif
         if result["fixed"] > 0:
             assert result["delta"] >= 0
@@ -123,14 +141,38 @@ class TestKG_L_Client:
 
     def test_count_nodes(self, client):
         """Test comptage nœuds."""
-        stats = client.get_graph_stats()
+        # Nécessite KG-L running — mocké pour CI
+        from unittest.mock import patch, MagicMock
+        import json
+
+        def _make_resp(payload):
+            mock_resp = MagicMock()
+            mock_resp.__enter__ = MagicMock(return_value=mock_resp)
+            mock_resp.__exit__ = MagicMock(return_value=False)
+            mock_resp.read.return_value = json.dumps(payload).encode("utf-8")
+            return mock_resp
+
+        with patch("urllib.request.urlopen", return_value=_make_resp({"nodes": 42, "edges": 100, "components": 1, "chi": 2})):
+            stats = client.get_graph_stats()
         count = stats.get("nodes", 0)
         assert isinstance(count, int)
         assert count >= 0
 
     def test_get_graph_stats(self, client):
         """Test stats graphe."""
-        stats = client.get_graph_stats()
+        # Nécessite KG-L running — mocké pour CI
+        from unittest.mock import patch, MagicMock
+        import json
+
+        def _make_resp(payload):
+            mock_resp = MagicMock()
+            mock_resp.__enter__ = MagicMock(return_value=mock_resp)
+            mock_resp.__exit__ = MagicMock(return_value=False)
+            mock_resp.read.return_value = json.dumps(payload).encode("utf-8")
+            return mock_resp
+
+        with patch("urllib.request.urlopen", return_value=_make_resp({"nodes": 42, "edges": 100, "components": 1, "chi": 2})):
+            stats = client.get_graph_stats()
         assert "nodes" in stats
         assert "edges" in stats
         assert "components" in stats
