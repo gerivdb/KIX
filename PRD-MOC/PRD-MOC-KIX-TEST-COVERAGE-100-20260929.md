@@ -87,8 +87,10 @@ Atteindre **100% de couverture de tests** sur le codebase KIX (`src/`) tout en c
 - [x] 2026-09-30T20:20:00+02:00 -- Modules ≥95% : diagnostics.py 96%, kix_bridge_wazaa.py 97%, nexus_registry_client.py 98%, brain_cognitive_client.py 98%, kix/orchestrator/l2_runner_orchestrator.py 96%, zombie_monitor.py 98%, kix/immune.py 100%, holograms/auth/v1/hologram_auth.py 100%, holograms/bateau.py 100%, notification_metrics.py 100%, kix/pipelines/talex_friction_analyzer.py 100%
 - [x] 2026-09-30T23:15:00+02:00 -- Couverture globale : 90% (2708 statements, 259 miss) — +2% vs 20:20
 - [x] 2026-09-30T23:15:00+02:00 -- Suite complète : 832 passed, 8 skipped, 0 failed — +8 tests vs 20:20
-- [x] 2026-09-30T23:15:00+02:00 -- Modules passés à 100% : hologram_auth.py, bateau.py, notification_metrics.py, immune.py, talex_friction_analyzer.py
-- [x] 2026-09-30T23:15:00+02:00 -- Analyse TALEX : 7 atomes ontologiques créés, 4 erreurs ERR-KIX-* documentées, 1 primitive TALEX créée, 1 skill KIX créé
+- [x] 2026-09-30T23:50:00+02:00 -- Couverture globale : 91% (2708 statements, 257 miss) — +1% vs 23:15
+- [x] 2026-09-30T23:50:00+02:00 -- Suite complète : 841 passed, 8 skipped, 0 failed — +9 tests vs 23:15
+- [x] 2026-09-30T23:50:00+02:00 -- Modules passés à 100% : l2_runner_orchestrator.py (96%→100%), auto_remediation.py (0%→100%), notification_store.py (73%→100%)
+- [x] 2026-09-30T23:50:00+02:00 -- Analyse TALEX : 11 atomes ontologiques créés, 9 erreurs ERR-KIX-* documentées, 1 primitive TALEX créée, 1 skill KIX créé, 1 skill ACT auto déduit
 
 ## Journal
 
