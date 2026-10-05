@@ -776,3 +776,17 @@ runners:
     repo: gerivdb/tlm-lang
     role: cognitive
   entrypoint: runners/tlm_lang_fastapi.py
+- name: piano-inject
+  runner_type: python
+  port: 8810
+  working_dir: D:\DO\WEB\TOOLS\L4-TOOLS\TRIX
+  depends_on:
+  - kix
+  health_path: /health
+  restart_policy: on-failure
+  auto_start: false
+  meta:
+    repo: gerivdb/TRIX
+    role: piano-bridge
+  entrypoint: src/handlers/piano_inject.py
+  telemetry_topic: e2e.proof.bridge-env3.kix
