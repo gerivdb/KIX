@@ -790,3 +790,19 @@ runners:
     role: piano-bridge
   entrypoint: src/handlers/piano_inject.py
   telemetry_topic: e2e.proof.bridge-env3.kix
+- name: ragx-env3
+  runner_type: python
+  port: 8853
+  working_dir: D:/DO/WEB/TOOLS/L0-CANON/RAGX
+  entrypoint: src/ragx_server.py
+  depends_on:
+  - llm-gateway
+  health_path: /health
+  restart_policy: on-failure
+  log_file: D:/DO/WEB/TOOLS/L0-CANON/RAGX/logs/ragx-env3.log
+  pid_file: D:/DO/WEB/TOOLS/L0-CANON/RAGX/logs/ragx-env3.pid
+  auto_start: true
+  meta:
+    repo: gerivdb/RAGX
+    role: env3-runner
+    strate: L0-CANON
