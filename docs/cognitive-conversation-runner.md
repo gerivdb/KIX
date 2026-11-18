@@ -181,3 +181,6 @@ DEFAULT_WEIGHTS = {
 - **INTENT** : `INTENT-COGNITIVE-CONVERSATION-RUNNER-KG-L-WAZAA-2026-08-21.md`
 - **ADR** : `ADR-2026-08-21-conversation-cognitive-runner.md`
 - **Schéma** : `schemas/runners/cognitive-conversation-decision.schema.json`
+
+
+*Source : gerivdb/gerivdb/KIX*

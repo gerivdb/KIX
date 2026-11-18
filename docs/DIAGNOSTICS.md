@@ -1,3 +1,11 @@
+---
+intent_hash: 0x8612e6f6604140ef
+created: 2026-11-18T01:18:21Z
+profil: TOOL
+role: orchestration_runtime
+source_repo: gerivdb/KIX
+status: active
+---
 # KIX Diagnostics API Documentation
 
 **IntentHash** : `0xPRD_MOC_AGENT_MANAGER_DIAGNOSTICS_ECOSYSTEM_20260809`

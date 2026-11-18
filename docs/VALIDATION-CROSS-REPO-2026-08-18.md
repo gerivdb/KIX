@@ -1,3 +1,11 @@
+---
+intent_hash: 0x1384baba8e805d21
+created: 2026-11-18T01:18:21Z
+profil: TOOL
+role: orchestration_runtime
+source_repo: gerivdb/KIX
+status: active
+---
 # Validation Cross-Repo — KIX Generic Runner Wrapper
 
 Date : 2026-08-18

@@ -1,3 +1,11 @@
+---
+intent_hash: 0x1bdfd36d31b0309f
+created: 2026-11-18T01:18:21Z
+profil: TOOL
+role: orchestration_runtime
+source_repo: gerivdb/KIX
+status: active
+---
 # KIX - Intégration Écosystème
 
 ## Vue d'Ensemble

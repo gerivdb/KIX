@@ -1,3 +1,11 @@
+---
+intent_hash: 0x081df3eb3d71aa9f
+created: 2026-11-18T01:18:21Z
+profil: TOOL
+role: orchestration_runtime
+source_repo: gerivdb/KIX
+status: active
+---
 # Runbook — Relance manuelle du Bootstrap Runner
 
 ## Contexte

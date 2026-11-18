@@ -1,3 +1,11 @@
+---
+intent_hash: 0xec70825f9d2b7ddd
+created: 2026-11-18T01:18:21Z
+profil: TOOL
+role: orchestration_runtime
+source_repo: gerivdb/KIX
+status: active
+---
 # Bootstrap Runner Documentation
 
 ## Overview
