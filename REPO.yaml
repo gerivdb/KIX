@@ -1,47 +1,51 @@
----
 type: REPO
-version: "1.0.0"
-date: "2026-08-02"
+version: 1.0.0
+date: '2026-08-02'
 status: ACTIVE
-intent_hash: "0xREPO_KIX_20260802"
-author: "V7.6_ENGINEERING"
-
+intent_hash: 0xREPO_KIX_20260802
+layer: L2-PLATFORM
+author: V7.6_ENGINEERING
 repo: gerivdb/KIX
 canonical_name: gerivdb/KIX
-local_path: "D:\\DO\\WEB\\TOOLS\\L2-PLATFORM\\KIX"
+local_path: D:\DO\WEB\TOOLS\L2-PLATFORM\KIX
 stratum: L2-PLATFORM
 profil: PLATFORM
-rss_version: "2.3"
+rss_version: '2.3'
 structure_hash: sha256:PLACEHOLDER
-last_audited: "2026-08-02"
+last_audited: '2026-08-02'
 conformite: EN_COURS
-remote_origin: "https://github.com/gerivdb/KIX.git"
-
+remote_origin: https://github.com/gerivdb/KIX.git
 dossiers_presents:
-  - src
-  - tests
-  - scripts
-  - config
-  - data
-
+- src
+- tests
+- scripts
+- config
+- data
 dossiers_manquants:
-  - .github/workflows  # À supprimer (interdiction ADR-024)
-  - .rssignore         # À créer
-
+- .rssignore
 fichiers_requis_absents:
-  - REPO.yaml          # ✅ Créé par ce fichier
-  - .rssignore         # À créer
-
+- .rssignore
 crosslinks:
-  - governance-hub: "L0-CANON/GOVERNANCE-HUB (known_repositories.yaml, OrgansRegistry.yaml)"
-  - mimir: "L3-CITIZENS/MIMIR (metrics.db)"
-  - path-registry: "L2-PLATFORM/PLIX (path-registry.yaml)"
-  - kiva-cli: "L1-INFRA/KIVA-CLI (kiva ci run KIX)"
-
+- governance-hub: L0-CANON/GOVERNANCE-HUB (known_repositories.yaml, OrgansRegistry.yaml)
+- mimir: L3-CITIZENS/MIMIR (metrics.db)
+- path-registry: L2-PLATFORM/PLIX (path-registry.yaml)
+- kiva-cli: L1-INFRA/KIVA-CLI (kiva ci run KIX)
 env_vars:
-  - KIX_KNOWN_REPOS_FILE: "Chemin vers known_repositories.yaml (défaut: L0-CANON/GOVERNANCE-HUB/known_repositories.yaml)"
-  - KIX_MIMIR_METRICS_DB: "Chemin vers metrics.db MIMIR (défaut: L3-CITIZENS/MIMIR/data/metrics.db)"
-
+- KIX_KNOWN_REPOS_FILE: 'Chemin vers known_repositories.yaml (défaut: L0-CANON/GOVERNANCE-HUB/known_repositories.yaml)'
+- KIX_MIMIR_METRICS_DB: 'Chemin vers metrics.db MIMIR (défaut: L3-CITIZENS/MIMIR/data/metrics.db)'
 role: ORCHESTRATOR
-description: "Central orchestrator for the gerivdb RLM/TLM/LLM runners. Port: 8800"
+description: 'Central orchestrator for the gerivdb RLM/TLM/LLM runners. Port: 8800'
 do_not_edit: false
+dependencies:
+- gerivdb/CTULU
+governance:
+  bridge_required: true
+  hooks_required:
+    - pre-commit
+    - pre-push
+  ci_required: true
+metadata:
+  audit_tool: "audit_l2_pipelines.py"
+  template_version: "1.0.0"
+  migrated_at: "2026-11-21T03:35:00Z"
+  migration_source: "golden_template_l2"
