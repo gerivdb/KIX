@@ -1,0 +1,53 @@
+# WISPX Middleware CDP/DOM — Intégration KIX
+# Référence SSoT : GERIVDB - PRD-MOC-ENV2-CDP-DOM-MIDDLEWARE | WAL: 0x243
+# Horodatage : 2026-11-22T04:53:00Z
+
+wisp_x:
+  repo: 'gerivdb/WISPX'
+  local_path: 'D:\DO\WEB\TOOLS\L2-PLATFORM\WISPX'
+  remote: 'https://github.com/gerivdb/WISPX.git'
+  strate: L2-PLATFORM
+  role: middleware_cdp_dom
+  wal: '0x243'
+
+  # Middleware HTTP local
+  middleware:
+    host: '127.0.0.1'
+    port: 9333
+    version: '1.0.0-ENV2-stdlib'
+
+  # CDP cible
+  cdp:
+    endpoint: 'http://127.0.0.1:9222'
+    protocol: '1.3'
+
+  # Authentification
+  auth:
+    header: 'X-M3-CDP-Token'
+    token_file: '%LOCALAPPDATA%\gerivdb\wisp-x\wisp-x.token'
+
+  # Journalisation
+  logging:
+    type: 'jsonl'
+    path: '%LOCALAPPDATA%\gerivdb\wisp-x\logs\wisp-x-access.jsonl'
+    append_only: true
+
+  # Intégrations croisées
+  integrations:
+    vex:
+      citizen: 'wisp-x-cdp-middleware'
+      file: 'D:\DO\WEB\TOOLS\L3-CITIZENS\VEX\vex.yaml'
+    gateway_manager:
+      file: 'D:\DO\WEB\TOOLS\L1-INFRA\GATEWAY-MANAGER\config\gateway.yaml'
+      section: 'wisp_x'
+    unified_design:
+      file: 'D:\DO\WEB\TOOLS\L0-CANON\unified-design\atoms\wisp-x-cdp-dom-mapping.yaml'
+      atom: 'wisp-x-cdp-dom-mapping'
+
+  semantic_clusters:
+    - cdp
+    - middleware
+    - dom
+    - shadow-dom
+    - env2
+    - kix
